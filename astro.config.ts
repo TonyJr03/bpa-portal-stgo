@@ -62,9 +62,9 @@ export default defineConfig({
     config: './src/config.yaml',
   }), vue()],
 
-  //image: {
-  //  domains: ['cdn.pixabay.com'],
-  //},
+  image: {
+    domains: ['cdn.pixabay.com'],
+  },
 
   markdown: {
     remarkPlugins: [readingTimeRemarkPlugin],
