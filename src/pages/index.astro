@@ -1,0 +1,71 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import Hero from '~/components/widgets/Hero.astro';
+import Features from '~/components/widgets/Features.astro';
+
+const metadata = {
+  title: 'Inicio - BPA Santiago de Cuba',
+  ignoreTitleTemplate: true,
+};
+---
+
+<Layout metadata={metadata}>
+  <Hero
+    actions={[
+      {
+        variant: 'primary',
+        text: 'Trámites',
+        href: '/tramites',
+        icon: 'tabler:file-description',
+      },
+      { 
+        text: 'Calculadora', 
+        href: '/calculadora',
+        icon: 'tabler:calculator',
+      },
+    ]}
+  >
+    <Fragment slot="title">
+      Bienvenido al <span class="text-green-700 dark:text-green-500 highlight">Banco Popular de Ahorro</span>
+    </Fragment>
+
+    <Fragment slot="subtitle">
+      Sucursal Provincial Santiago de Cuba. <br/>
+      Ahorramos trabajo, multiplicamos su tiempo.
+    </Fragment>
+  </Hero>
+
+  <Features
+    id="servicios"
+    tagline="Nuestros Servicios"
+    title="¿Qué le ofrecemos?"
+    subtitle="Descubra las facilidades y servicios que el BPA tiene para usted."
+    items={[
+      {
+        title: 'Banca Personal',
+        description:
+          'Información sobre cuentas de ahorro, tarjetas magnéticas y créditos personales para la población.',
+        icon: 'tabler:user',
+      },
+      {
+        title: 'Atención a Empresas',
+        description:
+          'Servicios financieros adaptados a las necesidades de las empresas estatales y los nuevos actores económicos (Mipymes).',
+        icon: 'tabler:building-factory-2',
+      },
+      {
+        title: 'Banca Electrónica',
+        description:
+          'Acceda a sus cuentas y realice operaciones desde la comodidad de su hogar mediante Transfermóvil o Enzona.',
+        icon: 'tabler:device-mobile',
+      },
+      {
+        title: 'Tasas de Cambio',
+        description:
+          'Consulte las tasas de cambio de monedas extranjeras actualizadas al día.',
+        icon: 'tabler:currency-dollar',
+      },
+    ]}
+  />
+
+  </Layout>
