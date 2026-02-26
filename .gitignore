@@ -22,3 +22,7 @@ pnpm-debug.log*
 pnpm-lock.yaml
 
 .astro
+
+# PocketBase backend
+bpa-backend/pocketbase.exe
+bpa-backend/pb_data/
