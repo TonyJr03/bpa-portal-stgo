@@ -1,6 +1,6 @@
 site:
   name: 'BPA - Banco Popular de Ahorro'
-  site: 'https://bpa.cu'  #Esto hay que cambiarlo luego
+  site: 'https://bpa.cu' #Esto hay que cambiarlo luego
   base: '/'
   trailingSlash: false
 

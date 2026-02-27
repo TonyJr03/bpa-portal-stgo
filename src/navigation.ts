@@ -90,7 +90,7 @@ export const footerData = {
     {
       title: 'Otros',
       links: [
-        { text: 'Enzona', href: '#' }, 
+        { text: 'Enzona', href: '#' },
         { text: 'BPA Nacional', href: '#' },
         { text: 'Cubadebate', href: '#' },
         { text: 'Periódico Granma', href: '#' },

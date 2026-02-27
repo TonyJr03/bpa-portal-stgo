@@ -5,18 +5,10 @@
     "allowJs": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "src/*"
-      ]
+      "~/*": ["src/*"]
     },
     "jsx": "preserve"
   },
-  "include": [
-    ".astro/types.d.ts",
-    "**/*"
-  ],
-  "exclude": [
-    "dist/",
-    "bpa-backend/"
-  ]
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist/", "bpa-backend/"]
 }
