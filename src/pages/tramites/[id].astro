@@ -1,0 +1,92 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Steps from '~/components/widgets/Steps.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+
+export function getStaticPaths() {
+  // Estas son las 4 rutas que definimos en los botones de la página anterior
+  return [
+    { params: { id: 'apertura-cuenta' } },
+    { params: { id: 'solicitud-tarjeta' } },
+    { params: { id: 'credito-personal' } },
+    { params: { id: 'transferencias' } },
+  ];
+}
+
+const { id } = Astro.params;
+
+// Información temporal (mock data) de los trámites
+const data = {
+  'apertura-cuenta': {
+    title: 'Apertura de Cuenta de Ahorro',
+    subtitle: 'Conozca la documentación necesaria para abrir una nueva cuenta en el BPA.',
+    requisitos: [
+      { title: 'Carnet de Identidad', description: 'Documento original, actualizado y en buen estado.' },
+      { title: 'Depósito Inicial', description: 'Importe mínimo requerido (Ej. 50 CUP para cuentas a la vista).' },
+      { title: 'Presencia Física', description: 'El trámite es estrictamente personal, no se admiten intermediarios sin poder notarial.' }
+    ]
+  },
+  'solicitud-tarjeta': {
+    title: 'Solicitud de Tarjeta Magnética',
+    subtitle: 'Requisitos para obtener su medio de pago electrónico.',
+    requisitos: [
+      { title: 'Ser titular de una cuenta', description: 'Debe poseer una cuenta de ahorro activa en la sucursal.' },
+      { title: 'Carnet de Identidad', description: 'Documento original vigente.' }
+    ]
+  },
+  'credito-personal': {
+    title: 'Solicitud de Crédito Personal',
+    subtitle: 'Documentos requeridos para solicitar financiamiento.',
+    requisitos: [
+      { title: 'Certificación de Ingresos', description: 'Documento oficial emitido y acuñado por su centro de trabajo.' },
+      { title: 'Fiador Solidario', description: 'Carnet de identidad y certificación de ingresos de la persona que respaldará el crédito.' },
+      { title: 'Proforma o Presupuesto', description: 'Documento que justifique el monto solicitado (ej. materiales de construcción).' }
+    ]
+  },
+  'transferencias': {
+    title: 'Transferencias y Cheques',
+    subtitle: 'Pasos para realizar movimientos de fondos en la sucursal.',
+    requisitos: [
+      { title: 'Datos del Beneficiario', description: 'Número de cuenta o tarjeta de la persona que recibirá el dinero.' },
+      { title: 'Carnet de Identidad', description: 'Para verificar la identidad del ordenante.' }
+    ]
+  }
+};
+
+const tramiteData = data[id as keyof typeof data];
+
+const metadata = {
+  title: `${tramiteData.title} - BPA`,
+};
+---
+
+<Layout metadata={metadata}>
+  
+  <HeroText title={tramiteData.title} subtitle={tramiteData.subtitle} />
+
+  <Steps
+    title="Documentos y Requisitos"
+    subtitle="Por favor, asegúrese de cumplir con estos requisitos antes de acudir al banco."
+    items={tramiteData.requisitos}
+    image={{ src: '~/assets/images/default.png', alt: 'Documentos requeridos' }}
+  />
+
+  <CallToAction
+    title="¿Todo listo para su trámite?"
+    subtitle="Encuentre la sucursal más cercana para ser atendido por nuestros comerciales."
+    actions={[
+      {
+        variant: 'primary',
+        text: 'Ir al Mapa',
+        href: '/mapa',
+        icon: 'tabler:map-pin',
+      },
+      {
+        text: 'Volver a trámites',
+        href: '/tramites',
+      }
+    ]}
+  />
+
+</Layout>

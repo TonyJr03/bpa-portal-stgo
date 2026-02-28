@@ -1,0 +1,89 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+import Steps from '~/components/widgets/Steps.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+
+const metadata = {
+  title: 'Trámites - BPA',
+  description: 'Guía de trámites, requisitos y documentos necesarios del Banco Popular de Ahorro.',
+};
+---
+
+<Layout metadata={metadata}>
+  <Features2
+    title="Trámites Bancarios"
+    subtitle="Conozca los requisitos y documentos necesarios antes de visitar nuestras sucursales para agilizar sus gestiones."
+    columns={2}
+    items={[
+      {
+        title: 'Apertura de Cuenta de Ahorro',
+        description: 'Conozca los depósitos mínimos, plazos y documentos requeridos para abrir una nueva cuenta en CUP o divisas.',
+        icon: 'tabler:folder-plus',
+        callToAction: { text: 'Ver detalles', href: '/tramites/apertura-cuenta' },
+      },
+      {
+        title: 'Solicitud de Tarjeta Magnética',
+        description: 'Pasos para solicitar una tarjeta nueva, reposición por pérdida o deterioro, y vinculación a canales electrónicos.',
+        icon: 'tabler:credit-card',
+        callToAction: { text: 'Ver detalles', href: '/tramites/solicitud-tarjeta' },
+      },
+      {
+        title: 'Solicitud de Crédito Personal',
+        description: 'Guía sobre las certificaciones de ingresos, requisitos para fiadores solidarios y modelos a llenar.',
+        icon: 'tabler:file-certificate',
+        callToAction: { text: 'Ver detalles', href: '/tramites/credito-personal' },
+      },
+      {
+        title: 'Transferencias y Cheques',
+        description: 'Procedimientos para emisión de cheques de gerencia, transferencias de fondos y pagos a terceros.',
+        icon: 'tabler:exchange',
+        callToAction: { text: 'Ver detalles', href: '/tramites/transferencias' },
+      },
+    ]}
+  />
+
+  <Steps
+    title="¿Cómo realizar un trámite en nuestras sucursales?"
+    subtitle="Siga estos pasos generales para garantizar que su visita sea rápida y sin contratiempos."
+    items={[
+      {
+        title: 'Paso 1: Verifique los requisitos',
+        description: 'Lea detenidamente la documentación requerida para su trámite específico en esta página web para evitar viajes innecesarios.',
+        icon: 'tabler:list-check',
+      },
+      {
+        title: 'Paso 2: Reúna la documentación',
+        description: 'Asegúrese de llevar su Carnet de Identidad actualizado y en buen estado, junto con cualquier otro documento legal exigido.',
+        icon: 'tabler:files',
+      },
+      {
+        title: 'Paso 3: Visite su sucursal',
+        description: 'Diríjase a la sucursal del BPA más cercana. Contamos con atención priorizada para embarazadas, personas con discapacidad y de la tercera edad.',
+        icon: 'tabler:map-pin',
+      },
+      {
+        title: 'Paso 4: Procesamiento Comercial',
+        description: 'Un especialista comercial le atenderá de manera personalizada, revisará sus documentos y ejecutará su solicitud en el sistema.',
+        icon: 'tabler:user-check',
+      },
+    ]}
+    image={{
+      src: '~/assets/images/default.png',
+      alt: 'Pasos para trámites bancarios',
+    }}
+  />
+
+  <CallToAction
+    title="¿Necesita encontrar una sucursal?"
+    subtitle="Utilice nuestro mapa interactivo para localizar la unidad del BPA más cercana a usted en Santiago de Cuba."
+    actions={[
+      {
+        variant: 'primary',
+        text: 'Ver Mapa de Sucursales',
+        href: '/mapa',
+        icon: 'tabler:map-search',
+      },
+    ]}
+  />
+</Layout>
