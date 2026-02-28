@@ -1,0 +1,37 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+
+const metadata = {
+  title: 'Productos y Servicios - BPA',
+  description: 'Explore nuestra cartera de productos: cuentas de ahorro, créditos y tarjetas magnéticas.',
+};
+---
+
+<Layout metadata={metadata}>
+  <Features2
+    title="Nuestros Productos y Servicios"
+    subtitle="Seleccione una categoría para conocer los detalles, requisitos y beneficios que el Banco Popular de Ahorro tiene para usted."
+    columns={3}
+    items={[
+      {
+        title: 'Cuentas de Ahorro',
+        description: 'Conozca las diferentes modalidades para proteger y multiplicar su dinero a corto y largo plazo.',
+        icon: 'tabler:building-bank',
+        callToAction: { text: 'Ver modalidades', href: '/categorias/ahorro' },
+      },
+      {
+        title: 'Créditos y Préstamos',
+        description: 'Financiamiento adaptado a sus necesidades personales y para nuevos actores económicos.',
+        icon: 'tabler:coin',
+        callToAction: { text: 'Ver créditos', href: '/categorias/creditos' },
+      },
+      {
+        title: 'Tarjetas Magnéticas',
+        description: 'Comodidad y seguridad para sus transacciones diarias, pago de nóminas y jubilaciones.',
+        icon: 'tabler:credit-card',
+        callToAction: { text: 'Ver tarjetas', href: '/categorias/tarjetas' },
+      },
+    ]}
+  />
+</Layout>

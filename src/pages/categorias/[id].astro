@@ -1,0 +1,108 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Content from '~/components/widgets/Content.astro';
+import Steps from '~/components/widgets/Steps.astro';
+
+export function getStaticPaths() {
+  return [
+    { params: { id: 'ahorro' } },
+    { params: { id: 'creditos' } },
+    { params: { id: 'tarjetas' } },
+  ];
+}
+
+const { id } = Astro.params;
+
+// Base de datos simulada con una estructura mucho más rica para los widgets Content y Steps
+const data = {
+  ahorro: {
+    title: 'Cuentas de Ahorro',
+    subtitle: 'Proteja su futuro con nuestras opciones de ahorro flexibles y seguras.',
+    products: [
+      {
+        title: 'Ahorro a Plazo Fijo',
+        description: 'La mejor opción para multiplicar su dinero con tasas de interés preferenciales y plazos adaptados a sus necesidades.',
+        features: [
+          { title: 'Plazos flexibles desde 3 hasta 72 meses.' },
+          { title: 'Importe mínimo de apertura de solo 500 CUP.' },
+          { title: 'Cobro de intereses mensual, trimestral o al vencimiento.' },
+        ],
+        // Usamos la imagen por defecto que ya viene en el proyecto para no depender de internet
+        image: { src: '~/assets/images/default.png', alt: 'Ahorro a Plazo Fijo' },
+      }
+    ],
+    requirements: [
+      { title: 'Carnet de Identidad', description: 'Documento de identidad actualizado y en buen estado.' },
+      { title: 'Depósito Inicial', description: 'Efectivo mínimo requerido según la modalidad de la cuenta.' },
+      { title: 'Firma del Contrato', description: 'Presencialmente en cualquiera de nuestras sucursales.' },
+    ]
+  },
+  creditos: {
+    title: 'Créditos y Préstamos',
+    subtitle: 'Impulsamos sus proyectos personales y de negocio.',
+    products: [
+      {
+        title: 'Créditos Personales',
+        description: 'Financiamiento rápido para compra de materiales de construcción, pago de mano de obra y otras necesidades.',
+        features: [
+          { title: 'Tasas de interés competitivas.' },
+          { title: 'Análisis de riesgo y aprobación rápida.' },
+        ],
+        image: { src: '~/assets/images/default.png', alt: 'Créditos Personales' },
+      }
+    ],
+    requirements: [
+      { title: 'Demostrar ingresos', description: 'Documento oficial de su centro de trabajo.' },
+      { title: 'Fiador Solidario', description: 'Persona natural con ingresos demostrables.' },
+    ]
+  },
+  tarjetas: {
+    title: 'Tarjetas Magnéticas',
+    subtitle: 'La llave electrónica a sus finanzas.',
+    products: [
+      {
+        title: 'Tarjeta en CUP',
+        description: 'Comodidad total para el pago de servicios, compras en tiendas y acceso a la banca electrónica.',
+        features: [
+          { title: 'Asociación directa a Transfermóvil y Enzona.' },
+          { title: 'Extracción en toda la red de cajeros del país.' },
+        ],
+        image: { src: '~/assets/images/default.png', alt: 'Tarjetas Magnéticas' },
+      }
+    ],
+    requirements: [
+      { title: 'Carnet de Identidad', description: 'Documento oficial vigente.' },
+      { title: 'Solicitud presencial o remota', description: 'Puede solicitarla en sucursal o vía Transfermóvil.' },
+    ]
+  }
+};
+
+const categoryData = data[id as keyof typeof data];
+const metadata = { title: `${categoryData.title} - BPA` };
+---
+
+<Layout metadata={metadata}>
+  
+  <HeroText title={categoryData.title} subtitle={categoryData.subtitle} />
+
+  {categoryData.products.map((product, index) => (
+    <Content
+      isReversed={index % 2 !== 0} 
+      title={product.title}
+      items={product.features}
+      image={product.image}
+    >
+      <Fragment slot="content">
+        <p class="text-lg text-muted dark:text-slate-400">{product.description}</p>
+      </Fragment>
+    </Content>
+  ))}
+
+  <Steps
+    title="Requisitos Generales"
+    items={categoryData.requirements}
+    image={{ src: '~/assets/images/default.png', alt: 'Requisitos' }}
+  />
+
+</Layout>
