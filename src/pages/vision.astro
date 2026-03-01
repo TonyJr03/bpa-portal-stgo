@@ -1,0 +1,62 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Content from '~/components/widgets/Content.astro';
+import Features3 from '~/components/widgets/Features3.astro';
+
+const metadata = {
+  title: 'Nuestra Visión - BPA',
+  description: 'La visión a futuro y valores corporativos del Banco Popular de Ahorro.',
+};
+---
+
+<Layout metadata={metadata}>
+  <HeroText 
+    title="Nuestra Visión" 
+    subtitle="Hacia dónde vamos y qué aspiramos ser como institución financiera." 
+  />
+
+  <Content
+    items={[
+      {
+        title: 'Liderazgo Tecnológico',
+        description: 'Ser referentes en la implementación de tecnologías para la banca electrónica en Cuba.',
+        icon: 'tabler:cpu',
+      },
+      {
+        title: 'Excelencia en el Servicio',
+        description: 'Lograr los más altos estándares de satisfacción al cliente en cada una de nuestras sucursales.',
+        icon: 'tabler:star',
+      },
+    ]}
+    image={{
+      src: '~/assets/images/default.png',
+      alt: 'Visión del BPA',
+    }}
+  >
+    <Fragment slot="content">
+      <h3 class="text-2xl font-bold tracking-tight dark:text-white sm:text-3xl mb-2">
+        Innovación y Liderazgo
+      </h3>
+      <p class="text-lg text-muted dark:text-slate-400">
+        Aspiramos a ser la institución bancaria líder en el territorio nacional, reconocida por su solidez financiera, modernidad tecnológica y la calidez humana de su colectivo laboral, adaptándonos continuamente a las nuevas exigencias del entorno económico.
+      </p>
+    </Fragment>
+  </Content>
+
+  <Features3
+    title="Nuestros Valores"
+    subtitle="Los pilares éticos que rigen el comportamiento de todos los trabajadores del BPA."
+    columns={3}
+    defaultIcon="tabler:point-filled"
+    items={[
+      { title: 'Profesionalidad', description: 'Actuamos con rigor técnico y superación constante.' },
+      { title: 'Ética y Transparencia', description: 'Garantizamos la seguridad y claridad en todas las operaciones.' },
+      { title: 'Sentido de Pertenencia', description: 'Compromiso total con la institución y sus objetivos.' },
+      { title: 'Responsabilidad Social', description: 'Aportamos al bienestar de nuestra comunidad.' },
+      { title: 'Trabajo en Equipo', description: 'Colaboramos unidos para alcanzar la excelencia.' },
+      { title: 'Respeto al Cliente', description: 'Brindamos un trato amable, digno y equitativo.' },
+    ]}
+  />
+
+</Layout>

@@ -1,0 +1,52 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Content from '~/components/widgets/Content.astro';
+
+const metadata = {
+  title: 'Nuestra Misión - BPA',
+  description: 'Conozca la misión y razón de ser del Banco Popular de Ahorro.',
+};
+---
+
+<Layout metadata={metadata}>
+  <HeroText 
+    title="Nuestra Misión" 
+    subtitle="El propósito que nos impulsa cada día en el Banco Popular de Ahorro." 
+  />
+
+  <Content
+    isReversed
+    items={[
+      {
+        title: 'Fomento del Ahorro',
+        description: 'Incentivar y proteger los depósitos de la población cubana con total seguridad y transparencia.',
+        icon: 'tabler:building-bank',
+      },
+      {
+        title: 'Desarrollo Económico',
+        description: 'Financiar proyectos que impulsen el crecimiento de la economía local y los nuevos actores económicos.',
+        icon: 'tabler:chart-arrows-vertical',
+      },
+      {
+        title: 'Bancarización',
+        description: 'Acercar los servicios financieros a todos los rincones mediante canales electrónicos e innovación.',
+        icon: 'tabler:device-mobile',
+      },
+    ]}
+    image={{
+      src: '~/assets/images/default.png',
+      alt: 'Misión del BPA',
+    }}
+  >
+    <Fragment slot="content">
+      <h3 class="text-2xl font-bold tracking-tight dark:text-white sm:text-3xl mb-2">
+        Ser el Banco de la Familia Cubana
+      </h3>
+      <p class="text-lg text-muted dark:text-slate-400">
+        Nuestra misión fundamental es ofrecer servicios y productos financieros de excelencia, garantizando la confianza de nuestros clientes y contribuyendo activamente al desarrollo socioeconómico del país mediante un equipo de profesionales altamente calificados.
+      </p>
+    </Fragment>
+  </Content>
+
+</Layout>
