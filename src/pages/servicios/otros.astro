@@ -1,0 +1,46 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+
+const metadata = {
+  title: 'Otros Servicios - BPA',
+  description: 'Descubra servicios adicionales como cajas de seguridad, cheques de gerencia y banca a distancia.',
+};
+---
+
+<Layout metadata={metadata}>
+  <Features2
+    title="Otros Servicios Bancarios"
+    subtitle="Soluciones financieras adicionales para satisfacer todas sus necesidades corporativas y personales."
+    columns={3}
+    items={[
+      {
+        title: 'Cheques de Gerencia',
+        description: 'Instrumentos de pago seguros y garantizados por el banco para transacciones de alto valor.',
+        icon: 'tabler:file-certificate',
+        callToAction: { text: 'Ver detalles', href: '/servicios/cheques' },
+      },
+      {
+        title: 'Cajas de Seguridad',
+        description: 'Proteja sus bienes de valor y documentos importantes en nuestras bóvedas acorazadas.',
+        icon: 'tabler:lock',
+        callToAction: { text: 'Ver detalles', href: '/servicios/cajas-seguridad' },
+      },
+      {
+        title: 'Banca a Distancia',
+        description: 'Gestione sus cuentas sin visitar el banco mediante nuestros canales telefónicos y banca remota.',
+        icon: 'tabler:phone-call',
+        callToAction: { text: 'Ver detalles', href: '/servicios/banca-distancia' },
+      },
+    ]}
+  />
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex justify-start pb-12">
+    <a 
+      href="/servicios" 
+      class="btn bg-gray-200 dark:bg-slate-800 flex items-center gap-2 hover:bg-gray-300 dark:hover:bg-slate-700"
+    >
+      <span class="text-xl">&larr;</span> Volver a Principales
+    </a>
+  </div>
+</Layout>

@@ -6,8 +6,8 @@ export const headerData = {
       text: 'Productos y Servicios',
       links: [
         {
-          text: 'Categorias',
-          href: getPermalink('/categorias'),
+          text: 'Servicios',
+          href: getPermalink('/servicios'),
         },
         {
           text: 'Trámites',

@@ -18,20 +18,29 @@ const metadata = {
         title: 'Cuentas de Ahorro',
         description: 'Conozca las diferentes modalidades para proteger y multiplicar su dinero a corto y largo plazo.',
         icon: 'tabler:building-bank',
-        callToAction: { text: 'Ver modalidades', href: '/categorias/ahorro' },
+        callToAction: { text: 'Ver modalidades', href: '/servicios/ahorro' },
       },
       {
         title: 'Créditos y Préstamos',
         description: 'Financiamiento adaptado a sus necesidades personales y para nuevos actores económicos.',
         icon: 'tabler:coin',
-        callToAction: { text: 'Ver créditos', href: '/categorias/creditos' },
+        callToAction: { text: 'Ver créditos', href: '/servicios/creditos' },
       },
       {
         title: 'Tarjetas Magnéticas',
         description: 'Comodidad y seguridad para sus transacciones diarias, pago de nóminas y jubilaciones.',
         icon: 'tabler:credit-card',
-        callToAction: { text: 'Ver tarjetas', href: '/categorias/tarjetas' },
+        callToAction: { text: 'Ver tarjetas', href: '/servicios/tarjetas' },
       },
     ]}
   />
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex justify-end pb-12">
+    <a 
+      href="/servicios/otros" 
+      class="btn bg-primary text-white hover:bg-green-800 flex items-center gap-2"
+    >
+      Otros Servicios <span class="text-xl">&rarr;</span>
+    </a>
+  </div>
 </Layout>

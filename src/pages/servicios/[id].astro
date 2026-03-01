@@ -6,9 +6,14 @@ import Steps from '~/components/widgets/Steps.astro';
 
 export function getStaticPaths() {
   return [
+    // Principales
     { params: { id: 'ahorro' } },
     { params: { id: 'creditos' } },
     { params: { id: 'tarjetas' } },
+    // Otros servicios
+    { params: { id: 'cheques' } },
+    { params: { id: 'cajas-seguridad' } },
+    { params: { id: 'banca-distancia' } },
   ];
 }
 
