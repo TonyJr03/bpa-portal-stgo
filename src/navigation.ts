@@ -6,75 +6,84 @@ export const headerData = {
       text: 'Productos y Servicios',
       links: [
         {
-          text: 'Categorias',
-          href: getPermalink('/categorias'),
+          text: 'Banca Personal',
+          href: getPermalink('/productos/banca-personal'),
         },
         {
-          text: 'Trámites',
-          href: getPermalink('/tramites'),
+          text: 'Banca Corporativa',
+          href: getPermalink('/productos/banca-corporativa'),
+        },
+        {
+          text: 'Banca Electrónica',
+          href: getPermalink('/productos/banca-electronica'),
+        },
+        {
+          text: 'Banca Internacional',
+          href: getPermalink('/productos/banca-internacional'),
         },
         {
           text: 'Otros Servicios',
-          href: getPermalink('/otros-servicios'),
+          href: getPermalink('/productos/otros-servicios'),
         },
       ],
     },
+
+    {
+      text: 'Trámites',
+      href: getPermalink('/tramites'),
+    },
+
     {
       text: 'Sobre Nosotros',
       links: [
         {
-          text: 'Historia',
-          href: getPermalink('/historia'),
-        },
-        {
           text: 'Misión',
-          href: getPermalink('/mision'),
+          href: getPermalink('/sobre-nosotros/mision'),
         },
         {
           text: 'Visión',
-          href: getPermalink('/vision'),
+          href: getPermalink('/sobre-nosotros/vision'),
         },
         {
-          text: 'Dirección Provincial',
-          href: getPermalink('/direccion-provincial'),
+          text: 'Historia',
+          href: getPermalink('/sobre-nosotros/historia'),
         },
         {
-          text: 'Subdirección Comercial',
-          href: getPermalink('/subdireccion-comercial'),
-        },
-        {
-          text: 'Oficina de Comunicaciones',
-          href: getPermalink('/oficina-comunicaciones'),
+          text: 'Directorio Institucional',
+          href: getPermalink('/sobre-nosotros/directorio'),
         },
       ],
     },
+
     {
       text: 'Herramientas',
       links: [
         {
+          text: 'Calculadora Financiera',
+          href: getPermalink('/herramientas/calculadora'),
+        },
+        {
+          text: 'Tasa de Cambio',
+          href: getPermalink('/herramientas/tasas-de-cambio'),
+        },
+        {
+          text: 'Mapa Interactivo',
+          href: getPermalink('/herramientas/mapa'),
+        },
+        {
           text: 'Calendario',
-          href: getPermalink('/calendario'),
-        },
-        {
-          text: 'Calculadora',
-          href: getPermalink('/calculadora'),
-        },
-        {
-          text: 'Mapa',
-          href: getPermalink('/mapa'),
-        },
-        {
-          text: 'Contacto',
-          href: getPermalink('/contacto'),
-        },
-        {
-          text: 'Tasa de cambio',
-          href: getPermalink('/tasa-de-cambio'),
+          href: getPermalink('/herramientas/calendario'),
         },
       ],
     },
+
+    {
+      text: 'Contáctenos',
+      href: getPermalink('/contacto'),
+    },
   ],
-  actions: [], // Eliminado el botón de "Download" ya que no corresponde al diseño del banco
+
+  actions: [],
 };
 
 export const footerData = {
@@ -82,48 +91,65 @@ export const footerData = {
     {
       title: 'Productos y Servicios',
       links: [
-        { text: 'Categorías', href: getPermalink('/categorias') },
-        { text: 'Trámites', href: getPermalink('/tramites') },
-        { text: 'Otros servicios', href: getPermalink('/otros-servicios') },
+        { text: 'Banca Personal',       href: getPermalink('/productos/banca-personal') },
+        { text: 'Banca Corporativa',    href: getPermalink('/productos/banca-corporativa') },
+        { text: 'Banca Electrónica',    href: getPermalink('/productos/banca-electronica') },
+        { text: 'Banca Internacional',  href: getPermalink('/productos/banca-internacional') },
+        { text: 'Otros Servicios',      href: getPermalink('/productos/otros-servicios') },
+        { text: 'Trámites',             href: getPermalink('/tramites') },
       ],
     },
+
     {
-      title: 'Otros',
+      title: 'Sobre Nosotros',
       links: [
-        { text: 'Enzona', href: '#' },
-        { text: 'BPA Nacional', href: '#' },
-        { text: 'Cubadebate', href: '#' },
-        { text: 'Periódico Granma', href: '#' },
+        { text: 'Misión',                  href: getPermalink('/sobre-nosotros/mision') },
+        { text: 'Visión',                  href: getPermalink('/sobre-nosotros/vision') },
+        { text: 'Historia',                href: getPermalink('/sobre-nosotros/historia') },
+        { text: 'Directorio Institucional', href: getPermalink('/sobre-nosotros/directorio') },
       ],
     },
+
     {
       title: 'Herramientas',
       links: [
-        { text: 'Opiniones', href: getPermalink('/opiniones') },
-        { text: 'Calculadora', href: getPermalink('/calculadora') },
-        { text: 'Calendario', href: getPermalink('/calendario') },
-        { text: 'Tasas de cambio', href: getPermalink('/tasas-de-cambio') },
-        { text: 'Mapa', href: getPermalink('/mapa') },
+        { text: 'Calculadora Financiera', href: getPermalink('/herramientas/calculadora') },
+        { text: 'Tasa de Cambio',         href: getPermalink('/herramientas/tasas-de-cambio') },
+        { text: 'Mapa Interactivo',       href: getPermalink('/herramientas/mapa') },
+        { text: 'Calendario',             href: getPermalink('/herramientas/calendario') },
+        { text: 'Contáctenos',            href: getPermalink('/contacto') },
       ],
     },
+
     {
-      title: 'Empresa',
+      title: 'En la Red',
       links: [
-        { text: 'Sobre nosotros', href: getPermalink('/sobre-nosotros') },
-        { text: 'Misión', href: getPermalink('/mision') },
+        { text: 'BPA Nacional',   href: 'http://www.bpa.cu' },
+        { text: 'EnZona',         href: 'http://www.enzona.net' },
+        { text: 'Transfermóvil',  href: 'http://www.transfermovil.cu' },
+        { text: 'Cubadebate',     href: 'http://www.cubadebate.cu' },
+        { text: 'Granma',         href: 'http://www.granma.cu' },
       ],
     },
   ],
+
   secondaryLinks: [
     { text: 'Términos y Condiciones', href: getPermalink('/terminos') },
     { text: 'Política de Privacidad', href: getPermalink('/privacidad') },
   ],
+
   socialLinks: [
-    { ariaLabel: 'X', icon: 'tabler:brand-x', href: '#' },
+    { ariaLabel: 'Facebook',  icon: 'tabler:brand-facebook',  href: '#' },
     { ariaLabel: 'Instagram', icon: 'tabler:brand-instagram', href: '#' },
-    { ariaLabel: 'Facebook', icon: 'tabler:brand-facebook', href: '#' },
+    { ariaLabel: 'Telegram',  icon: 'tabler:brand-telegram',  href: '#' },
+    { ariaLabel: 'YouTube',   icon: 'tabler:brand-youtube',   href: '#' },
   ],
+
   footNote: `
-    <span class="font-bold">BPA - Santiago de Cuba</span> · Todos los derechos reservados.
+    <img class="w-5 h-5 md:w-4 md:h-4 md:-mt-0.5 bg-cover mr-1.5 rtl:mr-0 rtl:ml-1.5 float-left rtl:float-right rounded-sm" 
+          src="/favicon.ico" 
+          alt="Logo BPA" 
+          loading="lazy" />
+    <span class="font-semibold">BPA — Banco Popular de Ahorro</span> · Sucursal Provincial Santiago de Cuba · Todos los derechos reservados ${new Date().getFullYear()}.
   `,
 };
