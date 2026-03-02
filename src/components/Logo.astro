@@ -2,8 +2,6 @@
 import { SITE } from 'astrowind:config';
 ---
 
-<span
-  class="self-center ml-2 rtl:ml-0 rtl:mr-2 text-2xl md:text-xl font-bold text-gray-900 whitespace-nowrap dark:text-white flex items-center gap-2"
->
-  🚀 {SITE?.name}
+<span class="self-center ml-2 rtl:ml-0 rtl:mr-2 text-base lg:text-sm xl:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 min-w-0 shrink">
+  🚀 <span class="min-w-0 leading-tight">{SITE?.name}</span>
 </span>
