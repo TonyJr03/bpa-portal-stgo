@@ -1,12 +1,4 @@
 ---
-/**
- * PageLayout.astro — Layout base para todas las páginas del portal BPA.
- * Cambios respecto a AstroWind original:
- *   - Se eliminó el slot <Announcement /> (barra "New Astro 5.0.0" eliminada).
- *   - Se eliminó showRssFeed del Header (icono no relevante).
- *   - Se añadió showToggleLang para el selector de idioma ES/EN.
- *   - Header con isFullWidth para máximo uso del espacio horizontal.
- */
 import Layout from '~/layouts/Layout.astro';
 import Header from '~/components/widgets/Header.astro';
 import Footer from '~/components/widgets/Footer.astro';
@@ -23,8 +15,6 @@ const { metadata } = Astro.props;
 
 <Layout metadata={metadata}>
 
-  <!-- Header: sticky, con toggle de tema y toggle de idioma.
-       Sin showRssFeed (eliminado) ni Announcement (eliminado). -->
   <slot name="header">
     <Header
       {...headerData}
