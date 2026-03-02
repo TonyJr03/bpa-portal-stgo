@@ -1,12 +1,21 @@
 ---
+/**
+ * Header.astro — Cabecera global del portal BPA.
+ * Cambios respecto a la plantilla original AstroWind:
+ *   - Grid de columnas cambiado de `grid-cols-3` a `grid-cols-[auto_1fr_auto]`
+ *     para que la navegación central se expanda y no solape con el logo.
+ *   - Se eliminó la prop `showRssFeed` (icono wifi/RSS no relevante para el banco).
+ *   - Se añadió prop `showToggleLang` para mostrar el selector de idioma.
+ */
 import { Icon } from 'astro-icon/components';
 import Logo from '~/components/Logo.astro';
 import ToggleTheme from '~/components/common/ToggleTheme.astro';
 import ToggleMenu from '~/components/common/ToggleMenu.astro';
+import ToggleLang from '~/components/common/ToggleLang.astro';
 import Button from '~/components/ui/Button.astro';
 
 import { getHomePermalink } from '~/utils/permalinks';
-import { trimSlash, getAsset } from '~/utils/permalinks';
+import { trimSlash } from '~/utils/permalinks';
 import type { CallToAction } from '~/types';
 
 interface Link {
@@ -28,7 +37,7 @@ export interface Props {
   isDark?: boolean;
   isFullWidth?: boolean;
   showToggleTheme?: boolean;
-  showRssFeed?: boolean;
+  showToggleLang?: boolean;   // ← NUEVO: reemplaza showRssFeed
   position?: string;
 }
 
@@ -40,7 +49,7 @@ const {
   isDark = false,
   isFullWidth = false,
   showToggleTheme = false,
-  showRssFeed = false,
+  showToggleLang = false,     // ← NUEVO
   position = 'center',
 } = Astro.props;
 
@@ -63,13 +72,23 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
         'md:flex md:justify-between': position !== 'center',
       },
       {
-        'md:grid md:grid-cols-3 md:items-center': position === 'center',
+        /*
+         * ✅ FIX CLAVE: cambiamos de `md:grid-cols-3` (columnas iguales que causaban
+         * solapamiento) a `md:grid-cols-[auto_1fr_auto]`:
+         *   - col 1 (auto): Logo — toma solo el espacio que necesita
+         *   - col 2 (1fr):  Navegación — se expande para llenar todo el espacio libre
+         *   - col 3 (auto): Acciones (tema, idioma) — toma solo el espacio que necesita
+         */
+        'md:grid md:grid-cols-[auto_1fr_auto] md:items-center': position === 'center',
       },
       {
         'max-w-7xl': !isFullWidth,
       },
     ]}
   >
+    <!-- ============================================================
+         COLUMNA 1: Logo + botón hamburguesa (móvil)
+         ============================================================ -->
     <div class:list={[{ 'mr-auto rtl:mr-0 rtl:ml-auto': position === 'right' }, 'flex justify-between']}>
       <a class="flex items-center" href={getHomePermalink()}>
         <Logo />
@@ -78,12 +97,16 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
         <ToggleMenu />
       </div>
     </div>
+
+    <!-- ============================================================
+         COLUMNA 2: Navegación principal (desktop)
+         ============================================================ -->
     <nav
       class="items-center w-full md:w-auto hidden md:flex md:mx-5 text-default overflow-y-auto overflow-x-hidden md:overflow-y-visible md:overflow-x-auto md:justify-self-center"
-      aria-label="Main navigation"
+      aria-label="Navegación principal"
     >
       <ul
-        class="flex flex-col md:flex-row md:self-center w-full md:w-auto text-xl md:text-[0.9375rem] tracking-[0.01rem] font-medium md:justify-center"
+        class="flex flex-col md:flex-row md:self-center w-full md:w-auto text-xl md:text-[0.9rem] tracking-[0.01rem] font-medium md:justify-center"
       >
         {
           links.map(({ text, href, links }) => (
@@ -129,37 +152,31 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
         }
       </ul>
     </nav>
+
+    <!-- ============================================================
+         COLUMNA 3: Controles de utilidad (tema + idioma) + acciones
+         ============================================================ -->
     <div
       class:list={[
         { 'ml-auto rtl:ml-0 rtl:mr-auto': position === 'left' },
         'hidden md:self-center md:flex items-center md:mb-0 fixed w-full md:w-auto md:static justify-end left-0 rtl:left-auto rtl:right-0 bottom-0 p-3 md:p-0 md:justify-self-end',
       ]}
     >
-      <div class="items-center flex justify-between w-full md:w-auto">
-        <div class="flex">
+      <div class="items-center flex justify-between w-full md:w-auto gap-1">
+        <div class="flex items-center gap-1">
+          <!-- Selector de idioma ES/EN (placeholder para futura implementación de i18n) -->
+          {showToggleLang && <ToggleLang />}
+          <!-- Selector de tema claro / oscuro -->
           {showToggleTheme && <ToggleTheme iconClass="w-6 h-6 md:w-5 md:h-5 md:inline-block" />}
-          {
-            showRssFeed && (
-              <a
-                class="text-muted dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 inline-flex items-center"
-                aria-label="RSS Feed"
-                href={getAsset('/rss.xml')}
-              >
-                <Icon name="tabler:rss" class="w-5 h-5" />
-              </a>
-            )
-          }
         </div>
         {
           actions?.length ? (
-            <span class="ml-4 rtl:ml-0 rtl:mr-4">
+            <span class="ml-3 rtl:ml-0 rtl:mr-3">
               {actions.map((btnProps) => (
                 <Button {...btnProps} class="ml-2 py-2.5 px-5.5 md:px-6 font-semibold shadow-none text-sm w-auto" />
               ))}
             </span>
-          ) : (
-            ''
-          )
+          ) : null
         }
       </div>
     </div>
