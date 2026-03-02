@@ -146,10 +146,6 @@ export const footerData = {
   ],
 
   footNote: `
-    <img class="w-5 h-5 md:w-4 md:h-4 md:-mt-0.5 bg-cover mr-1.5 rtl:mr-0 rtl:ml-1.5 float-left rtl:float-right rounded-sm" 
-          src="/favicon.ico" 
-          alt="Logo BPA" 
-          loading="lazy" />
     <span class="font-semibold">BPA — Banco Popular de Ahorro</span> · Sucursal Provincial Santiago de Cuba · Todos los derechos reservados ${new Date().getFullYear()}.
   `,
 };
