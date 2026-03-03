@@ -1,0 +1,144 @@
+---
+/**
+ * @pagina src/pages/productos/index.astro
+ * @ruta   /productos
+ *
+ * Widgets: HeroText · Features2 · CallToAction · PageNav
+ * Colección PocketBase: `categorias`
+ *   Campos: nombre, slug, descripcion, icono, orden
+ */
+
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
+import { pb } from '~/lib/pocketbase';
+
+// ─── TIPO ─────────────────────────────────────────────────────────────────────
+interface Categoria {
+  id: string;
+  nombre: string;
+  slug: string;
+  descripcion: string;
+  icono: string;
+  orden: number;
+}
+
+// ─── FALLBACK — mantener sincronizado con PocketBase ──────────────────────────
+const FALLBACK: Categoria[] = [
+  {
+    id: '1',
+    nombre: 'Banca Personal',
+    slug: 'banca-personal',
+    descripcion: 'Cuentas de ahorro, depósitos a plazo fijo, certificados de depósito, créditos personales y tarjetas magnéticas para personas naturales.',
+    icono: 'user-dollar',
+    orden: 1,
+  },
+  {
+    id: '2',
+    nombre: 'Banca Corporativa',
+    slug: 'banca-corporativa',
+    descripcion: 'Financiamiento para empresas estatales, negocios privados (TCP y MiPymes) y pequeños agricultores con líneas de crédito adaptadas.',
+    icono: 'building-factory-2',
+    orden: 2,
+  },
+  {
+    id: '3',
+    nombre: 'Banca Electrónica',
+    slug: 'banca-electronica',
+    descripcion: 'Opere desde su teléfono o computadora con Transfermóvil, Banca Remota, Banca Telefónica y transferencias nacionales e internacionales.',
+    icono: 'device-mobile',
+    orden: 3,
+  },
+  {
+    id: '4',
+    nombre: 'Banca Internacional',
+    slug: 'banca-internacional',
+    descripcion: 'Recepción de transferencias desde el exterior para beneficiarios en Cuba, con gestión segura y personalizada en cada sucursal.',
+    icono: 'globe',
+    orden: 4,
+  },
+  {
+    id: '5',
+    nombre: 'Otros Servicios',
+    slug: 'otros-servicios',
+    descripcion: 'Créditos para vivienda (Ley 65), cheques de gerencia, cobros por cuenta de terceros y otros servicios complementarios.',
+    icono: 'layout-grid',
+    orden: 5,
+  },
+];
+
+// ─── CARGA DESDE POCKETBASE ───────────────────────────────────────────────────
+let categorias: Categoria[] = [];
+
+try {
+  const resultado = await pb
+    .collection('categorias')
+    .getFullList<Categoria>({ sort: 'orden' });
+  // Si la colección responde pero está vacía, usar fallback
+  categorias = resultado.length > 0 ? resultado : FALLBACK;
+} catch {
+  // PocketBase no disponible (primer build, servidor apagado, etc.)
+  categorias = FALLBACK;
+}
+
+// ─── MAPEO A Item[] para Features2 ───────────────────────────────────────────
+const items = categorias.map((cat) => ({
+  title: cat.nombre,
+  description: cat.descripcion,
+  icon: `tabler:${cat.icono}`,
+  callToAction: {
+    text: 'Ver productos',
+    href: `/productos/${cat.slug}`,
+    variant: 'link' as const,
+    icon: 'tabler:arrow-right',
+  },
+}));
+
+// ─── METADATA ────────────────────────────────────────────────────────────────
+const metadata = {
+  title: 'Productos y Servicios — BPA Santiago de Cuba',
+  description:
+    'Conozca toda la cartera de productos y servicios del Banco Popular de Ahorro ' +
+    'en Santiago de Cuba: ahorro, créditos, banca electrónica, servicios internacionales y más.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <HeroText
+    title="Productos y Servicios"
+    subtitle="Conozca la cartera completa de productos financieros diseñados para personas naturales, empresas y la comunidad en general."
+  />
+
+  <Features2
+    id="categorias"
+    tagline="Seleccione una categoría"
+    columns={3}
+    items={items}
+  >
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Features2>
+
+  <CallToAction
+    title="¿No sabe cuál producto es el adecuado para usted?"
+    subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están
+              disponibles para orientarle sin compromiso."
+    actions={[
+      {
+        variant: 'primary',
+        text: 'Contáctenos',
+        href: '/contacto',
+        icon: 'tabler:headset',
+      },
+    ]}
+  />
+
+  <PageNav
+    prev={{ text: 'Volver a Inicio', href: '/' }}
+  />
+
+</Layout>
