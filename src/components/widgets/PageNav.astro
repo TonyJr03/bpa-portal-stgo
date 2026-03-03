@@ -1,0 +1,77 @@
+---
+import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
+import { Icon } from 'astro-icon/components';
+import type { Widget } from '~/types';
+
+interface NavLink {
+  text: string;
+  href: string;
+}
+
+export interface Props extends Widget {
+  prev?: NavLink;
+  next?: NavLink;
+  showDivider?: boolean;
+}
+
+const {
+  prev,
+  next,
+  showDivider = true,
+
+  id,
+  isDark = false,
+  classes = {},
+  bg = await Astro.slots.render('bg'),
+} = Astro.props;
+
+const justify =
+  prev && next ? 'justify-between' : next ? 'justify-end' : 'justify-start';
+---
+
+{
+  (prev || next) && (
+    <WidgetWrapper
+      id={id}
+      isDark={isDark}
+      containerClass={`max-w-7xl mx-auto ${classes?.container ?? ''}`}
+      bg={bg}
+    >
+      {showDivider && (
+        <div class="border-t border-slate-200 dark:border-slate-700 mb-6" aria-hidden="true" />
+      )}
+
+      <nav aria-label="Navegación entre páginas" class={`flex items-center ${justify}`}>
+
+        {prev && (
+          <a
+            href={prev.href}
+            class="group inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-primary dark:hover:text-white transition-colors duration-200"
+          >
+            <Icon
+              name="tabler:arrow-left"
+              class="w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:-translate-x-1"
+              aria-hidden="true"
+            />
+            {prev.text}
+          </a>
+        )}
+
+        {next && (
+          <a
+            href={next.href}
+            class="group inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-primary dark:hover:text-white transition-colors duration-200"
+          >
+            {next.text}
+            <Icon
+              name="tabler:arrow-right"
+              class="w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-1"
+              aria-hidden="true"
+            />
+          </a>
+        )}
+
+      </nav>
+    </WidgetWrapper>
+  )
+}
