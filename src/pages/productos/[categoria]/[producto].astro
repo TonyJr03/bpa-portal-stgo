@@ -1,38 +1,42 @@
 ---
 /**
- * @pagina src/pages/productos/[categoria].astro
- * @ruta   /productos/[categoria]
- * @ejemplo /productos/banca-personal
+ * @pagina  src/pages/productos/[categoria]/[producto].astro
+ * @ruta    /productos/[categoria]/[producto]
+ * @ejemplo /productos/banca-personal/depositos-plazo-fijo
  *
  * @descripcion
- * Página dinámica generada en build time para cada categoría de productos.
- * getStaticPaths consulta la colección `categorias` y genera una ruta por
- * cada registro. Cada ruta precarga también sus `productos` asociados en la
- * misma función, evitando una segunda consulta al renderizar.
+ * Página dinámica generada en build time para cada producto o servicio.
+ * getStaticPaths consulta todas las categorías y sus productos publicados,
+ * generando una ruta por cada combinación categoria/producto.
  *
- * Widgets utilizados (nativos de AstroWind):
- *   - HeroText      → Nombre y descripción de la categoría
- *   - Features2     → Grid de cards con los productos de la categoría
+ * El campo `contenido` (Rich Text de PocketBase) se renderiza con Tailwind
+ * Typography (prose). El administrador escribe con el editor visual del panel
+ * de PocketBase — encabezados, listas, negritas, etc. — y prose aplica el
+ * estilo tipográfico automáticamente. No se necesita escribir clases CSS en
+ * el contenido.
+ *
+ * Widgets utilizados:
+ *   - HeroText      → Nombre del producto como título (sin subtitle)
+ *                     Tagline = nombre de la categoría padre
+ *   - prose div     → Cuerpo de contenido enriquecido desde PocketBase
  *   - CallToAction  → Cierre institucional
- *   - PageNav       → Navegación: ← Volver a Productos y Servicios
+ *   - PageNav       → ← Volver a la categoría padre
  *
  * Componentes de estado:
- *   - EmptyCollection → La categoría existe pero no tiene productos
- *   - DatabaseError   → No se pudo conectar con PocketBase en build time
+ *   - DatabaseError   → Fallo de conexión con PocketBase en build time
  *
  * Colecciones PocketBase:
- *   `categorias` → nombre, slug, descripcion, icono, orden
- *   `productos`  → nombre, slug, categoria (Relation), descripcion_corta,
- *                  icono, orden, publicado
+ *   `categorias` → id, nombre, slug
+ *   `productos`  → id, nombre, slug, categoria (Relation → categorias),
+ *                  descripcion_corta, contenido (Rich Text), icono,
+ *                  orden, publicado
  */
 
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import Layout from '~/layouts/PageLayout.astro';
 import HeroText from '~/components/widgets/HeroText.astro';
-import Features2 from '~/components/widgets/Features2.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
 import PageNav from '~/components/widgets/PageNav.astro';
-import EmptyCollection from '~/components/ui/EmptyCollection.astro';
 import DatabaseError from '~/components/ui/DatabaseError.astro';
 import { pb } from '~/lib/pocketbase';
 
@@ -41,9 +45,6 @@ interface Categoria {
   id: string;
   nombre: string;
   slug: string;
-  descripcion: string;
-  icono: string;   // nombre Tabler SIN prefijo, ej: "user-dollar"
-  orden: number;
 }
 
 interface Producto {
@@ -51,24 +52,23 @@ interface Producto {
   nombre: string;
   slug: string;
   descripcion_corta: string;
-  icono: string;   // nombre Tabler SIN prefijo, ej: "pig-money"
+  contenido: string;   // HTML generado por el editor Rich Text de PocketBase
+  icono: string;
   orden: number;
   publicado: boolean;
-  // El campo `categoria` es una Relation — PocketBase devuelve el ID del registro
-  categoria: string;
+  categoria: string;   // ID del registro relacionado en `categorias`
 }
 
 // ─── getStaticPaths ───────────────────────────────────────────────────────────
-// Se ejecuta UNA SOLA VEZ durante el build.
-// Consulta todas las categorías y, para cada una, sus productos publicados.
-// Todo el fetching ocurre aquí para no repetir llamadas al renderizar.
+// Genera una ruta por cada producto publicado de cada categoría.
+// Toda la lógica de carga ocurre aquí para no repetir consultas al renderizar.
 export const getStaticPaths = (async () => {
   // 1. Obtener todas las categorías
   const categorias = await pb
     .collection('categorias')
     .getFullList<Categoria>({ sort: 'orden' });
 
-  // 2. Para cada categoría, obtener sus productos publicados
+  // 2. Para cada categoría, obtener sus productos publicados y generar rutas
   const paths = await Promise.all(
     categorias.map(async (cat) => {
       let productos: Producto[] = [];
@@ -85,89 +85,85 @@ export const getStaticPaths = (async () => {
         dbError = true;
       }
 
-      return {
-        // El param debe coincidir con el nombre del archivo: [categoria]
-        params: { categoria: cat.slug },
-        // Todo lo que necesita la página se pasa como props aquí
-        props: { categoria: cat, productos, dbError },
-      };
+      // Una ruta por cada producto de esta categoría
+      return productos.map((prod) => ({
+        params: {
+          categoria: cat.slug,
+          producto: prod.slug,
+        },
+        props: {
+          producto: prod,
+          categoria: cat,
+          dbError,
+        },
+      }));
     })
   );
 
-  return paths;
+  // flatMap porque cada categoría devuelve un array de rutas
+  return paths.flat();
 }) satisfies GetStaticPaths;
 
 // ─── PROPS ────────────────────────────────────────────────────────────────────
-// Astro infiere los tipos desde getStaticPaths automáticamente.
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { categoria, productos, dbError } = Astro.props;
-
-// ─── MAPEO A Item[] para Features2 ───────────────────────────────────────────
-const items = productos.map((prod) => ({
-  title: prod.nombre,
-  description: prod.descripcion_corta,
-  icon: `tabler:${prod.icono}`,
-  callToAction: {
-    text: 'Ver detalles',
-    href: `/productos/${categoria.slug}/${prod.slug}`,
-    variant: 'link' as const,
-    icon: 'tabler:arrow-right',
-  },
-}));
+const { producto, categoria, dbError } = Astro.props;
 
 // ─── METADATA SEO ─────────────────────────────────────────────────────────────
 const metadata = {
-  title: `${categoria.nombre} — BPA Santiago de Cuba`,
-  description: categoria.descripcion,
+  title: `${producto.nombre} — BPA Santiago de Cuba`,
+  description: producto.descripcion_corta,
 };
 ---
 
 <Layout metadata={metadata}>
 
   <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
-      Nombre de la categoría como título principal.
-      Descripción de PocketBase como subtítulo.
-      Tagline contextualiza la ubicación dentro del portal.
+      Nombre del producto como título principal.
+      Tagline muestra la categoría padre para contextualizar la ubicación.
+      Sin subtitle — el contenido habla por sí mismo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Productos y Servicios"
-    title={categoria.nombre}
-    subtitle={categoria.descripcion}
+    tagline={categoria.nombre}
+    title={producto.nombre}
   />
 
-  <!-- BLOQUE 2 · Grid de productos / estados ──────────────────────────────────
-      Tres casos posibles:
-        1. Error de conexión en build time → DatabaseError
-        2. Categoría sin productos         → EmptyCollection
-        3. Productos disponibles           → Features2
+  <!-- BLOQUE 2 · Contenido enriquecido ────────────────────────────────────────
+      El campo `contenido` es HTML generado por el editor Rich Text de
+      PocketBase. Tailwind Typography (prose) aplica estilo tipográfico
+      automático a todos los elementos HTML: h2, h3, p, ul, ol, strong, etc.
   ─────────────────────────────────────────────────────────────────────────── -->
   {dbError ? (
     <DatabaseError coleccion="productos" />
-  ) : items.length === 0 ? (
-    <EmptyCollection
-      coleccion="productos"
-      mensaje={`No hay productos disponibles en ${categoria.nombre} aún.`}
-      icono="tabler:package-off"
-    />
   ) : (
-    <Features2
-      id="productos"
-      tagline="Seleccione un producto"
-      columns={3}
-      items={items}
-    >
-      <Fragment slot="bg">
-        <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-      </Fragment>
-    </Features2>
+    <section class="py-12 lg:py-16">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        <div
+          class="
+            prose prose-lg max-w-none
+            dark:prose-invert
+            dark:prose-headings:text-slate-300
+            prose-headings:font-heading
+            prose-headings:leading-tighter
+            prose-headings:tracking-tighter
+            prose-headings:font-bold
+            prose-a:text-primary
+            dark:prose-a:text-blue-400
+            prose-img:rounded-md
+            prose-img:shadow-lg
+            prose-li:my-0
+          "
+          set:html={producto.contenido}
+        ></div>
+      </div>
+    </section>
   )}
 
   <!-- BLOQUE 3 · CallToAction ─────────────────────────────────────────────────
-      Mismo cierre institucional que el resto del módulo.
+      Cierre institucional consistente con el resto del módulo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Necesita orientación personalizada?"
+    title="¿Necesita más información sobre este servicio?"
     subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están disponibles para asesorarle sin compromiso."
     actions={[
       {
@@ -180,10 +176,14 @@ const metadata = {
   />
 
   <!-- NAVEGACIÓN · PageNav ────────────────────────────────────────────────────
-      ← Volver a Productos y Servicios
+      Botón izquierdo: volver a la página de la categoría padre.
+      La URL se construye dinámicamente con el slug de la categoría.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: 'Volver a Productos y Servicios', href: '/productos' }}
+    prev={{
+      text: `Volver a ${categoria.nombre}`,
+      href: `/productos/${categoria.slug}`,
+    }}
   />
 
 </Layout>
