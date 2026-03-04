@@ -1,11 +1,21 @@
 ---
 /**
  * @pagina src/pages/productos/index.astro
- * @ruta   /productos
+ * @ruta  /productos
  *
- * Widgets: HeroText · Features2 · CallToAction · PageNav
- * Colección PocketBase: `categorias`
- *   Campos: nombre, slug, descripcion, icono, orden
+ * @descripcion
+ * Página estática de índice de "Productos y Servicios".
+ * Lista las 5 categorías de la cartera comercial del BPA Santiago de Cuba.
+ * Cada categoría enlaza a su página dinámica /productos/[categoria].
+ *
+ * Widgets utilizados (nativos de AstroWind):
+ *   - HeroText     -> Titulo y subtitulo de seccion (sin tagline)
+ *   - Features2    -> Grid de cards (solo tagline, sin title ni subtitle)
+ *   - CallToAction -> Cierre institucional
+ *   - PageNav      -> Navegacion inferior a Inicio
+ *
+ * Coleccion PocketBase: `categorias`
+ *   Campos: nombre, slug, descripcion, icono (nombre tabler sin prefijo), orden
  */
 
 import Layout from '~/layouts/PageLayout.astro';
@@ -13,6 +23,8 @@ import HeroText from '~/components/widgets/HeroText.astro';
 import Features2 from '~/components/widgets/Features2.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
 import PageNav from '~/components/widgets/PageNav.astro';
+import EmptyCollection from '~/components/ui/EmptyCollection.astro';
+import DatabaseError from '~/components/ui/DatabaseError.astro';
 import { pb } from '~/lib/pocketbase';
 
 // ─── TIPO ─────────────────────────────────────────────────────────────────────
@@ -21,69 +33,27 @@ interface Categoria {
   nombre: string;
   slug: string;
   descripcion: string;
-  icono: string;
+  icono: string;   // nombre Tabler SIN prefijo, ej: "user-dollar"
   orden: number;
 }
 
-// ─── FALLBACK — mantener sincronizado con PocketBase ──────────────────────────
-const FALLBACK: Categoria[] = [
-  {
-    id: '1',
-    nombre: 'Banca Personal',
-    slug: 'banca-personal',
-    descripcion: 'Cuentas de ahorro, depósitos a plazo fijo, certificados de depósito, créditos personales y tarjetas magnéticas para personas naturales.',
-    icono: 'user-dollar',
-    orden: 1,
-  },
-  {
-    id: '2',
-    nombre: 'Banca Corporativa',
-    slug: 'banca-corporativa',
-    descripcion: 'Financiamiento para empresas estatales, negocios privados (TCP y MiPymes) y pequeños agricultores con líneas de crédito adaptadas.',
-    icono: 'building-factory-2',
-    orden: 2,
-  },
-  {
-    id: '3',
-    nombre: 'Banca Electrónica',
-    slug: 'banca-electronica',
-    descripcion: 'Opere desde su teléfono o computadora con Transfermóvil, Banca Remota, Banca Telefónica y transferencias nacionales e internacionales.',
-    icono: 'device-mobile',
-    orden: 3,
-  },
-  {
-    id: '4',
-    nombre: 'Banca Internacional',
-    slug: 'banca-internacional',
-    descripcion: 'Recepción de transferencias desde el exterior para beneficiarios en Cuba, con gestión segura y personalizada en cada sucursal.',
-    icono: 'globe',
-    orden: 4,
-  },
-  {
-    id: '5',
-    nombre: 'Otros Servicios',
-    slug: 'otros-servicios',
-    descripcion: 'Créditos para vivienda (Ley 65), cheques de gerencia, cobros por cuenta de terceros y otros servicios complementarios.',
-    icono: 'layout-grid',
-    orden: 5,
-  },
-];
-
 // ─── CARGA DESDE POCKETBASE ───────────────────────────────────────────────────
+// dbError = true  → PocketBase no respondio durante el build
+// categorias = [] → PocketBase respondio pero la coleccion esta vacia
 let categorias: Categoria[] = [];
+let dbError = false;
 
 try {
-  const resultado = await pb
+  categorias = await pb
     .collection('categorias')
     .getFullList<Categoria>({ sort: 'orden' });
-  // Si la colección responde pero está vacía, usar fallback
-  categorias = resultado.length > 0 ? resultado : FALLBACK;
 } catch {
-  // PocketBase no disponible (primer build, servidor apagado, etc.)
-  categorias = FALLBACK;
+  dbError = true;
 }
 
 // ─── MAPEO A Item[] para Features2 ───────────────────────────────────────────
+// Solo si hay datos. Si la coleccion esta vacia, items = [] y el template
+// muestra el estado vacio en lugar del grid.
 const items = categorias.map((cat) => ({
   title: cat.nombre,
   description: cat.descripcion,
@@ -96,37 +66,56 @@ const items = categorias.map((cat) => ({
   },
 }));
 
-// ─── METADATA ────────────────────────────────────────────────────────────────
 const metadata = {
   title: 'Productos y Servicios — BPA Santiago de Cuba',
   description:
-    'Conozca toda la cartera de productos y servicios del Banco Popular de Ahorro ' +
-    'en Santiago de Cuba: ahorro, créditos, banca electrónica, servicios internacionales y más.',
+    'Conozca toda la cartera de productos y servicios del Banco Popular de Ahorro en Santiago de Cuba: ahorro, creditos, banca electronica, servicios internacionales y mas.',
 };
 ---
 
 <Layout metadata={metadata}>
 
+  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
+      Titulo y subtitulo institucional de la seccion. Sin tagline.
+  ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
     title="Productos y Servicios"
     subtitle="Conozca la cartera completa de productos financieros diseñados para personas naturales, empresas y la comunidad en general."
   />
 
-  <Features2
-    id="categorias"
-    tagline="Seleccione una categoría"
-    columns={3}
-    items={items}
-  >
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Features2>
+  <!-- BLOQUE 2 · Features2 / estados de error ────────────────────────────────
+      Tres casos posibles segun el resultado de la consulta a PocketBase:
+        1. Error de conexion → DatabaseError
+        2. Coleccion vacia   → EmptyCollection
+        3. Datos disponibles → Features2 con el grid de categorias
+  ─────────────────────────────────────────────────────────────────────────── -->
+  {dbError ? (
+    <DatabaseError coleccion="categorias" />
+  ) : items.length === 0 ? (
+    <EmptyCollection
+      coleccion="categorias"
+      mensaje="No hay categorias disponibles en este momento."
+      icono="tabler:layout-grid-remove"
+    />
+  ) : (
+    <Features2
+      id="categorias"
+      tagline="Seleccione una categoría"
+      columns={3}
+      items={items}
+    >
+      <Fragment slot="bg">
+        <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+      </Fragment>
+    </Features2>
+  )}
 
+  <!-- BLOQUE 3 · CallToAction ─────────────────────────────────────────────────
+      Cierre institucional. Un solo boton hacia Contacto.
+  ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
     title="¿No sabe cuál producto es el adecuado para usted?"
-    subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están
-              disponibles para orientarle sin compromiso."
+    subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están disponibles para orientarle sin compromiso."
     actions={[
       {
         variant: 'primary',
@@ -137,6 +126,9 @@ const metadata = {
     ]}
   />
 
+  <!-- NAVEGACIÓN · PageNav ────────────────────────────────────────────────────
+      Boton izquierdo para volver a Inicio.
+  ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
     prev={{ text: 'Volver a Inicio', href: '/' }}
   />
