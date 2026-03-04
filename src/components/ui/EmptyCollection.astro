@@ -1,0 +1,35 @@
+---
+import { Icon } from 'astro-icon/components';
+
+export interface Props {
+  coleccion: string;
+  mensaje?: string;
+  icono?: string;
+}
+
+const {
+  coleccion,
+  mensaje = 'No hay registros disponibles en este momento.',
+  icono = 'tabler:database-off',
+} = Astro.props;
+---
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center">
+  <Icon
+    name={icono}
+    class="w-14 h-14 mx-auto mb-5 text-muted opacity-40"
+    aria-hidden="true"
+  />
+
+  <p class="text-xl font-semibold text-default dark:text-white">
+    {mensaje}
+  </p>
+
+  <p class="text-sm text-muted mt-3">
+    La coleccion
+    <code class="font-mono text-xs bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+      {coleccion}
+    </code>
+    esta vacia. Anada registros desde el panel de administracion de PocketBase.
+  </p>
+</div>

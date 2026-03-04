@@ -1,0 +1,37 @@
+---
+import { Icon } from 'astro-icon/components';
+
+export interface Props {
+  coleccion: string;
+  mensaje?: string;
+}
+
+const {
+  coleccion,
+  mensaje = 'No se pudo conectar con la base de datos.',
+} = Astro.props;
+---
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center">
+  <Icon
+    name="tabler:wifi-off"
+    class="w-14 h-14 mx-auto mb-5 text-red-400 opacity-60"
+    aria-hidden="true"
+  />
+
+  <p class="text-xl font-semibold text-default dark:text-white">
+    {mensaje}
+  </p>
+
+  <p class="text-sm text-muted mt-3 max-w-md mx-auto">
+    No se pudo leer la coleccion
+    <code class="font-mono text-xs bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+      {coleccion}
+    </code>
+    de PocketBase. Verifique que el servidor este corriendo en
+    <code class="font-mono text-xs bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+      http://127.0.0.1:8090
+    </code>
+    y vuelva a ejecutar el build.
+  </p>
+</div>
