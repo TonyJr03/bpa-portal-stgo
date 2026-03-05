@@ -1,0 +1,156 @@
+---
+/**
+ * @pagina     Trámite — Detalle
+ * @ruta       /tramites/[tramite]   (ej: /tramites/tarjeta-debito)
+ * @descripcion Página de detalle de un trámite individual. Muestra el contenido
+ *              completo del proceso (pasos, requisitos, beneficios) renderizado
+ *              desde HTML almacenado en PocketBase, más un bloque de descarga de
+ *              documentos asociados al trámite (planillas, guías, formularios).
+ *
+ * @colecciones
+ *   - tramites    →  getFullList, filtro: publicado = true  (genera las rutas)
+ *   - documentos  →  getFullList, filtro: referencia = "{slug}" && tipo = "tramite"
+ *                    orden: orden ASC  (documentos descargables del trámite)
+ *
+ * @patron  getStaticPaths: TODO el fetching ocurre aquí. Cero consultas al renderizar.
+ */
+
+// ── Imports ────────────────────────────────────────────────────────────────────
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import Layout                  from '~/layouts/PageLayout.astro';
+import HeroText                from '~/components/widgets/HeroText.astro';
+import CallToAction            from '~/components/widgets/CallToAction.astro';
+import PageNav                 from '~/components/widgets/PageNav.astro';
+import ProseContent            from '~/components/widgets/ProseContent.astro';
+import DocumentosDescargables  from '~/components/widgets/DocumentosDescargables.astro';
+import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
+
+import { pb } from '~/lib/pocketbase';
+
+// ── Interfaces ────────────────────────────────────────────────────────────────
+interface Tramite {
+  id: string;
+  nombre: string;
+  slug: string;
+  descripcion_corta: string;
+  contenido: string;
+  icono: string;
+  orden: number;
+  publicado: boolean;
+}
+
+interface Documento {
+  id: string;
+  nombre: string;
+  archivo: string;
+  referencia: string;
+  tipo: string;
+  orden: number;
+  collectionId: string;
+  collectionName: string;
+}
+
+// ── getStaticPaths ─────────────────────────────────────────────────────────────
+export const getStaticPaths = (async () => {
+  const tramites = await pb.collection('tramites').getFullList<Tramite>({
+    filter: 'publicado = true',
+    sort:   'orden',
+  });
+
+  const paths = await Promise.all(
+    tramites.map(async (tramite) => {
+      let documentos: Documento[] = [];
+      let dbErrorDocs = false;
+
+      try {
+        documentos = await pb.collection('documentos').getFullList<Documento>({
+          filter: `referencia = "${tramite.slug}" && tipo = "tramite"`,
+          sort:   'orden',
+        });
+      } catch {
+        dbErrorDocs = true;
+      }
+
+      return {
+        params: { tramite: tramite.slug },
+        props:  { tramite, documentos, dbErrorDocs },
+      };
+    })
+  );
+
+  return paths;
+}) satisfies GetStaticPaths;
+
+// ── Props ─────────────────────────────────────────────────────────────────────
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { tramite, documentos, dbErrorDocs } = Astro.props;
+
+// ── Construcción de URLs de descarga ──────────────────────────────────────────
+const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
+  id:      doc.id,
+  nombre:  doc.nombre,
+  archivo: doc.archivo,
+  url:     pb.files.getURL(doc, doc.archivo),
+  orden:   doc.orden,
+}));
+
+// ── Metadata SEO ──────────────────────────────────────────────────────────────
+const metadata = {
+  title:       `${tramite.nombre} — Trámites BPA Santiago de Cuba`,
+  description: tramite.descripcion_corta,
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Tagline = sección padre "Trámites". Title = nombre del trámite.
+      Sin subtitle: el contenido prose aporta el contexto completo.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    tagline="Trámites"
+    title={tramite.nombre}
+  />
+
+  <!-- BLOQUE 2 · ProseContent ──────────────────────────────────────────────────
+      Renderiza el HTML del campo `contenido` con Tailwind Typography.
+      Contiene: descripción, requisitos, pasos del proceso y beneficios.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <ProseContent contenido={tramite.contenido} />
+
+  <!-- BLOQUE 3 · DocumentosDescargables ───────────────────────────────────────
+      Muestra el grid de archivos descargables asociados a este trámite.
+      - Si error=true  → aviso ámbar discreto (no bloquea la página).
+      - Si array vacío → el componente no renderiza nada (silencioso).
+      - Si hay docs    → grid de tarjetas con botón de descarga.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <DocumentosDescargables
+    documentos={documentosConUrl}
+    error={dbErrorDocs}
+    titulo="Documentos del trámite"
+  />
+
+  <!-- BLOQUE 4 · CallToAction ──────────────────────────────────────────────────
+      Cierre institucional. Invita a contactar si quedan dudas sobre el trámite.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CallToAction
+    title="¿Tiene alguna duda sobre este trámite?"
+    subtitle="Nuestro equipo puede orientarle sobre los requisitos o el estado de su gestión."
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Contáctenos',
+        href:    '/contacto',
+        icon:    'tabler:message',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
+      Navegación contextual: regresa al listado de trámites.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Volver a Trámites', href: '/tramites' }}
+  />
+
+</Layout>

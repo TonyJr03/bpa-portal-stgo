@@ -1,0 +1,127 @@
+---
+/**
+ * @pagina     Trámites — Listado General
+ * @ruta       /tramites
+ * @descripcion Página de índice que lista todos los trámites disponibles en el
+ *              BPA Santiago de Cuba. Cada trámite se presenta como una tarjeta
+ *              interactiva con icono, nombre y descripción corta. Al hacer clic
+ *              se redirige a la página de detalle del trámite (/tramites/[tramite]).
+ *
+ * @colecciones
+ *   - tramites  →  getFullList, filtro: publicado = true, orden: orden ASC
+ */
+
+// ── Imports ────────────────────────────────────────────────────────────────────
+import Layout         from '~/layouts/PageLayout.astro';
+import HeroText       from '~/components/widgets/HeroText.astro';
+import Features2      from '~/components/widgets/Features2.astro';
+import CallToAction   from '~/components/widgets/CallToAction.astro';
+import PageNav        from '~/components/widgets/PageNav.astro';
+import DatabaseError  from '~/components/ui/DatabaseError.astro';
+import EmptyCollection from '~/components/ui/EmptyCollection.astro';
+
+import { pb } from '~/lib/pocketbase';
+
+// ── Interfaces ────────────────────────────────────────────────────────────────
+/**
+ * Representa un registro de la colección `tramites` en PocketBase.
+ */
+interface Tramite {
+  id: string;
+  nombre: string;
+  slug: string;
+  descripcion: string;
+  icono: string;   // Nombre Tabler SIN prefijo. Ej: "file-text"
+  orden: number;
+  publicado: boolean;
+}
+
+// ── Carga de datos desde PocketBase ──────────────────────────────────────────
+let tramites: Tramite[] = [];
+let dbError = false;
+
+try {
+  tramites = await pb.collection('tramites').getFullList<Tramite>({
+    filter: 'publicado = true',
+    sort:   'orden',
+  });
+} catch {
+  dbError = true;
+}
+
+// ── Mapeo al formato que espera Features2 ─────────────────────────────────────
+const items = tramites.map((tramite) => ({
+  title:       tramite.nombre,
+  description: tramite.descripcion,
+  icon:        `tabler:${tramite.icono}`,
+  callToAction: {
+    variant: 'link' as const,
+    text:    'Ver más',
+    href:    `/tramites/${tramite.slug}`,
+    icon:    'tabler:arrow-right',
+  },
+}));
+
+// ── Metadata SEO ──────────────────────────────────────────────────────────────
+const metadata = {
+  title:       'Trámites — BPA Santiago de Cuba',
+  description: 'Consulte los trámites disponibles en el Banco Popular de Ahorro de Santiago de Cuba: solicitudes, requisitos, pasos y documentos necesarios.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Encabezado de sección. Sin tagline, sin imagen.
+      Transmite al usuario de qué trata esta área del portal.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    title="Trámites"
+    subtitle="Consulte los procedimientos disponibles en nuestra sucursal. Conozca los requisitos, los pasos a seguir y los documentos que necesita antes de visitar el banco."
+  />
+
+  <!-- BLOQUE 2 · Features2 ─────────────────────────────────────────────────────
+      Grid de tarjetas: una por cada trámite publicado en PocketBase.
+      Se muestra DatabaseError si PB no respondió, EmptyCollection si no hay datos.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  {dbError ? (
+    <DatabaseError coleccion="tramites" />
+  ) : items.length === 0 ? (
+    <EmptyCollection
+      coleccion="tramites"
+      mensaje="Aún no hay trámites publicados. Agregue registros en la colección 'tramites' de PocketBase con el campo 'publicado' en true."
+      icono="tabler:clipboard-off"
+    />
+  ) : (
+    <Features2
+      tagline="Seleccione un trámite"
+      columns={3}
+      items={items}
+    />
+  )}
+
+  <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
+      Cierre institucional. Invita al usuario a contactar al banco si tiene dudas
+      sobre algún trámite que no encuentre en el listado.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CallToAction
+    title="¿No encontró lo que buscaba?"
+    subtitle="Contáctenos y un representante del banco le orientará sobre el trámite que necesita realizar."
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Contáctenos',
+        href:    '/contacto',
+        icon:    'tabler:message',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
+      Navegación contextual. Solo botón izquierdo: regresa al inicio.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Volver a Inicio', href: '/' }}
+  />
+
+</Layout>
