@@ -5,42 +5,46 @@
  * @ejemplo /productos/banca-personal/depositos-plazo-fijo
  *
  * @descripcion
- * Página dinámica generada en build time para cada producto o servicio.
- * getStaticPaths consulta todas las categorías y sus productos publicados,
- * generando una ruta por cada combinación categoria/producto.
- *
- * El campo `contenido` (Rich Text de PocketBase) se renderiza con Tailwind
- * Typography (prose). El administrador escribe con el editor visual del panel
- * de PocketBase — encabezados, listas, negritas, etc. — y prose aplica el
- * estilo tipográfico automáticamente. No se necesita escribir clases CSS en
- * el contenido.
+ * Pagina dinamica generada en build time para cada producto o servicio.
+ * getStaticPaths consulta todas las categorias, sus productos publicados
+ * y los documentos descargables de cada producto en una sola pasada.
  *
  * Widgets utilizados:
- *   - HeroText      → Nombre del producto como título (sin subtitle)
- *                     Tagline = nombre de la categoría padre
- *   - prose div     → Cuerpo de contenido enriquecido desde PocketBase
- *   - CallToAction  → Cierre institucional
- *   - PageNav       → ← Volver a la categoría padre
+ *   - HeroText               -> Nombre del producto (sin subtitle)
+ *                               Tagline = nombre de la categoria padre
+ *   - ProseContent           -> Contenido HTML del campo `contenido` de PocketBase
+ *                               renderizado con Tailwind Typography
+ *   - DocumentosDescargables -> Grid de archivos descargables del producto
+ *   - CallToAction           -> Cierre institucional
+ *   - PageNav                -> Volver a la categoria padre
  *
  * Componentes de estado:
- *   - DatabaseError   → Fallo de conexión con PocketBase en build time
+ *   - DatabaseError -> Fallo al cargar el contenido del producto en build time
  *
  * Colecciones PocketBase:
- *   `categorias` → id, nombre, slug
- *   `productos`  → id, nombre, slug, categoria (Relation → categorias),
- *                  descripcion_corta, contenido (Rich Text), icono,
- *                  orden, publicado
+ *   categorias  -> id, nombre, slug
+ *   productos   -> id, nombre, slug, categoria (Relation), descripcion,
+ *                  contenido (Plain Text / HTML), icono, orden, publicado
+ *   documentos  -> id, nombre, archivo, referencia, tipo, orden,
+ *                  collectionId, collectionName
+ *                  Filtro: referencia = "{producto.slug}" && tipo = "producto"
+ *
+ * @patron getStaticPaths: TODO el fetching ocurre aqui. Cero consultas al renderizar.
  */
 
+// -- Imports -------------------------------------------------------------------
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
-import Layout from '~/layouts/PageLayout.astro';
-import HeroText from '~/components/widgets/HeroText.astro';
-import CallToAction from '~/components/widgets/CallToAction.astro';
-import PageNav from '~/components/widgets/PageNav.astro';
-import DatabaseError from '~/components/ui/DatabaseError.astro';
+import Layout                 from '~/layouts/PageLayout.astro';
+import HeroText               from '~/components/widgets/HeroText.astro';
+import ProseContent           from '~/components/widgets/ProseContent.astro';
+import DocumentosDescargables from '~/components/widgets/DocumentosDescargables.astro';
+import CallToAction           from '~/components/widgets/CallToAction.astro';
+import PageNav                from '~/components/widgets/PageNav.astro';
+import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
+import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
 import { pb } from '~/lib/pocketbase';
 
-// ─── TIPOS ────────────────────────────────────────────────────────────────────
+// -- Interfaces ----------------------------------------------------------------
 interface Categoria {
   id: string;
   nombre: string;
@@ -51,28 +55,39 @@ interface Producto {
   id: string;
   nombre: string;
   slug: string;
-  descripcion_corta: string;
-  contenido: string;   // HTML generado por el editor Rich Text de PocketBase
+  descripcion: string;
+  contenido: string;
   icono: string;
   orden: number;
   publicado: boolean;
-  categoria: string;   // ID del registro relacionado en `categorias`
+  categoria: string;
 }
 
-// ─── getStaticPaths ───────────────────────────────────────────────────────────
-// Genera una ruta por cada producto publicado de cada categoría.
-// Toda la lógica de carga ocurre aquí para no repetir consultas al renderizar.
+interface Documento {
+  id: string;
+  nombre: string;
+  archivo: string;
+  referencia: string;
+  tipo: string;
+  orden: number;
+  collectionId: string;
+  collectionName: string;
+}
+
+// -- getStaticPaths ------------------------------------------------------------
+// Genera una ruta por cada producto publicado.
+// Por cada producto se cargan tambien sus documentos descargables.
+// Todo el fetching ocurre aqui para no repetir consultas al renderizar.
 export const getStaticPaths = (async () => {
-  // 1. Obtener todas las categorías
+  // 1. Obtener todas las categorias (fallo aqui = build falla, correcto)
   const categorias = await pb
     .collection('categorias')
     .getFullList<Categoria>({ sort: 'orden' });
 
-  // 2. Para cada categoría, obtener sus productos publicados y generar rutas
+  // 2. Por cada categoria, obtener sus productos publicados
   const paths = await Promise.all(
     categorias.map(async (cat) => {
       let productos: Producto[] = [];
-      let dbError = false;
 
       try {
         productos = await pb
@@ -82,103 +97,129 @@ export const getStaticPaths = (async () => {
             sort: 'orden',
           });
       } catch {
-        dbError = true;
+        // Si falla la carga de productos de esta categoria, se omite
+        // sin romper el build completo
+        return [];
       }
 
-      // Una ruta por cada producto de esta categoría
-      return productos.map((prod) => ({
-        params: {
-          categoria: cat.slug,
-          producto: prod.slug,
-        },
-        props: {
-          producto: prod,
-          categoria: cat,
-          dbError,
-        },
-      }));
+      // 3. Por cada producto, obtener sus documentos descargables
+      return Promise.all(
+        productos.map(async (prod) => {
+          let documentos: Documento[] = [];
+          let dbErrorDocs = false;
+
+          try {
+            documentos = await pb
+              .collection('documentos')
+              .getFullList<Documento>({
+                filter: `referencia = "${prod.slug}" && tipo = "producto"`,
+                sort: 'orden',
+              });
+          } catch {
+            dbErrorDocs = true;
+          }
+
+          return {
+            params: {
+              categoria: cat.slug,
+              producto: prod.slug,
+            },
+            props: {
+              producto: prod,
+              categoria: cat,
+              documentos,
+              dbErrorDocs,
+            },
+          };
+        })
+      );
     })
   );
 
-  // flatMap porque cada categoría devuelve un array de rutas
-  return paths.flat();
+  return paths.flat(2);
 }) satisfies GetStaticPaths;
 
-// ─── PROPS ────────────────────────────────────────────────────────────────────
+// -- Props --------------------------------------------------------------------
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { producto, categoria, dbError } = Astro.props;
+const { producto, categoria, documentos, dbErrorDocs } = Astro.props;
 
-// ─── METADATA SEO ─────────────────────────────────────────────────────────────
+// -- Construccion de URLs de descarga -----------------------------------------
+// pb.files.getURL construye la URL local completa del archivo en PocketBase.
+const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
+  id:      doc.id,
+  nombre:  doc.nombre,
+  archivo: doc.archivo,
+  url:     pb.files.getURL(doc, doc.archivo),
+  orden:   doc.orden,
+}));
+
+// -- Metadata SEO -------------------------------------------------------------
 const metadata = {
-  title: `${producto.nombre} — BPA Santiago de Cuba`,
-  description: producto.descripcion_corta,
+  title:       `${producto.nombre} - BPA Santiago de Cuba`,
+  description: producto.descripcion,
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
-      Nombre del producto como título principal.
-      Tagline muestra la categoría padre para contextualizar la ubicación.
-      Sin subtitle — el contenido habla por sí mismo.
-  ─────────────────────────────────────────────────────────────────────────── -->
+  <!-- BLOQUE 1 - HeroText -----------------------------------------------------
+      Nombre del producto como titulo principal.
+      Tagline = nombre de la categoria para contextualizar la ubicacion.
+      Sin subtitle: el contenido del campo `contenido` habla por si mismo.
+  --------------------------------------------------------------------------- -->
   <HeroText
     tagline={categoria.nombre}
     title={producto.nombre}
   />
 
-  <!-- BLOQUE 2 · Contenido enriquecido ────────────────────────────────────────
-      El campo `contenido` es HTML generado por el editor Rich Text de
-      PocketBase. Tailwind Typography (prose) aplica estilo tipográfico
-      automático a todos los elementos HTML: h2, h3, p, ul, ol, strong, etc.
-  ─────────────────────────────────────────────────────────────────────────── -->
-  {dbError ? (
-    <DatabaseError coleccion="productos" />
-  ) : (
-    <section class="py-12 lg:py-16">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6">
-        <div
-          class="
-            prose prose-lg max-w-none
-            dark:prose-invert
-            dark:prose-headings:text-slate-300
-            prose-headings:font-heading
-            prose-headings:leading-tighter
-            prose-headings:tracking-tighter
-            prose-headings:font-bold
-            prose-a:text-primary
-            dark:prose-a:text-blue-400
-            prose-img:rounded-md
-            prose-img:shadow-lg
-            prose-li:my-0
-          "
-          set:html={producto.contenido}
-        ></div>
-      </div>
-    </section>
-  )}
+  <!-- BLOQUE 2 - ProseContent -------------------------------------------------
+      Renderiza el HTML del campo `contenido` con Tailwind Typography.
+      El administrador escribe en el campo Plain Text de PocketBase con
+      HTML generado por IA — prose aplica el estilo automaticamente.
+      Si hubo error de conexion en build time -> DatabaseError.
+  --------------------------------------------------------------------------- -->
+  {producto.contenido
+    ? <ProseContent contenido={producto.contenido} />
+    : <EmptyCollection 
+        coleccion="productos" 
+        mensaje="Aún no hay información detallada acerca de este servicio."
+        icono="tabler:info-circle"
+      />
+  }
 
-  <!-- BLOQUE 3 · CallToAction ─────────────────────────────────────────────────
-      Cierre institucional consistente con el resto del módulo.
-  ─────────────────────────────────────────────────────────────────────────── -->
+  <!-- BLOQUE 3 - DocumentosDescargables ---------------------------------------
+      Grid de archivos asociados a este producto (planillas, guias, etc.).
+      - Si dbErrorDocs=true -> aviso ambar discreto (no bloquea la pagina).
+      - Si no hay documentos -> el componente no renderiza nada (silencioso).
+      - Si hay documentos    -> grid de tarjetas con boton de descarga.
+  --------------------------------------------------------------------------- -->
+  <DocumentosDescargables
+    documentos={documentosConUrl}
+    error={dbErrorDocs}
+    titulo="Documentos relacionados"
+  />
+
+  <!-- BLOQUE 4 - CallToAction -------------------------------------------------
+      Cierre institucional consistente con el resto del modulo.
+  --------------------------------------------------------------------------- -->
   <CallToAction
     title="¿Necesita más información sobre este servicio?"
     subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están disponibles para asesorarle sin compromiso."
     actions={[
       {
         variant: 'primary',
-        text: 'Contáctenos',
-        href: '/contacto',
-        icon: 'tabler:headset',
+        text:    'Contáctenos',
+        href:    '/contacto',
+        icon:    'tabler:headset',
       },
     ]}
   />
 
-  <!-- NAVEGACIÓN · PageNav ────────────────────────────────────────────────────
-      Botón izquierdo: volver a la página de la categoría padre.
-      La URL se construye dinámicamente con el slug de la categoría.
-  ─────────────────────────────────────────────────────────────────────────── -->
+  <!-- NAVEGACION - PageNav ----------------------------------------------------
+      Boton izquierdo: volver a la pagina de la categoria padre.
+      La URL y el texto se construyen dinamicamente con los datos de la categoria.
+  --------------------------------------------------------------------------- -->
   <PageNav
     prev={{
       text: `Volver a ${categoria.nombre}`,

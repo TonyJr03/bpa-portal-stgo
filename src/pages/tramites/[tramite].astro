@@ -24,6 +24,7 @@ import PageNav                 from '~/components/widgets/PageNav.astro';
 import ProseContent            from '~/components/widgets/ProseContent.astro';
 import DocumentosDescargables  from '~/components/widgets/DocumentosDescargables.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
+import EmptyCollection         from '~/components/ui/EmptyCollection.astro';
 
 import { pb } from '~/lib/pocketbase';
 
@@ -32,7 +33,7 @@ interface Tramite {
   id: string;
   nombre: string;
   slug: string;
-  descripcion_corta: string;
+  descripcion: string;
   contenido: string;
   icono: string;
   orden: number;
@@ -67,7 +68,8 @@ export const getStaticPaths = (async () => {
           filter: `referencia = "${tramite.slug}" && tipo = "tramite"`,
           sort:   'orden',
         });
-      } catch {
+      } catch (err) {
+        console.error(`[BPA] Error cargando documentos para "${tramite.slug}":`, err);
         dbErrorDocs = true;
       }
 
@@ -97,7 +99,7 @@ const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
 // ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
   title:       `${tramite.nombre} — Trámites BPA Santiago de Cuba`,
-  description: tramite.descripcion_corta,
+  description: tramite.descripcion,
 };
 ---
 
@@ -112,11 +114,18 @@ const metadata = {
     title={tramite.nombre}
   />
 
-  <!-- BLOQUE 2 · ProseContent ──────────────────────────────────────────────────
-      Renderiza el HTML del campo `contenido` con Tailwind Typography.
-      Contiene: descripción, requisitos, pasos del proceso y beneficios.
+  <!-- BLOQUE 2 · ProseContent / EmptyCollection ───────────────────────────────
+      Si el campo `contenido` tiene datos → renderiza el HTML con Typography.
+      Si está vacío → EmptyCollection avisa que falta información detallada.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <ProseContent contenido={tramite.contenido} />
+  {tramite.contenido?.trim()
+    ? <ProseContent contenido={tramite.contenido} />
+    : <EmptyCollection
+        coleccion="tramites"
+        mensaje="Aún no hay información detallada acerca de este trámite."
+        icono="tabler:info-circle"
+      />
+  }
 
   <!-- BLOQUE 3 · DocumentosDescargables ───────────────────────────────────────
       Muestra el grid de archivos descargables asociados a este trámite.
