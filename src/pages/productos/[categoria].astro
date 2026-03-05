@@ -22,7 +22,7 @@
  *
  * Colecciones PocketBase:
  *   `categorias` → nombre, slug, descripcion, icono, orden
- *   `productos`  → nombre, slug, categoria (Relation), descripcion_corta,
+ *   `productos`  → nombre, slug, categoria (Relation), descripcion,
  *                  icono, orden, publicado
  */
 
@@ -50,7 +50,7 @@ interface Producto {
   id: string;
   nombre: string;
   slug: string;
-  descripcion_corta: string;
+  descripcion: string;
   icono: string;   // nombre Tabler SIN prefijo, ej: "pig-money"
   orden: number;
   publicado: boolean;
@@ -106,7 +106,7 @@ const { categoria, productos, dbError } = Astro.props;
 // ─── MAPEO A Item[] para Features2 ───────────────────────────────────────────
 const items = productos.map((prod) => ({
   title: prod.nombre,
-  description: prod.descripcion_corta,
+  description: prod.descripcion,
   icon: `tabler:${prod.icono}`,
   callToAction: {
     text: 'Ver detalles',
