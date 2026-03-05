@@ -1,0 +1,169 @@
+---
+import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
+import { Icon }      from 'astro-icon/components';
+import type { Widget } from '~/types';
+
+export interface DocumentoConUrl {
+  id: string;
+  nombre: string;
+  archivo: string;
+  url: string;
+  orden: number;
+}
+
+interface Props extends Widget {
+  documentos: DocumentoConUrl[];
+  error?: boolean;
+  titulo?: string;
+}
+
+const {
+  documentos,
+  error  = false,
+  titulo = 'Documentos',
+  id,
+  isDark = false,
+  classes = {},
+  bg = await Astro.slots.render('bg'),
+} = Astro.props;
+
+function iconoPorExtension(nombreArchivo: string): string {
+  const ext = nombreArchivo.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'pdf':         return 'tabler:file-type-pdf';
+    case 'docx':
+    case 'doc':         return 'tabler:file-type-doc';
+    case 'xlsx':
+    case 'xls':         return 'tabler:file-type-xls';
+    case 'pptx':
+    case 'ppt':         return 'tabler:file-type-ppt';
+    case 'zip':
+    case 'rar':         return 'tabler:file-zip';
+    case 'txt':         return 'tabler:file-text';
+    default:            return 'tabler:file-download';
+  }
+}
+
+function extensionLegible(nombreArchivo: string): string {
+  return nombreArchivo.split('.').pop()?.toUpperCase() ?? 'FILE';
+}
+
+function nombreDescarga(nombre: string, archivo: string): string {
+  const ext = archivo.split('.').pop() ?? '';
+  return ext ? `${nombre}.${ext}` : nombre;
+}
+---
+
+{error ? (
+  <div class="max-w-4xl mx-auto px-4 md:px-6 pb-8">
+    <div class="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4 flex items-start">
+      <Icon
+        name="tabler:alert-triangle"
+        class="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0 mr-4"
+      />
+      <p class="text-sm text-amber-800 dark:text-amber-300">
+        No se pudieron cargar los documentos descargables.
+        Si el problema persiste, contacte al administrador del sistema.
+      </p>
+    </div>
+  </div>
+
+) : documentos.length > 0 ? (
+
+  <WidgetWrapper
+    id={id}
+    isDark={isDark}
+    containerClass={`max-w-4xl mx-auto pt-0 ${classes?.container ?? ''}`}
+    bg={bg}
+  >
+
+    <div class="flex items-center gap-2 mb-5">
+      <Icon
+        name="tabler:paperclip"
+        class="w-5 h-5 text-primary dark:text-blue-400"
+      />
+      <h2 class="text-xl font-bold font-heading tracking-tight text-slate-800 dark:text-slate-200">
+        {titulo}
+      </h2>
+    </div>
+
+    <ul class="grid gap-3 sm:grid-cols-2">
+      {documentos.map((doc) => (
+        <li>
+          <a
+            href={doc.url}
+            data-url={doc.url}
+            data-nombre={nombreDescarga(doc.nombre, doc.archivo)}
+            class="
+              bpa-descarga
+              flex items-center gap-4 rounded-lg border border-slate-200
+              bg-white dark:bg-slate-800 dark:border-slate-700
+              px-4 py-3
+              hover:border-primary hover:shadow-md
+              dark:hover:border-blue-500
+              transition-all duration-200
+              group cursor-pointer
+            "
+            aria-label={`Descargar ${doc.nombre}`}
+          >
+            <Icon
+              name={iconoPorExtension(doc.archivo)}
+              class="w-8 h-8 text-primary dark:text-blue-400 shrink-0 group-hover:scale-110 transition-transform"
+            />
+
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                {doc.nombre}
+              </p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {extensionLegible(doc.archivo)}
+              </p>
+            </div>
+
+            <Icon
+              name="tabler:download"
+              class="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"
+            />
+          </a>
+        </li>
+      ))}
+    </ul>
+
+  </WidgetWrapper>
+
+) : null}
+
+<!--
+  Script cliente: intercepta el click en cada tarjeta .bpa-descarga,
+  hace fetch() del archivo desde PocketBase, crea un blob URL efímero
+  y dispara la descarga con el nombre correcto del registro.
+-->
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('a.bpa-descarga').forEach((enlace) => {
+    enlace.addEventListener('click', async (evento) => {
+      evento.preventDefault();
+
+      const url    = enlace.dataset.url!;
+      const nombre = enlace.dataset.nombre!;
+
+      try {
+        const respuesta = await fetch(url);
+        const blob      = await respuesta.blob();
+        const blobUrl   = URL.createObjectURL(blob);
+
+        const temporal         = document.createElement('a');
+        temporal.href          = blobUrl;
+        temporal.download      = nombre;
+        temporal.style.display = 'none';
+        document.body.appendChild(temporal);
+        temporal.click();
+        document.body.removeChild(temporal);
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
+
+      } catch {
+        window.location.href = url;
+      }
+    });
+  });
+</script>
