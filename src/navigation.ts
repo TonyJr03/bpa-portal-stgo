@@ -4,6 +4,7 @@ export const headerData = {
   links: [
     {
       text: 'Productos y Servicios',
+      href: getPermalink('/productos'), 
       links: [
         {
           text: 'Banca Personal',
@@ -35,6 +36,7 @@ export const headerData = {
 
     {
       text: 'Sobre Nosotros',
+      href: getPermalink('/sobre-nosotros'),
       links: [
         {
           text: 'Misión',
@@ -57,6 +59,7 @@ export const headerData = {
 
     {
       text: 'Herramientas',
+      href: getPermalink('/herramientas'),
       links: [
         {
           text: 'Calculadora Financiera',
