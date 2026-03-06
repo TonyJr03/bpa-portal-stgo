@@ -12,26 +12,22 @@
  */
 
 // ── Imports ────────────────────────────────────────────────────────────────────
-import Layout         from '~/layouts/PageLayout.astro';
-import HeroText       from '~/components/widgets/HeroText.astro';
-import Features2      from '~/components/widgets/Features2.astro';
-import CallToAction   from '~/components/widgets/CallToAction.astro';
-import PageNav        from '~/components/widgets/PageNav.astro';
-import DatabaseError  from '~/components/ui/DatabaseError.astro';
+import Layout          from '~/layouts/PageLayout.astro';
+import HeroText        from '~/components/widgets/HeroText.astro';
+import Features2       from '~/components/widgets/Features2.astro';
+import CallToAction    from '~/components/widgets/CallToAction.astro';
+import PageNav         from '~/components/widgets/PageNav.astro';
+import DatabaseError   from '~/components/ui/DatabaseError.astro';
 import EmptyCollection from '~/components/ui/EmptyCollection.astro';
-
 import { pb } from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
-/**
- * Representa un registro de la colección `tramites` en PocketBase.
- */
 interface Tramite {
   id: string;
   nombre: string;
   slug: string;
   descripcion: string;
-  icono: string;   // Nombre Tabler SIN prefijo. Ej: "file-text"
+  icono: string;
   orden: number;
   publicado: boolean;
 }
@@ -97,7 +93,11 @@ const metadata = {
       tagline="Seleccione un trámite"
       columns={3}
       items={items}
-    />
+    >
+      <Fragment slot="bg">
+        <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+      </Fragment>
+    </Features2>
   )}
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
@@ -112,7 +112,7 @@ const metadata = {
         variant: 'primary',
         text:    'Contáctenos',
         href:    '/contacto',
-        icon:    'tabler:message',
+        icon:    'tabler:headset',
       },
     ]}
   />

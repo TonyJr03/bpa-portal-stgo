@@ -10,22 +10,13 @@
  * cada registro. Cada ruta precarga también sus `productos` asociados en la
  * misma función, evitando una segunda consulta al renderizar.
  *
- * Widgets utilizados (nativos de AstroWind):
- *   - HeroText      → Nombre y descripción de la categoría
- *   - Features2     → Grid de cards con los productos de la categoría
- *   - CallToAction  → Cierre institucional
- *   - PageNav       → Navegación: ← Volver a Productos y Servicios
- *
- * Componentes de estado:
- *   - EmptyCollection → La categoría existe pero no tiene productos
- *   - DatabaseError   → No se pudo conectar con PocketBase en build time
- *
- * Colecciones PocketBase:
+ * @colecciones
  *   `categorias` → nombre, slug, descripcion, icono, orden
  *   `productos`  → nombre, slug, categoria (Relation), descripcion,
  *                  icono, orden, publicado
  */
 
+// ── Imports ────────────────────────────────────────────────────────────────────
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import Layout from '~/layouts/PageLayout.astro';
 import HeroText from '~/components/widgets/HeroText.astro';
@@ -36,13 +27,13 @@ import EmptyCollection from '~/components/ui/EmptyCollection.astro';
 import DatabaseError from '~/components/ui/DatabaseError.astro';
 import { pb } from '~/lib/pocketbase';
 
-// ─── TIPOS ────────────────────────────────────────────────────────────────────
+// ── Interfaces ────────────────────────────────────────────────────────────────
 interface Categoria {
   id: string;
   nombre: string;
   slug: string;
   descripcion: string;
-  icono: string;   // nombre Tabler SIN prefijo, ej: "user-dollar"
+  icono: string;
   orden: number;
 }
 
@@ -51,7 +42,7 @@ interface Producto {
   nombre: string;
   slug: string;
   descripcion: string;
-  icono: string;   // nombre Tabler SIN prefijo, ej: "pig-money"
+  icono: string;
   orden: number;
   publicado: boolean;
   // El campo `categoria` es una Relation — PocketBase devuelve el ID del registro
@@ -59,25 +50,18 @@ interface Producto {
 }
 
 // ─── getStaticPaths ───────────────────────────────────────────────────────────
-// Se ejecuta UNA SOLA VEZ durante el build.
-// Consulta todas las categorías y, para cada una, sus productos publicados.
-// Todo el fetching ocurre aquí para no repetir llamadas al renderizar.
 export const getStaticPaths = (async () => {
-  // 1. Obtener todas las categorías
-  const categorias = await pb
-    .collection('categorias')
-    .getFullList<Categoria>({ sort: 'orden' });
+  const categorias = await pb.collection('categorias').getFullList<Categoria>({ 
+    sort: 'orden'
+  });
 
-  // 2. Para cada categoría, obtener sus productos publicados
   const paths = await Promise.all(
     categorias.map(async (cat) => {
       let productos: Producto[] = [];
       let dbError = false;
 
       try {
-        productos = await pb
-          .collection('productos')
-          .getFullList<Producto>({
+        productos = await pb.collection('productos').getFullList<Producto>({
             filter: `categoria = "${cat.id}" && publicado = true`,
             sort: 'orden',
           });
@@ -86,9 +70,7 @@ export const getStaticPaths = (async () => {
       }
 
       return {
-        // El param debe coincidir con el nombre del archivo: [categoria]
         params: { categoria: cat.slug },
-        // Todo lo que necesita la página se pasa como props aquí
         props: { categoria: cat, productos, dbError },
       };
     })
@@ -98,9 +80,7 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths;
 
 // ─── PROPS ────────────────────────────────────────────────────────────────────
-// Astro infiere los tipos desde getStaticPaths automáticamente.
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-
 const { categoria, productos, dbError } = Astro.props;
 
 // ─── MAPEO A Item[] para Features2 ───────────────────────────────────────────

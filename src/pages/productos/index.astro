@@ -8,45 +8,38 @@
  * Lista las 5 categorías de la cartera comercial del BPA Santiago de Cuba.
  * Cada categoría enlaza a su página dinámica /productos/[categoria].
  *
- * Widgets utilizados (nativos de AstroWind):
- *   - HeroText     -> Titulo y subtitulo de seccion (sin tagline)
- *   - Features2    -> Grid de cards (solo tagline, sin title ni subtitle)
- *   - CallToAction -> Cierre institucional
- *   - PageNav      -> Navegacion inferior a Inicio
- *
- * Coleccion PocketBase: `categorias`
+ * @colecciones
  *   Campos: nombre, slug, descripcion, icono, orden
  */
 
-import Layout from '~/layouts/PageLayout.astro';
-import HeroText from '~/components/widgets/HeroText.astro';
-import Features2 from '~/components/widgets/Features2.astro';
-import CallToAction from '~/components/widgets/CallToAction.astro';
-import PageNav from '~/components/widgets/PageNav.astro';
+ // ── Imports ────────────────────────────────────────────────────────────────────
+import Layout          from '~/layouts/PageLayout.astro';
+import HeroText        from '~/components/widgets/HeroText.astro';
+import Features2       from '~/components/widgets/Features2.astro';
+import CallToAction    from '~/components/widgets/CallToAction.astro';
+import PageNav         from '~/components/widgets/PageNav.astro';
+import DatabaseError   from '~/components/ui/DatabaseError.astro';
 import EmptyCollection from '~/components/ui/EmptyCollection.astro';
-import DatabaseError from '~/components/ui/DatabaseError.astro';
 import { pb } from '~/lib/pocketbase';
 
-// ─── TIPO ─────────────────────────────────────────────────────────────────────
+// ── Interfaces ────────────────────────────────────────────────────────────────
 interface Categoria {
   id: string;
   nombre: string;
   slug: string;
   descripcion: string;
-  icono: string;   // nombre Tabler SIN prefijo, ej: "user-dollar"
+  icono: string;
   orden: number;
 }
 
 // ─── CARGA DESDE POCKETBASE ───────────────────────────────────────────────────
-// dbError = true  → PocketBase no respondio durante el build
-// categorias = [] → PocketBase respondio pero la coleccion esta vacia
 let categorias: Categoria[] = [];
 let dbError = false;
 
 try {
-  categorias = await pb
-    .collection('categorias')
-    .getFullList<Categoria>({ sort: 'orden' });
+  categorias = await pb.collection('categorias').getFullList<Categoria>({
+    sort: 'orden'
+  });
 } catch {
   dbError = true;
 }
@@ -127,7 +120,7 @@ const metadata = {
     ]}
   />
 
-  <!-- NAVEGACIÓN · PageNav ────────────────────────────────────────────────────
+  <!-- BLOQUE 4 · PageNav ────────────────────────────────────────────────────
       Boton izquierdo para volver a Inicio.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav

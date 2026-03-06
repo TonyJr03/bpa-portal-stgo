@@ -3,25 +3,12 @@
  * @pagina  src/pages/productos/[categoria]/[producto].astro
  * @ruta    /productos/[categoria]/[producto]
  * @ejemplo /productos/banca-personal/depositos-plazo-fijo
- *
  * @descripcion
  * Pagina dinamica generada en build time para cada producto o servicio.
  * getStaticPaths consulta todas las categorias, sus productos publicados
  * y los documentos descargables de cada producto en una sola pasada.
  *
- * Widgets utilizados:
- *   - HeroText               -> Nombre del producto (sin subtitle)
- *                               Tagline = nombre de la categoria padre
- *   - ProseContent           -> Contenido HTML del campo `contenido` de PocketBase
- *                               renderizado con Tailwind Typography
- *   - DocumentosDescargables -> Grid de archivos descargables del producto
- *   - CallToAction           -> Cierre institucional
- *   - PageNav                -> Volver a la categoria padre
- *
- * Componentes de estado:
- *   - DatabaseError -> Fallo al cargar el contenido del producto en build time
- *
- * Colecciones PocketBase:
+ * @colecciones
  *   categorias  -> id, nombre, slug
  *   productos   -> id, nombre, slug, categoria (Relation), descripcion,
  *                  contenido (Plain Text / HTML), icono, orden, publicado
@@ -32,19 +19,19 @@
  * @patron getStaticPaths: TODO el fetching ocurre aqui. Cero consultas al renderizar.
  */
 
-// -- Imports -------------------------------------------------------------------
+// ── Imports ────────────────────────────────────────────────────────────────────
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import Layout                 from '~/layouts/PageLayout.astro';
 import HeroText               from '~/components/widgets/HeroText.astro';
-import ProseContent           from '~/components/widgets/ProseContent.astro';
-import DocumentosDescargables from '~/components/widgets/DocumentosDescargables.astro';
 import CallToAction           from '~/components/widgets/CallToAction.astro';
 import PageNav                from '~/components/widgets/PageNav.astro';
+import ProseContent           from '~/components/widgets/ProseContent.astro';
+import DocumentosDescargables from '~/components/widgets/DocumentosDescargables.astro';
 import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
 import { pb } from '~/lib/pocketbase';
 
-// -- Interfaces ----------------------------------------------------------------
+// ── Interfaces ────────────────────────────────────────────────────────────────
 interface Categoria {
   id: string;
   nombre: string;
@@ -74,48 +61,37 @@ interface Documento {
   collectionName: string;
 }
 
-// -- getStaticPaths ------------------------------------------------------------
-// Genera una ruta por cada producto publicado.
-// Por cada producto se cargan tambien sus documentos descargables.
-// Todo el fetching ocurre aqui para no repetir consultas al renderizar.
+// ── getStaticPaths ─────────────────────────────────────────────────────────────
 export const getStaticPaths = (async () => {
-  // 1. Obtener todas las categorias (fallo aqui = build falla, correcto)
-  const categorias = await pb
-    .collection('categorias')
-    .getFullList<Categoria>({ sort: 'orden' });
+  const categorias = await pb.collection('categorias').getFullList<Categoria>({ 
+    sort: 'orden' 
+  });
 
-  // 2. Por cada categoria, obtener sus productos publicados
   const paths = await Promise.all(
     categorias.map(async (cat) => {
       let productos: Producto[] = [];
 
       try {
-        productos = await pb
-          .collection('productos')
-          .getFullList<Producto>({
+        productos = await pb.collection('productos').getFullList<Producto>({
             filter: `categoria = "${cat.id}" && publicado = true`,
             sort: 'orden',
           });
       } catch {
-        // Si falla la carga de productos de esta categoria, se omite
-        // sin romper el build completo
         return [];
       }
 
-      // 3. Por cada producto, obtener sus documentos descargables
       return Promise.all(
         productos.map(async (prod) => {
           let documentos: Documento[] = [];
           let dbErrorDocs = false;
 
           try {
-            documentos = await pb
-              .collection('documentos')
-              .getFullList<Documento>({
+            documentos = await pb.collection('documentos').getFullList<Documento>({
                 filter: `referencia = "${prod.slug}" && tipo = "producto"`,
                 sort: 'orden',
               });
-          } catch {
+          } catch (err) {
+            console.error(`[BPA] Error cargando documentos para "${prod.slug}":`, err);
             dbErrorDocs = true;
           }
 
@@ -139,12 +115,11 @@ export const getStaticPaths = (async () => {
   return paths.flat(2);
 }) satisfies GetStaticPaths;
 
-// -- Props --------------------------------------------------------------------
+// ── Props ─────────────────────────────────────────────────────────────────────
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-
 const { producto, categoria, documentos, dbErrorDocs } = Astro.props;
 
-// -- Construccion de URLs de descarga -----------------------------------------
+// ── Construcción de URLs de descarga ──────────────────────────────────────────
 // pb.files.getURL construye la URL local completa del archivo en PocketBase.
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   id:      doc.id,
@@ -154,7 +129,7 @@ const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   orden:   doc.orden,
 }));
 
-// -- Metadata SEO -------------------------------------------------------------
+// ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
   title:       `${producto.nombre} - BPA Santiago de Cuba`,
   description: producto.descripcion,
@@ -163,22 +138,20 @@ const metadata = {
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 - HeroText -----------------------------------------------------
+  <!-- BLOQUE 1 - HeroText ──────────────────────────────────────────────────────
       Nombre del producto como titulo principal.
       Tagline = nombre de la categoria para contextualizar la ubicacion.
       Sin subtitle: el contenido del campo `contenido` habla por si mismo.
-  --------------------------------------------------------------------------- -->
+  ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
     tagline={categoria.nombre}
     title={producto.nombre}
   />
 
-  <!-- BLOQUE 2 - ProseContent -------------------------------------------------
-      Renderiza el HTML del campo `contenido` con Tailwind Typography.
-      El administrador escribe en el campo Plain Text de PocketBase con
-      HTML generado por IA — prose aplica el estilo automaticamente.
-      Si hubo error de conexion en build time -> DatabaseError.
-  --------------------------------------------------------------------------- -->
+  <!-- BLOQUE 2 - ProseContent ───────────────────────────────
+      Si el campo `contenido` tiene datos → renderiza el HTML con Typography.
+      Si está vacío → EmptyCollection avisa que falta información detallada.
+  ─────────────────────────────────────────────────────────────────────────── -->
   {producto.contenido
     ? <ProseContent contenido={producto.contenido} />
     : <EmptyCollection 
@@ -188,21 +161,21 @@ const metadata = {
       />
   }
 
-  <!-- BLOQUE 3 - DocumentosDescargables ---------------------------------------
+  <!-- BLOQUE 3 - DocumentosDescargables ───────────────────────────────────────
       Grid de archivos asociados a este producto (planillas, guias, etc.).
       - Si dbErrorDocs=true -> aviso ambar discreto (no bloquea la pagina).
       - Si no hay documentos -> el componente no renderiza nada (silencioso).
       - Si hay documentos    -> grid de tarjetas con boton de descarga.
-  --------------------------------------------------------------------------- -->
+  ─────────────────────────────────────────────────────────────────────────── -->
   <DocumentosDescargables
     documentos={documentosConUrl}
     error={dbErrorDocs}
     titulo="Documentos relacionados"
   />
 
-  <!-- BLOQUE 4 - CallToAction -------------------------------------------------
+  <!-- BLOQUE 4 - CallToAction ──────────────────────────────────────────────────
       Cierre institucional consistente con el resto del modulo.
-  --------------------------------------------------------------------------- -->
+  ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
     title="¿Necesita más información sobre este servicio?"
     subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están disponibles para asesorarle sin compromiso."
@@ -216,15 +189,12 @@ const metadata = {
     ]}
   />
 
-  <!-- NAVEGACION - PageNav ----------------------------------------------------
+  <!-- NAVEGACION - PageNav ───────────────────────────────────────────────────────
       Boton izquierdo: volver a la pagina de la categoria padre.
       La URL y el texto se construyen dinamicamente con los datos de la categoria.
-  --------------------------------------------------------------------------- -->
+  ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{
-      text: `Volver a ${categoria.nombre}`,
-      href: `/productos/${categoria.slug}`,
-    }}
+    prev={{ text: `Volver a ${categoria.nombre}`, href: `/productos/${categoria.slug}`}}
   />
 
 </Layout>
