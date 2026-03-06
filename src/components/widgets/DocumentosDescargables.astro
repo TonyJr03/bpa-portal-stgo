@@ -1,11 +1,45 @@
 ---
+/**
+ * @widget     DocumentosDescargables
+ * @ruta       src/components/widgets/DocumentosDescargables.astro
+ * @descripcion Widget que muestra un grid de tarjetas para descargar documentos.
+ *
+ *              Los archivos se sirven desde /descargas/{recordId}/{filename},
+ *              que apunta directamente al storage local de PocketBase mediante
+ *              un symlink en public/descargas/ → pb_data/storage/{collectionId}/.
+ *
+ *              Al ser same-origin, download="nombre legible" funciona de forma
+ *              nativa. Cero JavaScript. Cero copias. Los archivos siguen
+ *              viviendo exactamente donde PocketBase los guarda.
+ *
+ * @uso
+ *   import DocumentosDescargables from '~/components/widgets/DocumentosDescargables.astro';
+ *   import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
+ *
+ *   const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
+ *     id:      doc.id,
+ *     nombre:  doc.nombre,
+ *     archivo: doc.archivo,
+ *     url:     pb.files.getURL(doc, doc.archivo),
+ *     orden:   doc.orden,
+ *   }));
+ *
+ *   <DocumentosDescargables
+ *     documentos={documentosConUrl}
+ *     error={dbErrorDocs}
+ *     titulo="Documentos del trámite"
+ *   />
+ */
+
 import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
 import { Icon }      from 'astro-icon/components';
 import type { Widget } from '~/types';
 
+// ── Interfaces ────────────────────────────────────────────────────────────────
 export interface DocumentoConUrl {
   id: string;
   nombre: string;
+  /** Nombre exacto del archivo en PocketBase storage. Ej: "planilla_xz8k123.pdf" */
   archivo: string;
   url: string;
   orden: number;
@@ -17,6 +51,7 @@ interface Props extends Widget {
   titulo?: string;
 }
 
+// ── Props ─────────────────────────────────────────────────────────────────────
 const {
   documentos,
   error  = false,
@@ -27,6 +62,7 @@ const {
   bg = await Astro.slots.render('bg'),
 } = Astro.props;
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function iconoPorExtension(nombreArchivo: string): string {
   const ext = nombreArchivo.split('.').pop()?.toLowerCase();
   switch (ext) {
@@ -48,6 +84,24 @@ function extensionLegible(nombreArchivo: string): string {
   return nombreArchivo.split('.').pop()?.toUpperCase() ?? 'FILE';
 }
 
+/**
+ * Construye la URL same-origin del archivo.
+ * La integración copiarDocumentos lo copia a public/descargas/ con el
+ * ID del registro como nombre, conservando la extensión original.
+ * Ej: id="xzw7ostu", archivo="planilla_abc123.pdf"
+ *     → "/descargas/xzw7ostu.pdf"
+ */
+function urlSameOrigin(docId: string, archivo: string): string {
+  const ext = archivo.split('.').pop() ?? 'bin';
+  return `/descargas/${docId}.${ext}`;
+}
+
+/**
+ * Nombre legible para el atributo download.
+ * Funciona porque la URL es same-origin — sin ningún JS.
+ * Ej: nombre="Planilla de solicitud", archivo="planilla_abc123.pdf"
+ *     → "Planilla de solicitud.pdf"
+ */
 function nombreDescarga(nombre: string, archivo: string): string {
   const ext = archivo.split('.').pop() ?? '';
   return ext ? `${nombre}.${ext}` : nombre;
@@ -59,7 +113,7 @@ function nombreDescarga(nombre: string, archivo: string): string {
     <div class="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4 flex items-start">
       <Icon
         name="tabler:alert-triangle"
-        class="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0 mr-4"
+        class="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0 mr-3"
       />
       <p class="text-sm text-amber-800 dark:text-amber-300">
         No se pudieron cargar los documentos descargables.
@@ -91,18 +145,16 @@ function nombreDescarga(nombre: string, archivo: string): string {
       {documentos.map((doc) => (
         <li>
           <a
-            href={doc.url}
-            data-url={doc.url}
-            data-nombre={nombreDescarga(doc.nombre, doc.archivo)}
+            href={urlSameOrigin(doc.id, doc.archivo)}
+            download={nombreDescarga(doc.nombre, doc.archivo)}
             class="
-              bpa-descarga
               flex items-center gap-4 rounded-lg border border-slate-200
               bg-white dark:bg-slate-800 dark:border-slate-700
               px-4 py-3
               hover:border-primary hover:shadow-md
               dark:hover:border-blue-500
               transition-all duration-200
-              group cursor-pointer
+              group
             "
             aria-label={`Descargar ${doc.nombre}`}
           >
@@ -132,38 +184,3 @@ function nombreDescarga(nombre: string, archivo: string): string {
   </WidgetWrapper>
 
 ) : null}
-
-<!--
-  Script cliente: intercepta el click en cada tarjeta .bpa-descarga,
-  hace fetch() del archivo desde PocketBase, crea un blob URL efímero
-  y dispara la descarga con el nombre correcto del registro.
--->
-<script>
-  document.querySelectorAll<HTMLAnchorElement>('a.bpa-descarga').forEach((enlace) => {
-    enlace.addEventListener('click', async (evento) => {
-      evento.preventDefault();
-
-      const url    = enlace.dataset.url!;
-      const nombre = enlace.dataset.nombre!;
-
-      try {
-        const respuesta = await fetch(url);
-        const blob      = await respuesta.blob();
-        const blobUrl   = URL.createObjectURL(blob);
-
-        const temporal         = document.createElement('a');
-        temporal.href          = blobUrl;
-        temporal.download      = nombre;
-        temporal.style.display = 'none';
-        document.body.appendChild(temporal);
-        temporal.click();
-        document.body.removeChild(temporal);
-
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
-
-      } catch {
-        window.location.href = url;
-      }
-    });
-  });
-</script>

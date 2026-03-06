@@ -17,6 +17,8 @@ import { readingTimeRemarkPlugin, responsiveTablesRehypePlugin, lazyImagesRehype
 
 import vue from '@astrojs/vue';
 
+import { copiarDocumentos } from './src/integrations/copiarDocumentos';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const hasExternalScripts = false;
@@ -27,6 +29,7 @@ export default defineConfig({
   output: 'static',
 
   integrations: [
+    copiarDocumentos(),
     tailwind({
       applyBaseStyles: false,
     }),
