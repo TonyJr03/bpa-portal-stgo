@@ -1,0 +1,69 @@
+---
+/**
+ * @componente  src/components/icons/SvgMision.astro
+ *
+ * @descripcion
+ * Ilustración SVG institucional para la página de Misión del BPA.
+ * Diseño: diana de círculos concéntricos con flecha ascendente.
+ * Concepto visual: propósito definido, alcance medido, dirección clara.
+ *
+ * Se usa como slot `image` en el widget Content de mision.astro:
+ *   <Content ...>
+ *     <SvgMision slot="image" />
+ *   </Content>
+ *
+ * Paleta adaptada a modo claro/oscuro mediante clases Tailwind.
+ * 100% SVG puro — sin dependencias externas. Apto para entorno air-gapped.
+ */
+---
+
+<div class="flex items-center justify-center h-full py-8 lg:py-0">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 320 320"
+    class="w-64 h-64 lg:w-80 lg:h-80"
+    aria-hidden="true"
+    role="presentation"
+  >
+    <!-- Anillos exteriores de referencia -->
+    <circle cx="160" cy="160" r="148" fill="none"
+            stroke="currentColor" stroke-width="1.5"
+            class="text-blue-100 dark:text-slate-700"/>
+    <circle cx="160" cy="160" r="115" fill="none"
+            stroke="currentColor" stroke-width="2"
+            class="text-blue-200 dark:text-slate-600"/>
+    <circle cx="160" cy="160" r="82" fill="none"
+            stroke="currentColor" stroke-width="2.5"
+            class="text-blue-300 dark:text-slate-500"/>
+
+    <!-- Círculo interior relleno -->
+    <circle cx="160" cy="160" r="50"
+            fill="currentColor" class="text-blue-50 dark:text-slate-800"/>
+    <circle cx="160" cy="160" r="50" fill="none"
+            stroke="currentColor" stroke-width="3"
+            class="text-primary dark:text-blue-400"/>
+
+    <!-- Punto central -->
+    <circle cx="160" cy="160" r="10"
+            fill="currentColor" class="text-primary dark:text-blue-400"/>
+
+    <!-- Flecha ascendente: propósito y dirección -->
+    <line x1="160" y1="140" x2="160" y2="40"
+          stroke="currentColor" stroke-width="4" stroke-linecap="round"
+          class="text-primary dark:text-blue-400"/>
+    <polyline points="144,58 160,38 176,58"
+              fill="none" stroke="currentColor" stroke-width="4"
+              stroke-linecap="round" stroke-linejoin="round"
+              class="text-primary dark:text-blue-400"/>
+
+    <!-- Marcas cardinales -->
+    <line x1="160" y1="14"  x2="160" y2="32"  stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" class="text-blue-300 dark:text-slate-500"/>
+    <line x1="160" y1="288" x2="160" y2="306" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" class="text-blue-300 dark:text-slate-500"/>
+    <line x1="14"  y1="160" x2="32"  y2="160" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" class="text-blue-300 dark:text-slate-500"/>
+    <line x1="288" y1="160" x2="306" y2="160" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" class="text-blue-300 dark:text-slate-500"/>
+  </svg>
+</div>

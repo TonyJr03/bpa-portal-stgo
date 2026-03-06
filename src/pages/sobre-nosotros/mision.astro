@@ -1,0 +1,191 @@
+---
+/**
+ * @pagina  src/pages/sobre-nosotros/mision.astro
+ * @ruta    /sobre-nosotros/mision
+ *
+ * @descripcion
+ * Página estática institucional con la Misión oficial del BPA Santiago de Cuba.
+ * Estructura de presentación usando widgets nativos de AstroWind:
+ *
+ *   BLOQUE 2 · Content    → Texto oficial de la Misión (§2 del documento).
+ *                           SVG institucional inyectado vía slot `image`.
+ *                           Fondo azul suave (bg-blue-50).
+ *
+ *   BLOQUE 3 · Features3  → 4 principios clave a ancho completo (2 columnas).
+ *                           isAfterContent=true elimina el padding superior para
+ *                           que visualmente sea continuo con el bloque Content.
+ *                           Mismo fondo bg-blue-50 → sección unificada visualmente.
+ *
+ *   BLOQUE 4 · Features3  → 6 funciones principales del banco (3 columnas),
+ *                           orientadas al cliente, extraídas del §4 del documento.
+ *                           Fondo blanco / sin bg → alternancia visual clara.
+ *
+ * Nota sobre el SVG: se mantiene en src/components/icons/SvgMision.astro para
+ * no contaminar esta página con ~60 líneas de markup. Se pasa como slot `image`
+ * al widget Content, que internamente lo renderiza con Astro.slots.render('image').
+ *
+ * @colecciones  Ninguna — contenido 100 % hardcodeado (texto oficial estático).
+ */
+
+// ── Imports ────────────────────────────────────────────────────────────────────
+import Layout    from '~/layouts/PageLayout.astro';
+import HeroText  from '~/components/widgets/HeroText.astro';
+import Content   from '~/components/widgets/Content.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+import Features3 from '~/components/widgets/Features3.astro';
+import PageNav   from '~/components/widgets/PageNav.astro';
+import SvgMision from '~/components/icons/SvgMision.astro';
+
+// ── Metadata SEO ──────────────────────────────────────────────────────────────
+const metadata = {
+  title: 'Misión — BPA Santiago de Cuba',
+  description:
+    'Conozca la Misión oficial del Banco Popular de Ahorro en Santiago de Cuba: institución financiera de banca universal, líder en el segmento de personas naturales, comprometida con la atención integral a sus clientes.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Tagline ubica al usuario dentro del módulo "Sobre Nosotros".
+      Sin subtitle: el bloque Content inmediato proporciona todo el contexto.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    tagline="Sobre Nosotros"
+    title="Nuestra Misión"
+  />
+
+  <!-- BLOQUE 2 · Content ───────────────────────────────────────────────────────
+      Columna izquierda: texto oficial íntegro de la Misión (§2 del documento).
+      Columna derecha:  SvgMision inyectado como slot `image`. Content.astro
+                        toma su prop `image` de Astro.slots.render('image')
+                        cuando no se le pasa directamente, lo que permite usar
+                        un componente Astro en lugar de un string o archivo.
+      Sin items aquí: los principios van en el bloque siguiente a ancho completo.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Content
+    content="
+      <p>
+        El BPA es una institución financiera, destinada a captar y colocar recursos
+        financieros a través de productos y servicios, con una orientación de
+        <strong>banca universal</strong>, líder en el segmento de personas naturales.
+      </p>
+      <p style='margin-top:1rem'>
+        Con el uso racional y efectivo del capital humano, el fortalecimiento y
+        desarrollo del mismo y de los recursos tecnológicos con que cuenta, garantiza
+        brindar al cliente una <strong>atención integral y de calidad</strong> en
+        función de satisfacer sus necesidades.
+      </p>
+    "
+  >
+    <SvgMision slot="image" />
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Content>
+
+  <!-- BLOQUE 3 · Features3 — Principios (ancho completo) ──────────────────────
+      isAfterContent=true: elimina el padding-top para que este bloque quede
+      visualmente pegado al Content superior, formando una sola sección.
+      columns=2: 4 items en grid 2×2, ocupando los dos "carriles" de la página
+      (el del texto y el del SVG), no solo el izquierdo.
+      Mismo fondo bg-blue-50 que el Content: continuidad visual sin separación.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Features3
+    columns={4}
+    isAfterContent={true}
+    items={[
+      {
+        title: 'Banca Universal',
+        description:
+          'Operamos con licencia de banco universal, facultados para realizar todo tipo de actividad relacionada con el negocio de la banca, tanto en moneda nacional como en moneda libremente convertible.',
+        icon: 'tabler:building-bank',
+      },
+      {
+        title: 'Capital Humano',
+        description:
+          'Nuestro equipo de profesionales es el pilar de la institución. Apostamos por su formación, desarrollo y bienestar como base de un servicio de excelencia.',
+        icon: 'tabler:users',
+      },
+      {
+        title: 'Tecnología al Servicio',
+        description:
+          'Nos apoyamos en la innovación tecnológica para ofrecer soluciones modernas, eficientes y accesibles que simplifiquen la vida financiera de nuestros clientes.',
+        icon: 'tabler:device-laptop',
+      },
+      {
+        title: 'Atención Integral',
+        description:
+          'Cada cliente recibe orientación personalizada, con respeto a sus necesidades individuales y con la calidad que merece como protagonista de nuestra misión.',
+        icon: 'tabler:heart-handshake',
+      },
+    ]}
+  >
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Features3>
+
+  <!-- BLOQUE 4 · Features3 — Funciones ────────────────────────────────────────
+      Seis funciones principales del BPA (§4 del documento oficial), redactadas
+      en lenguaje accesible para el ciudadano, no en terminología legal.
+      Se seleccionaron las más relevantes desde la perspectiva del cliente:
+      ahorro, crédito, pagos, tarjetas, certificados y asesoría.
+      Sin `isAfterContent`: retoma el padding estándar, separando visualmente
+      este bloque del anterior y creando una alternancia clara de secciones.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Features2
+    tagline="Nuestras Funciones"
+    title="Lo que hacemos por usted"
+    subtitle="El BPA pone a su disposición una amplia gama de productos y servicios financieros diseñados para personas naturales, organizaciones y entidades de todo tipo."
+    columns={3}
+    items={[
+      {
+        title: 'Captación de Ahorros',
+        description:
+          'Abra su cuenta de ahorro y deposite con total seguridad. Ofrecemos modalidades en moneda nacional y libremente convertible, con intereses según los plazos acordados.',
+        icon: 'tabler:building-bank',
+      },
+      {
+        title: 'Créditos Personales',
+        description:
+          'Financiamos sus proyectos personales a corto, mediano y largo plazo. Con condiciones claras, garantías accesibles y cuotas adaptadas a su capacidad de pago.',
+        icon: 'tabler:cash-banknote',
+      },
+      {
+        title: 'Cobros y Pagos',
+        description:
+          'Realizamos operaciones de cobro y pago para personas naturales y jurídicas, tanto por cuenta propia como por cuenta de terceros, de forma ágil y segura.',
+        icon: 'tabler:arrows-exchange',
+      },
+      {
+        title: 'Tarjetas Magnéticas',
+        description:
+          'Emitimos y operamos tarjetas de débito, crédito y otros medios electrónicos de pago para que acceda a su dinero cuando y donde lo necesite.',
+        icon: 'tabler:credit-card',
+      },
+      {
+        title: 'Certificados de Depósito',
+        description:
+          'Invierta a plazo fijo mediante certificados de depósito nominativos. Una opción segura para hacer crecer sus ahorros con rendimientos acordados.',
+        icon: 'tabler:certificate',
+      },
+      {
+        title: 'Asesoría Financiera',
+        description:
+          'Nuestros especialistas le orientan sobre productos, operaciones e inversiones. Consulte sin compromiso en cualquiera de nuestras sucursales en Santiago de Cuba.',
+        icon: 'tabler:chart-bar',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
+      Izquierda: regresa al inicio del portal.
+      Derecha:   avanza a la Visión (flujo natural de lectura institucional).
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Volver a Inicio', href: '/' }}
+    next={{ text: 'Ver Visión',       href: '/sobre-nosotros/vision' }}
+  />
+
+</Layout>
