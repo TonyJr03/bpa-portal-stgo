@@ -1,0 +1,110 @@
+---
+/**
+ * @componente  src/components/icons/SvgVision.astro
+ *
+ * @descripcion
+ * Ilustración SVG institucional para la página de Visión del BPA.
+ * Diseño: estrella polar (norte) con rayos de luz irradiando sobre
+ * una línea de horizonte — evoca liderazgo, claridad de rumbo y futuro.
+ * Contrasta intencionalmente con SvgMision (diana + flecha vertical):
+ * donde la Misión habla de propósito interno, la Visión mira hacia afuera.
+ *
+ * Se usa como slot `image` en el widget Content de vision.astro:
+ *   <Content isReversed ...>
+ *     <SvgVision slot="image" />
+ *   </Content>
+ *
+ * Paleta adaptada a modo claro/oscuro con clases Tailwind.
+ * 100 % SVG puro — sin dependencias externas. Apto para entorno air-gapped.
+ */
+---
+
+<div class="flex items-center justify-center h-full py-8 lg:py-0">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 320 320"
+    class="w-64 h-64 lg:w-80 lg:h-80"
+    aria-hidden="true"
+    role="presentation"
+  >
+    <!-- ── Horizonte ─────────────────────────────────────────────────────── -->
+    <!-- Tierra / base estilizada -->
+    <ellipse  cx="160" cy="260" rx="130" ry="18"
+              fill="currentColor" class="text-blue-50 dark:text-slate-800"/>
+    <ellipse  cx="160" cy="260" rx="130" ry="18" fill="none"
+              stroke="currentColor" stroke-width="2"
+              class="text-blue-200 dark:text-slate-600"/>
+
+    <!-- Línea del horizonte -->
+    <line x1="30" y1="242" x2="290" y2="242"
+          stroke="currentColor" stroke-width="1.5" stroke-dasharray="6,4"
+          class="text-blue-200 dark:text-slate-600"/>
+
+    <!-- ── Rayos de luz desde la estrella ───────────────────────────────── -->
+    <!-- Rayo izquierdo largo -->
+    <line x1="160" y1="90" x2="52" y2="238"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+          class="text-blue-200 dark:text-slate-700"/>
+    <!-- Rayo derecho largo -->
+    <line x1="160" y1="90" x2="268" y2="238"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+          class="text-blue-200 dark:text-slate-700"/>
+    <!-- Rayo izquierdo medio -->
+    <line x1="160" y1="90" x2="88" y2="238"
+          stroke="currentColor" stroke-width="1" stroke-linecap="round"
+          class="text-blue-100 dark:text-slate-800"/>
+    <!-- Rayo derecho medio -->
+    <line x1="160" y1="90" x2="232" y2="238"
+          stroke="currentColor" stroke-width="1" stroke-linecap="round"
+          class="text-blue-100 dark:text-slate-800"/>
+    <!-- Rayo vertical central -->
+    <line x1="160" y1="90" x2="160" y2="242"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          class="text-primary/30 dark:text-blue-500/30"/>
+
+    <!-- ── Estrella polar (norte) ────────────────────────────────────────── -->
+    <!-- Halo exterior difuso -->
+    <circle cx="160" cy="90" r="38" fill="none"
+            stroke="currentColor" stroke-width="1"
+            class="text-blue-100 dark:text-slate-700"/>
+
+    <!-- Halo interior -->
+    <circle cx="160" cy="90" r="26"
+            fill="currentColor" class="text-blue-50 dark:text-slate-800"/>
+    <circle cx="160" cy="90" r="26" fill="none"
+            stroke="currentColor" stroke-width="2"
+            class="text-primary dark:text-blue-400"/>
+
+    <!-- Puntas de la estrella (4 puntas largas — estrella tipo brújula) -->
+    <!-- Punta norte -->
+    <polygon  points="160,44 155,82 160,76 165,82"
+              fill="currentColor" class="text-primary dark:text-blue-400"/>
+    <!-- Punta sur -->
+    <polygon  points="160,136 155,98 160,104 165,98"
+              fill="currentColor" class="text-primary dark:text-blue-400"/>
+    <!-- Punta oeste -->
+    <polygon  points="114,90 152,85 146,90 152,95"
+              fill="currentColor" class="text-primary/60 dark:text-blue-400/60"/>
+    <!-- Punta este -->
+    <polygon  points="206,90 168,85 174,90 168,95"
+              fill="currentColor" class="text-primary/60 dark:text-blue-400/60"/>
+
+    <!-- Núcleo central de la estrella -->
+    <circle cx="160" cy="90" r="7"
+            fill="currentColor" class="text-primary dark:text-blue-400"/>
+
+    <!-- ── Estrellas pequeñas de fondo ───────────────────────────────────── -->
+    <circle cx="72"  cy="58"  r="2.5"
+            fill="currentColor" class="text-blue-300 dark:text-slate-500"/>
+    <circle cx="248" cy="70"  r="2"
+            fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+    <circle cx="105" cy="38"  r="1.5"
+            fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+    <circle cx="220" cy="44"  r="2"
+            fill="currentColor" class="text-blue-300 dark:text-slate-500"/>
+    <circle cx="290" cy="115" r="1.5"
+            fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+    <circle cx="38"  cy="130" r="1.5"
+            fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+  </svg>
+</div>

@@ -1,0 +1,138 @@
+---
+/**
+ * @pagina  src/pages/sobre-nosotros/vision.astro
+ * @ruta    /sobre-nosotros/vision
+ *
+ * @descripcion
+ * Página estática institucional con la Visión oficial del BPA Santiago de Cuba.
+ * Estructura de presentación usando widgets nativos de AstroWind:
+ *
+ *   BLOQUE 2 · Content  → Texto oficial de la Visión (§3 del documento).
+ *                         isReversed=true: SVG a la izquierda, texto a la derecha.
+ *                         Invierte la composición respecto a mision.astro
+ *                         para dar variedad visual al módulo "Sobre Nosotros".
+ *                         Fondo azul suave (bg-blue-50).
+ *
+ *   BLOQUE 3 · Steps2   → 4 pilares estratégicos extraídos del texto de la Visión,
+ *                         cada uno con icono, título y desarrollo propio.
+ *                         Layout: izquierda = encabezado del bloque,
+ *                                 derecha  = lista de pilares numerados con icono.
+ *                         isAfterContent=true + mismo fondo bg-blue-50 → continuidad
+ *                         visual con el bloque Content superior.
+ *
+ * Nota sobre el SVG: componente separado en src/components/icons/SvgVision.astro.
+ * Se inyecta vía slot `image` en Content (mismo patrón que mision.astro).
+ *
+ * @colecciones  Ninguna — contenido 100 % hardcodeado (texto oficial estático).
+ */
+
+// ── Imports ────────────────────────────────────────────────────────────────────
+import Layout   from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Content  from '~/components/widgets/Content.astro';
+import Steps   from '~/components/widgets/Steps.astro';
+import PageNav  from '~/components/widgets/PageNav.astro';
+import SvgVision from '~/components/icons/SvgVision.astro';
+
+// ── Metadata SEO ──────────────────────────────────────────────────────────────
+const metadata = {
+  title: 'Visión — BPA Santiago de Cuba',
+  description:
+    'Conozca la Visión oficial del Banco Popular de Ahorro en Santiago de Cuba: institución financiera líder en atención a personas naturales, con la mayor red de sucursales del país y un capital humano comprometido con la calidad.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Tagline ubica al usuario dentro del módulo "Sobre Nosotros".
+      Sin subtitle: el bloque Content que sigue ofrece el texto completo.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    tagline="Sobre Nosotros"
+    title="Nuestra Visión"
+  />
+
+  <!-- BLOQUE 2 · Content ───────────────────────────────────────────────────────
+      isReversed=true: SvgVision ocupa la columna izquierda, el texto la derecha.
+      Esto invierte la composición de mision.astro y crea variedad visual cuando
+      el usuario navega de una página a la otra.
+      Sin items: los pilares estratégicos van en el Steps2 siguiente a ancho total.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Content
+    isReversed
+    content="
+      <p>
+        El BPA es la institución financiera <strong>líder en la atención a las personas
+        naturales</strong>, con un control interno razonable y en fortalecimiento
+        constante, mantiene la mayor Red de Sucursales en el país, dotadas de un
+        sistema informático único.
+      </p>
+      <p style='margin-top:1rem'>
+        Posee un capital humano profesional, que avanza hacia un desarrollo que le
+        permita alcanzar niveles de <strong>competencia superior</strong>, comprometido
+        con la prestación de un servicio de calidad, dotado de valores sólidos y
+        principios éticos que garanticen las características que lo distinguen.
+      </p>
+    "
+  >
+    <SvgVision slot="image" />
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Content>
+
+  <!-- BLOQUE 3 · Steps2 — Pilares estratégicos ─────────────────────────────────
+      Los 4 compromisos concretos que el texto de la Visión enuncia, desarrollados
+      en lenguaje accesible y orientado al ciudadano.
+      Steps2 divide la pantalla en dos mitades:
+        - Izquierda: título y subtítulo del bloque.
+        - Derecha:   lista vertical de items con círculo-icono y descripción.
+      isAfterContent=true + mismo fondo bg-blue-50: continuidad visual con el
+      bloque Content — el usuario percibe una sola sección unificada de Visión.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Steps
+    title="Nuestros Compromisos"
+    subtitle="Cuatro pilares que definen hacia dónde nos dirigimos y lo que el BPA representa para Santiago de Cuba y para todo el país."
+    items={[
+      {
+        title: 'Liderazgo en la Atención',
+        description:
+          'Ser la institución financiera de referencia para las personas naturales. Nuestro liderazgo no se mide solo en tamaño, sino en la calidad y calidez con que acompañamos a cada cliente.',
+        icon: 'tabler:award',
+      },
+      {
+        title: 'Mayor Red de Sucursales',
+        description:
+          'Mantenemos la red de sucursales más extensa del país, conectadas por un sistema informático único que garantiza coherencia, seguridad y agilidad en cada punto de atención.',
+        icon: 'tabler:map-pin',
+      },
+      {
+        title: 'Capital Humano de Excelencia',
+        description:
+          'Invertimos en el desarrollo profesional de nuestros trabajadores para que alcancen niveles superiores de competencia. Un equipo preparado es la base de un servicio de calidad sostenida.',
+        icon: 'tabler:school',
+      },
+      {
+        title: 'Valores Sólidos y Ética',
+        description:
+          'Actuamos con principios éticos inquebrantables que nos distinguen. La integridad, la transparencia y el compromiso institucional son el sello que el BPA imprime en cada gestión.',
+        icon: 'tabler:shield-check',
+      },
+    ]}
+  >
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Steps>
+
+  <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
+      Izquierda: retrocede a Misión (sección anterior del módulo).
+      Derecha:   avanza a Historia (siguiente subsección de Sobre Nosotros).
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Ver Misión',    href: '/sobre-nosotros/mision'  }}
+    next={{ text: 'Ver Historia',  href: '/sobre-nosotros/historia' }}
+  />
+
+</Layout>
