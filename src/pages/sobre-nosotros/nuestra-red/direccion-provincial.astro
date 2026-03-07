@@ -1,0 +1,184 @@
+---
+/**
+ * @pagina  src/pages/sobre-nosotros/nuestra-red/direccion-provincial.astro
+ * @ruta    /sobre-nosotros/nuestra-red/direccion-provincial
+ *
+ * @descripcion
+ * Página estática institucional de la Dirección Provincial del BPA en
+ * Santiago de Cuba. Presenta su rol territorial, las cuatro áreas de
+ * servicio relevantes para el ciudadano y los datos de contacto de la sede.
+ *
+ * El contenido se extrae y reescribe del documento oficial
+ * "02 - Estructura y Funciones" (Título II - Direcciones Provinciales),
+ * adaptado a lenguaje ciudadano — sin tecnicismos internos.
+ *
+ * Estructura:
+ *   BLOQUE 1 · HeroText  → tagline "Nuestra Red" + title
+ *   BLOQUE 2 · Content   → párrafo institucional + SvgDireccion
+ *                           fondo bg-blue-50
+ *   BLOQUE 3 · Features2 → 4 áreas de servicio al cliente (columns=2)
+ *                           isAfterContent para continuidad visual
+ *   BLOQUE 4 · Features2 → datos de contacto de la sede (columns=2)
+ *   BLOQUE 5 · PageNav   → prev: Nuestra Red / next: Sucursales y Oficinas
+ *
+ * @colecciones  Ninguna — contenido 100 % hardcodeado (datos oficiales fijos).
+ *
+ * NOTA PARA EL ADMINISTRADOR:
+ * Los datos de contacto del BLOQUE 4 (teléfono, correo, dirección, horario)
+ * están hardcodeados con valores de ejemplo marcados con [COMPLETAR].
+ * Sustitúyalos por los datos reales antes del despliegue en producción.
+ */
+
+// ── Imports ────────────────────────────────────────────────────────────────────
+import Layout       from '~/layouts/PageLayout.astro';
+import HeroText     from '~/components/widgets/HeroText.astro';
+import Content      from '~/components/widgets/Content.astro';
+import Features    from '~/components/widgets/Features.astro';
+import Features2    from '~/components/widgets/Features2.astro';
+import PageNav      from '~/components/widgets/PageNav.astro';
+import SvgDireccion from '~/components/icons/SvgDireccion.astro';
+
+// ── Metadata SEO ──────────────────────────────────────────────────────────────
+const metadata = {
+  title: 'Dirección Provincial — BPA Santiago de Cuba',
+  description:
+    'Conozca la Dirección Provincial del Banco Popular de Ahorro en Santiago de Cuba: su estructura, las áreas de servicio al cliente y cómo comunicarse con la sede provincial.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Tagline ubica al usuario dentro del módulo "Nuestra Red".
+      Sin subtitle: el bloque Content siguiente ofrece el texto completo.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    tagline="Nuestra Red"
+    title="Dirección Provincial"
+  />
+
+  <!-- BLOQUE 2 · Content ───────────────────────────────────────────────────────
+      Presentación institucional de la Dirección Provincial.
+      SVG a la derecha (sin isReversed): patrón estándar del módulo.
+      Fondo bg-blue-50: establece el tono visual de la sección.
+      Sin items: las áreas de servicio van en Features2 a continuación.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Content
+    content="
+      <p>
+        La <strong>Dirección Provincial del BPA en Santiago de Cuba</strong> es la
+        instancia territorial que coordina, supervisa y controla el funcionamiento
+        de toda la red de sucursales, cajas de ahorro y oficinas bancarias en la
+        provincia.
+      </p>
+      <p style='margin-top:1rem'>
+        Desde la sede provincial se dirigen las políticas comerciales, se garantiza
+        la calidad del servicio al cliente y se articula la respuesta del banco ante
+        las necesidades financieras de las personas naturales, las entidades estatales
+        y las nuevas formas de gestión no estatal en todo el territorio santiaguero.
+      </p>
+      <p style='margin-top:1rem'>
+        Subordinada a la Oficina Central del BPA, la Dirección Provincial actúa como
+        el <strong>primer nivel de atención especializada</strong> para los casos que
+        requieren gestión por encima de la sucursal: reclamaciones, financiamientos
+        de mayor complejidad, coordinación institucional y supervisión del control
+        interno en toda la red.
+      </p>
+    "
+  >
+    <SvgDireccion slot="image" />
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Content>
+
+  <!-- BLOQUE 3 · Features2 — Áreas de servicio al cliente ─────────────────────
+      Las cuatro áreas de la Dirección Provincial con impacto directo
+      en la atención ciudadana, extraídas del documento oficial y reescritas
+      en lenguaje accesible.
+      columns=2: cuatro items en dos filas de dos en desktop.
+      Sin fondo propio: hereda el bg-blue-50 del Content anterior para que
+      se perciban como una sola sección unificada.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Features2
+    tagline="Áreas de Servicio"
+    title="¿A qué área puede acudir?"
+    subtitle="La Dirección Provincial cuenta con equipos especializados para atender distintas necesidades. Conozca cuál le corresponde según su gestión."
+    columns={2}
+    items={[
+      {
+        title: 'Banca Personal',
+        description:
+          'Atiende todo lo relacionado con productos y servicios para personas naturales: cuentas de ahorro, créditos personales, tarjetas magnéticas y recuperación de financiamientos. Es el área de referencia para gestiones que la sucursal no puede resolver de forma directa.',
+        icon: 'tabler:user-dollar',
+      },
+      {
+        title: 'Banca de Negocios',
+        description:
+          'Da servicio a entidades estatales, cooperativas y trabajadores por cuenta propia. Gestiona financiamientos al sector no estatal, controla cobros y pagos de empresas y asesora metodológicamente a la red de sucursales en materia de clientes jurídicos.',
+        icon: 'tabler:briefcase',
+      },
+      {
+        title: 'Comunicación y Atención al Cliente',
+        description:
+          'Desarrolla las estrategias de imagen y comunicación del BPA en la provincia. Gestiona las quejas, reclamaciones y sugerencias de los clientes, y vela por la calidad del servicio en todas las oficinas del territorio. Es el canal para escalar reclamaciones no resueltas en sucursal.',
+        icon: 'tabler:message-circle',
+      },
+      {
+        title: 'Operaciones y Efectivo',
+        description:
+          'Garantiza la disponibilidad de efectivo en toda la red provincial, supervisa las operaciones con divisas y moneda nacional, y mantiene el funcionamiento correcto de los cajeros automáticos. Coordina con el Centro Provincial Distribuidor de Efectivo (CPDE).',
+        icon: 'tabler:coins',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 4 · Features2 — Datos de contacto ────────────────────────────────
+      Información de contacto de la sede de la Dirección Provincial.
+      NOTA: Los valores marcados con [COMPLETAR] deben ser sustituidos
+      por los datos reales antes del despliegue en producción.
+      columns=2: cuatro items en dos filas de dos.
+      Fondo bg-blue-50 para alternar el ritmo visual con el bloque anterior.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Features
+    tagline="Contáctenos"
+    title="Datos de la Sede Provincial"
+    subtitle="Si necesita comunicarse directamente con la Dirección Provincial, estos son nuestros canales de atención."
+    columns={2}
+    items={[
+      {
+        title: 'Dirección',
+        description: '[COMPLETAR: Calle, número, entre calles, municipio Santiago de Cuba]',
+        icon: 'tabler:map-pin',
+      },
+      {
+        title: 'Teléfonos',
+        description: '[COMPLETAR: (022) XXXXX — Recepción<br/>(022) XXXXX — Atención al Cliente]',
+        icon: 'tabler:phone',
+      },
+      {
+        title: 'Correo Institucional',
+        description: '[COMPLETAR: atencion@bpa.scu.cu]',
+        icon: 'tabler:mail',
+      },
+      {
+        title: 'Horario de Atención',
+        description: '[COMPLETAR: Lunes a Viernes · 8:00 am – 4:00 pm<br/>Sábados · 8:00 am – 12:00 m]',
+        icon: 'tabler:clock',
+      },
+    ]}
+  >
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Features>
+
+  <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
+      Izquierda: regresa al índice del módulo Nuestra Red.
+      Derecha:   avanza a la siguiente subsección (Sucursales y Oficinas).
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Nuestra Red', href: '/sobre-nosotros/nuestra-red' }}
+  />
+
+</Layout>

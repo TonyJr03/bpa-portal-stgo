@@ -1,0 +1,129 @@
+---
+/**
+ * @componente  src/components/icons/SvgATM.astro
+ *
+ * @descripcion
+ * Ilustración SVG institucional para la sección de Cajeros Automáticos.
+ * Diseño: terminal ATM de frente con pantalla, teclado numérico, ranura
+ * de tarjeta y dispensador de efectivo — reconocible e institucional.
+ */
+---
+
+<div class="flex items-center justify-center h-full py-8 lg:py-0">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 280 300"
+    class="w-56 h-60 lg:w-64 lg:h-72"
+    aria-hidden="true"
+    role="presentation"
+  >
+    <!-- ── Soporte / pedestal ────────────────────────────────────────────── -->
+    <rect x="100" y="248" width="80" height="16" rx="4"
+          fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+    <rect x="80"  y="260" width="120" height="10" rx="3"
+          fill="currentColor" class="text-blue-300 dark:text-slate-500"/>
+
+    <!-- ── Cuerpo principal del ATM ─────────────────────────────────────── -->
+    <rect x="60" y="40" width="160" height="212" rx="10"
+          fill="currentColor" class="text-slate-100 dark:text-slate-700"/>
+    <rect x="60" y="40" width="160" height="212" rx="10" fill="none"
+          stroke="currentColor" stroke-width="2"
+          class="text-blue-300 dark:text-slate-500"/>
+
+    <!-- Franja superior de color institucional -->
+    <rect x="60" y="40" width="160" height="32" rx="10"
+          fill="currentColor" class="text-primary dark:text-blue-500"/>
+    <rect x="60" y="58" width="160" height="14"
+          fill="currentColor" class="text-primary dark:text-blue-500"/>
+
+    <!-- Texto "BPA" en la franja superior -->
+    <rect x="100" y="50" width="80" height="12" rx="2"
+          fill="currentColor" class="text-blue-50/30 dark:text-blue-300/20"/>
+    <!-- Simulación de letras BPA -->
+    <rect x="112" y="53" width="6"  height="6" rx="1"
+          fill="currentColor" class="text-white/70 dark:text-blue-200/70"/>
+    <rect x="122" y="53" width="6"  height="6" rx="1"
+          fill="currentColor" class="text-white/70 dark:text-blue-200/70"/>
+    <rect x="132" y="53" width="6"  height="6" rx="1"
+          fill="currentColor" class="text-white/70 dark:text-blue-200/70"/>
+    <rect x="148" y="53" width="6"  height="6" rx="1"
+          fill="currentColor" class="text-white/70 dark:text-blue-200/70"/>
+    <rect x="158" y="53" width="6"  height="6" rx="1"
+          fill="currentColor" class="text-white/70 dark:text-blue-200/70"/>
+
+    <!-- ── Pantalla ──────────────────────────────────────────────────────── -->
+    <rect x="78" y="82" width="124" height="80" rx="6"
+          fill="currentColor" class="text-blue-900 dark:text-slate-900"/>
+    <!-- Brillo de pantalla -->
+    <rect x="78" y="82" width="124" height="80" rx="6" fill="none"
+          stroke="currentColor" stroke-width="1.5"
+          class="text-blue-400 dark:text-blue-500"/>
+    <!-- Contenido en pantalla -->
+    <rect x="90"  y="96"  width="60" height="6" rx="2"
+          fill="currentColor" class="text-blue-300/60 dark:text-blue-400/60"/>
+    <rect x="90"  y="108" width="100" height="5" rx="2"
+          fill="currentColor" class="text-blue-400/40 dark:text-blue-500/40"/>
+    <rect x="90"  y="118" width="80"  height="5" rx="2"
+          fill="currentColor" class="text-blue-400/40 dark:text-blue-500/40"/>
+    <!-- Cursor parpadeante simulado -->
+    <rect x="90" y="136" width="40" height="16" rx="3"
+          fill="currentColor" class="text-primary dark:text-blue-500"/>
+    <rect x="148" y="136" width="40" height="16" rx="3" fill="none"
+          stroke="currentColor" stroke-width="1.5"
+          class="text-primary dark:text-blue-500"/>
+
+    <!-- ── Ranura de tarjeta ─────────────────────────────────────────────── -->
+    <rect x="90" y="170" width="100" height="8" rx="2"
+          fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+    <rect x="90" y="170" width="100" height="8" rx="2" fill="none"
+          stroke="currentColor" stroke-width="1"
+          class="text-blue-400 dark:text-slate-500"/>
+    <!-- Indicador LED ranura -->
+    <circle cx="182" cy="174" r="3"
+            fill="currentColor" class="text-green-400 dark:text-green-500"/>
+    <!-- Icono tarjeta pequeño -->
+    <rect x="96" y="172" width="16" height="4" rx="1"
+          fill="currentColor" class="text-blue-400 dark:text-slate-500"/>
+
+    <!-- ── Teclado numérico ──────────────────────────────────────────────── -->
+    <!-- Fila 1: 1 2 3 -->
+    <rect x="86"  y="186" width="22" height="14" rx="3"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <rect x="119" y="186" width="22" height="14" rx="3"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <rect x="152" y="186" width="22" height="14" rx="3"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <!-- Fila 2: 4 5 6 -->
+    <rect x="86"  y="204" width="22" height="14" rx="3"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <rect x="119" y="204" width="22" height="14" rx="3"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <rect x="152" y="204" width="22" height="14" rx="3"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <!-- Fila 3: 7 8 9 -->
+    <rect x="86"  y="222" width="22" height="14" rx="3"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <rect x="119" y="222" width="22" height="14" rx="3"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <rect x="152" y="222" width="22" height="14" rx="3"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <!-- Tecla cancelar (roja) y confirmar (verde) -->
+    <rect x="86"  y="240" width="22" height="6" rx="2"
+          fill="currentColor" class="text-red-300 dark:text-red-700"/>
+    <rect x="152" y="240" width="22" height="6" rx="2"
+          fill="currentColor" class="text-green-300 dark:text-green-700"/>
+
+    <!-- ── Dispensador de efectivo ───────────────────────────────────────── -->
+    <rect x="78" y="248" width="50" height="8" rx="3"
+          fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+    <rect x="78" y="248" width="50" height="8" rx="3" fill="none"
+          stroke="currentColor" stroke-width="1"
+          class="text-blue-300 dark:text-slate-500"/>
+    <!-- Billete saliendo -->
+    <rect x="85" y="244" width="36" height="6" rx="1"
+          fill="currentColor" class="text-green-200 dark:text-green-800"/>
+    <line x1="90" y1="247" x2="116" y2="247"
+          stroke="currentColor" stroke-width="0.8"
+          class="text-green-400 dark:text-green-600"/>
+  </svg>
+</div>

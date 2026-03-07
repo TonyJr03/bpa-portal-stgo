@@ -1,0 +1,129 @@
+---
+/**
+ * @componente  src/components/icons/SvgSucursales.astro
+ *
+ * @descripcion
+ * Ilustración SVG institucional para la página de Sucursales y Oficinas.
+ * Diseño: tres edificios de distintos tamaños interconectados por líneas,
+ * representando la red territorial de oficinas bancarias del BPA.
+ * El edificio central (mayor) simboliza la sucursal grande; los laterales,
+ * las sucursales medianas/pequeñas y las cajas de ahorro.
+ */
+---
+
+<div class="flex items-center justify-center h-full py-8 lg:py-0">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 320 280"
+    class="w-64 h-56 lg:w-80 lg:h-72"
+    aria-hidden="true"
+    role="presentation"
+  >
+    <!-- ── Líneas de conexión entre edificios ────────────────────────────── -->
+    <line x1="80" y1="170" x2="148" y2="170"
+          stroke="currentColor" stroke-width="2" stroke-dasharray="5,3"
+          class="text-blue-200 dark:text-slate-600"/>
+    <line x1="172" y1="170" x2="240" y2="170"
+          stroke="currentColor" stroke-width="2" stroke-dasharray="5,3"
+          class="text-blue-200 dark:text-slate-600"/>
+    <!-- Nodos de conexión -->
+    <circle cx="148" cy="170" r="4"
+            fill="currentColor" class="text-primary dark:text-blue-400"/>
+    <circle cx="172" cy="170" r="4"
+            fill="currentColor" class="text-primary dark:text-blue-400"/>
+
+    <!-- ══ EDIFICIO IZQUIERDO (sucursal pequeña) ═════════════════════════ -->
+    <!-- Cuerpo -->
+    <rect x="28" y="140" width="52" height="60" rx="2"
+          fill="currentColor" class="text-white dark:text-slate-700"/>
+    <rect x="28" y="140" width="52" height="60" rx="2" fill="none"
+          stroke="currentColor" stroke-width="1.5"
+          class="text-blue-200 dark:text-slate-500"/>
+    <!-- Techo / frontón pequeño -->
+    <polygon points="54,120 80,140 28,140"
+             fill="currentColor" class="text-blue-400 dark:text-blue-600"/>
+    <!-- Puerta -->
+    <rect x="47" y="172" width="14" height="28" rx="2"
+          fill="currentColor" class="text-blue-500 dark:text-blue-500"/>
+    <!-- Ventanas -->
+    <rect x="33" y="148" width="10" height="10" rx="1"
+          fill="currentColor" class="text-blue-100 dark:text-slate-500"/>
+    <rect x="65" y="148" width="10" height="10" rx="1"
+          fill="currentColor" class="text-blue-100 dark:text-slate-500"/>
+    <!-- Escalón -->
+    <rect x="40" y="198" width="28" height="5" rx="1"
+          fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+
+    <!-- ══ EDIFICIO CENTRAL (sucursal grande) ════════════════════════════ -->
+    <!-- Cuerpo -->
+    <rect x="120" y="110" width="80" height="90" rx="2"
+          fill="currentColor" class="text-white dark:text-slate-700"/>
+    <rect x="120" y="110" width="80" height="90" rx="2" fill="none"
+          stroke="currentColor" stroke-width="1.5"
+          class="text-blue-300 dark:text-slate-500"/>
+    <!-- Frontón grande -->
+    <polygon points="160,78 200,110 120,110"
+             fill="currentColor" class="text-primary dark:text-blue-500"/>
+    <polygon points="160,78 200,110 120,110" fill="none"
+             stroke="currentColor" stroke-width="1.5"
+             class="text-blue-700 dark:text-blue-400"/>
+    <!-- Columnas centrales -->
+    <rect x="130" y="118" width="10" height="80" rx="1"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <rect x="180" y="118" width="10" height="80" rx="1"
+          fill="currentColor" class="text-blue-100 dark:text-slate-600"/>
+    <!-- Puerta central -->
+    <rect x="148" y="155" width="24" height="45" rx="2"
+          fill="currentColor" class="text-primary dark:text-blue-500"/>
+    <line x1="160" y1="155" x2="160" y2="200"
+          stroke="currentColor" stroke-width="1"
+          class="text-blue-700 dark:text-blue-300"/>
+    <!-- Ventanas superiores -->
+    <rect x="128" y="122" width="14" height="12" rx="1"
+          fill="currentColor" class="text-blue-100 dark:text-slate-500"/>
+    <rect x="178" y="122" width="14" height="12" rx="1"
+          fill="currentColor" class="text-blue-100 dark:text-slate-500"/>
+    <!-- Escalinata -->
+    <rect x="112" y="200" width="96" height="5" rx="1"
+          fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+    <rect x="105" y="205" width="110" height="5" rx="1"
+          fill="currentColor" class="text-blue-100 dark:text-slate-700"/>
+
+    <!-- ══ EDIFICIO DERECHO (caja de ahorro) ═════════════════════════════ -->
+    <!-- Cuerpo -->
+    <rect x="240" y="148" width="52" height="52" rx="2"
+          fill="currentColor" class="text-white dark:text-slate-700"/>
+    <rect x="240" y="148" width="52" height="52" rx="2" fill="none"
+          stroke="currentColor" stroke-width="1.5"
+          class="text-blue-200 dark:text-slate-500"/>
+    <!-- Techo plano con detalle -->
+    <rect x="236" y="140" width="60" height="10" rx="2"
+          fill="currentColor" class="text-blue-400 dark:text-blue-600"/>
+    <!-- Puerta -->
+    <rect x="259" y="172" width="14" height="28" rx="2"
+          fill="currentColor" class="text-blue-400 dark:text-blue-500"/>
+    <!-- Ventanas -->
+    <rect x="244" y="154" width="10" height="10" rx="1"
+          fill="currentColor" class="text-blue-100 dark:text-slate-500"/>
+    <rect x="278" y="154" width="10" height="10" rx="1"
+          fill="currentColor" class="text-blue-100 dark:text-slate-500"/>
+    <!-- Escalón -->
+    <rect x="252" y="198" width="28" height="5" rx="1"
+          fill="currentColor" class="text-blue-200 dark:text-slate-600"/>
+
+    <!-- ── Suelo ─────────────────────────────────────────────────────────── -->
+    <rect x="0" y="210" width="320" height="14" rx="0"
+          fill="currentColor" class="text-blue-50 dark:text-slate-800"/>
+    <line x1="0" y1="210" x2="320" y2="210"
+          stroke="currentColor" stroke-width="1"
+          class="text-blue-100 dark:text-slate-700"/>
+
+    <!-- ── Etiquetas textuales (puntos bajo cada edificio) ───────────────── -->
+    <circle cx="54"  cy="216" r="3"
+            fill="currentColor" class="text-blue-400 dark:text-slate-500"/>
+    <circle cx="160" cy="216" r="4"
+            fill="currentColor" class="text-primary dark:text-blue-400"/>
+    <circle cx="266" cy="216" r="3"
+            fill="currentColor" class="text-blue-400 dark:text-slate-500"/>
+  </svg>
+</div>

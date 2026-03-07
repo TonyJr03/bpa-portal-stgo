@@ -1,0 +1,108 @@
+---
+/**
+ * @pagina  src/pages/nuestra-red/index.astro
+ * @ruta    /nuestra-red
+ *
+ * @descripcion
+ * Página de entrada al módulo "Nuestra Red" del portal institucional del BPA
+ * Santiago de Cuba. Presenta las tres subsecciones del módulo como tarjetas
+ * de acceso rápido, acompañadas de un párrafo introductorio sobre la presencia
+ * territorial del banco en la provincia.
+ *
+ * Estructura:
+ *   BLOQUE 1 · HeroText  → título, subtítulo institucional
+ *   BLOQUE 2 · Features2 → 3 tarjetas (Dirección Provincial,
+ *                           Sucursales y Oficinas, Canales de Atención)
+ *   BLOQUE 3 · PageNav   → prev: Sobre Nosotros (último paso)
+ *
+ * @colecciones  Ninguna — contenido 100 % hardcodeado (secciones fijas).
+ */
+
+// ── Imports ────────────────────────────────────────────────────────────────────
+import Layout    from '~/layouts/PageLayout.astro';
+import HeroText  from '~/components/widgets/HeroText.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+import PageNav   from '~/components/widgets/PageNav.astro';
+
+// ── Metadata SEO ──────────────────────────────────────────────────────────────
+const metadata = {
+  title: 'Nuestra Red — BPA Santiago de Cuba',
+  description:
+    'Conozca la red territorial del Banco Popular de Ahorro en Santiago de Cuba: Dirección Provincial, sucursales, cajas de ahorro, cajeros automáticos y todos los canales de atención disponibles.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Sin tagline: este es el nivel raíz del módulo, no hay sección padre.
+      El subtitle resume en una frase qué encontrará el usuario en esta área.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    title="Nuestra Red"
+    subtitle="El BPA está presente en cada rincón de Santiago de Cuba. Conozca nuestra estructura territorial, dónde encontrarnos y cómo comunicarse con nosotros."
+  />
+
+  <!-- BLOQUE 2 · Features2 — Las tres subsecciones ────────────────────────────
+      Tres tarjetas hardcodeadas con icono, título, descripción y enlace.
+      columns=3: una tarjeta por columna en desktop, apiladas en móvil.
+      Fondo azul suave para diferenciar visualmente del HeroText superior.
+      callToAction variant='link' → texto con flecha, sin botón completo.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Features2
+    tagline="Explore cada sección"
+    columns={3}
+    items={[
+      {
+        title: 'Dirección Provincial',
+        description:
+          'Conozca la sede del BPA en Santiago de Cuba: su rol institucional, las áreas que la integran y los datos de contacto para comunicarse directamente con la dirección.',
+        icon: 'tabler:building-bank',
+        callToAction: {
+          variant: 'link',
+          text: 'Conocer más',
+          href: '/sobre-nosotros/nuestra-red/direccion-provincial',
+          icon: 'tabler:arrow-right',
+        },
+      },
+      {
+        title: 'Sucursales y Oficinas',
+        description:
+          'Descubra los tipos de oficinas bancarias que operan en la provincia: sucursales, cajas de ahorro y cajeros automáticos, con información sobre los servicios que ofrece cada una.',
+        icon: 'tabler:map-pins',
+        callToAction: {
+          variant: 'link',
+          text: 'Conocer más',
+          href: '/sobre-nosotros/nuestra-red/sucursales',
+          icon: 'tabler:arrow-right',
+        },
+      },
+      {
+        title: 'Canales de Atención',
+        description:
+          'Encuentre todas las vías para comunicarse con el banco: teléfonos por área, correos institucionales, atención presencial y horarios de servicio al público.',
+        icon: 'tabler:headset',
+        callToAction: {
+          variant: 'link',
+          text: 'Conocer más',
+          href: '/sobre-nosotros/nuestra-red/canales-de-atencion',
+          icon: 'tabler:arrow-right',
+        },
+      },
+    ]}
+  >
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Features2>
+
+  <!-- BLOQUE 3 · PageNav ───────────────────────────────────────────────────────
+      Sin botón "next": este es el índice del módulo, no una página de contenido
+      dentro de una secuencia. El usuario avanza haciendo clic en las tarjetas.
+      El botón "prev" permite volver a la última página del módulo anterior.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Sobre Nosotros', href: '/sobre-nosotros' }}
+  />
+
+</Layout>
