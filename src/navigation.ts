@@ -51,8 +51,8 @@ export const headerData = {
           href: getPermalink('/sobre-nosotros/historia'),
         },
         {
-          text: 'Directorio Institucional',
-          href: getPermalink('/sobre-nosotros/directorio'),
+          text: 'Nuestra Red',
+          href: getPermalink('/sobre-nosotros/nuestra-red'),
         },
       ],
     },
@@ -78,11 +78,6 @@ export const headerData = {
           href: getPermalink('/herramientas/calendario'),
         },
       ],
-    },
-
-    {
-      text: 'Contáctenos',
-      href: getPermalink('/contacto'),
     },
   ],
 

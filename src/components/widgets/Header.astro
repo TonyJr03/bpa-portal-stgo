@@ -6,7 +6,7 @@ import ToggleMenu from '~/components/common/ToggleMenu.astro';
 import ToggleLang from '~/components/common/ToggleLang.astro';
 import Button from '~/components/ui/Button.astro';
 
-import { getHomePermalink } from '~/utils/permalinks';
+import { getHomePermalink, getPermalink } from '~/utils/permalinks';
 import { trimSlash } from '~/utils/permalinks';
 import type { CallToAction } from '~/types';
 
@@ -46,6 +46,7 @@ const {
 } = Astro.props;
 
 const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
+const contactHref = getPermalink('/contacto');
 ---
 
 <header
@@ -66,6 +67,7 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
     ]}
   >
 
+    <!-- COLUMNA 1: Logo + botón hamburguesa (visible solo en móvil/tablet) -->
     <div class:list={[{ 'mr-auto rtl:mr-0 rtl:ml-auto': position === 'right' }, 'flex justify-between']}>
       <a class="flex items-center" href={getHomePermalink()}>
         <Logo />
@@ -75,6 +77,7 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
       </div>
     </div>
 
+    <!-- COLUMNA 2: Navegación principal (visible solo en escritorio lg+) -->
     <nav
       class="items-center w-full lg:w-auto hidden lg:flex lg:flex-1 lg:mx-1 xl:mx-5 text-default overflow-y-auto overflow-x-hidden lg:overflow-y-visible lg:overflow-x-auto lg:justify-center"
       aria-label="Navegación principal"
@@ -88,17 +91,27 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
               {links?.length ? (
                 <>
                   {href ? (
-                    <a
-                      href={href}
-                      class:list={[
-                        'hover:text-link dark:hover:text-white px-4 py-3 flex items-center whitespace-nowrap',
-                        { 'aw-link-active': href === currentPath },
-                      ]}
-                    >
-                      {text}{' '}
-                      <Icon name="tabler:chevron-down" class="w-3.5 h-3.5 ml-0.5 rtl:ml-0 rtl:mr-0.5 hidden lg:inline" />
-                    </a>
+                    //Ítem con página principal Y submenú:
+                    <div class="flex items-center">
+                      <a
+                        href={href}
+                        class:list={[
+                          'hover:text-link dark:hover:text-white pl-4 pr-1 py-3 flex items-center whitespace-nowrap',
+                          { 'aw-link-active': href === currentPath },
+                        ]}
+                      >
+                        {text}
+                      </a>
+                      <button
+                        type="button"
+                        aria-label={`Desplegar submenú de ${text}`}
+                        class="hover:text-link dark:hover:text-white pl-0 pr-3 py-3 flex items-center cursor-pointer"
+                      >
+                        <Icon name="tabler:chevron-down" class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   ) : (
+                    //Ítem solo con submenú (sin página propia):
                     <button
                       type="button"
                       class="hover:text-link dark:hover:text-white px-4 py-3 flex items-center whitespace-nowrap"
@@ -124,6 +137,7 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
                   </ul>
                 </>
               ) : (
+                //Ítem simple sin submenú: enlace directo 
                 <a
                   class:list={[
                     'hover:text-link dark:hover:text-white px-4 py-3 flex items-center whitespace-nowrap',
@@ -140,6 +154,7 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
       </ul>
     </nav>
 
+    <!-- COLUMNA 3: Controles de utilidad (contacto + idioma + tema) -->
     <div
       class:list={[
         { 'ml-auto rtl:ml-0 rtl:mr-auto': position === 'left' },
@@ -148,8 +163,26 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
     >
       <div class="items-center flex justify-between w-full lg:w-auto gap-1">
         <div class="flex items-center gap-1">
+
+          <!-- Botón Contáctenos: icono headset, siempre visible, lleva a /contacto -->
+          <a
+            href={contactHref}
+            aria-label="Contáctenos"
+            title="Contáctenos"
+            class:list={[
+              'text-muted dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 inline-flex items-center transition-colors duration-150',
+              { 'text-link dark:text-white': contactHref === currentPath },
+            ]}
+          >
+            <Icon name="tabler:headset" class="w-6 h-6 lg:w-5 lg:h-5" />
+          </a>
+
+          <!-- Selector de idioma ES/EN (placeholder para futura i18n) -->
           {showToggleLang && <ToggleLang />}
+
+          <!-- Selector de tema claro / oscuro -->
           {showToggleTheme && <ToggleTheme iconClass="w-6 h-6 lg:w-5 lg:h-5 lg:inline-block" />}
+
         </div>
         {
           actions?.length ? (
