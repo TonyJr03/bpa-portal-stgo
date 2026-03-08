@@ -1,0 +1,152 @@
+---
+/**
+ * @pagina   src/pages/contacto.astro
+ * @ruta     /contacto
+ *
+ * @descripcion
+ * Página dedicada de Contáctenos del portal institucional del BPA Santiago
+ * de Cuba. Estructura definitiva tras revisión:
+ *
+ *   BLOQUE 1 · HeroText
+ *     Encabezado de la página. Sin tagline, sin imagen.
+ *
+ *   BLOQUE 2 · Sección WidgetWrapper  ← Astro envuelve la isla Vue
+ *     FormularioContacto.vue (client:load):
+ *       · Tab "Mensaje o Sugerencia"  → feedback general, 4 campos
+ *       · Tab "Queja o Reclamación"   → proceso formal del BPA, 6 campos
+ *         con motivo categorizado según el documento oficial de 2024.
+ *       · Panel lateral derecho: datos de contacto rápido + nota 30 días.
+ *     El WidgetWrapper aporta el padding, max-width y el fondo bg-blue-50
+ *     que integran visualmente el formulario en el sistema de diseño.
+ *
+ *   BLOQUE 3 · Steps
+ *     Proceso oficial de quejas extraído del documento BPA 2024 (4 pasos).
+ *
+ *   BLOQUE 4 · CallToAction
+ *     Enlace al Mapa Interactivo de sucursales (pendiente de implementar).
+ *
+ *   BLOQUE 5 · PageNav
+ *     prev: "Volver a Inicio"
+ *
+ * @colecciones
+ *   mensajes_feedback  — debe crearse en PocketBase con:
+ *   tipo(Text) · nombre(Text) · correo(Email) · asunto(Text) · mensaje(Text)
+ *   direccion(Text) · municipio(Text) · telefono(Text) · motivo(Text) · leido(Bool)
+ */
+
+// ── Imports ──────────────────────────────────────────────────────────────────
+import Layout             from '~/layouts/PageLayout.astro';
+import HeroText           from '~/components/widgets/HeroText.astro';
+import WidgetWrapper      from '~/components/ui/WidgetWrapper.astro';
+import Steps              from '~/components/widgets/Steps.astro';
+import CallToAction       from '~/components/widgets/CallToAction.astro';
+import PageNav            from '~/components/widgets/PageNav.astro';
+import FormularioContacto from '~/components/vue/FormularioContacto.vue';
+
+// ── Metadata SEO ─────────────────────────────────────────────────────────────
+const metadata = {
+  title: 'Contáctenos — BPA Santiago de Cuba',
+  description:
+    'Comuníquese con el Banco Popular de Ahorro en Santiago de Cuba: envíe su mensaje o reclamación, consulte nuestros teléfonos, correos y horarios de atención.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Sin tagline: destino final, no es subnivel de ningún módulo.
+      Subtitle resume las dos vías disponibles en la página.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    title="Contáctenos"
+    subtitle="Escríbanos directamente o consulte los datos de la sede provincial. Atendemos consultas generales y reclamaciones formales."
+  />
+
+  <!-- BLOQUE 2 · WidgetWrapper + FormularioContacto.vue ───────────────────────
+      El WidgetWrapper replica exactamente el contenedor que usan todos los
+      widgets de AstroWind: padding vertical, max-width y fondo de sección.
+      Esto integra la isla Vue en el ritmo visual del resto de la página.
+
+      bg-blue-50 (fondo de sección) alterna con el blanco del HeroText de arriba
+      y con el blanco del bloque Steps de abajo — patrón estándar del proyecto.
+
+      client:load: el usuario viene aquí con intención explícita de contactar,
+      por lo que la carga inmediata es preferible a client:visible.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <WidgetWrapper containerClass="max-w-6xl mx-auto">
+    <FormularioContacto client:load />
+
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </WidgetWrapper>
+
+  <!-- BLOQUE 3 · Steps — Proceso oficial de quejas ──────────────────────────
+      Basado literalmente en "Parámetros que se necesitan para el tratamiento
+      a las quejas, reclamaciones y sugerencias" (DOCX BPA 2024).
+      max-w-3xl: el proceso es lineal y gana legibilidad en columna estrecha.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <Steps
+    tagline="Protocolo Oficial"
+    title="¿Cómo presentar una queja o reclamación formal?"
+    subtitle="Si su situación requiere una respuesta oficial del banco, siga estos pasos. Tiene derecho a recibir respuesta en un plazo máximo de 30 días hábiles."
+    items={[
+      {
+        title: 'Reúna sus datos personales',
+        description:
+          'Para tramitar correctamente su queja necesitará: nombre y apellidos completos, dirección, municipio, provincia y un teléfono de contacto. Estos datos son imprescindibles para que el banco pueda localizarle y responder.',
+        icon: 'tabler:user-check',
+      },
+      {
+        title: 'Identifique el motivo de su reclamación',
+        description:
+          'El BPA clasifica las reclamaciones en categorías: falta de información, demora en el servicio, inconformidad con un trámite, maltrato, servicios de pago a jubilados, créditos sociales, transferencias monetarias, títulos de propiedad u otros. Seleccione la que mejor describe su situación.',
+        icon: 'tabler:list-check',
+      },
+      {
+        title: 'Describa los hechos con exactitud y claridad',
+        description:
+          'Redacte un texto detallado explicando qué ocurrió, cuándo, en qué sucursal o área del banco y qué trámite realizaba. Cuanto más precisa sea la descripción, más ágil será la resolución. Puede usar el formulario de la pestaña "Queja o Reclamación" en esta misma página.',
+        icon: 'tabler:pencil',
+      },
+      {
+        title: 'Aguarde la respuesta en el plazo establecido',
+        description:
+          'El banco está obligado a responder su reclamación en un plazo máximo de 30 días hábiles desde la fecha de recepción. Si no recibe respuesta en ese período, puede escalar la situación a la Dirección Provincial a través del teléfono o correo de Atención al Cliente.',
+        icon: 'tabler:clock-check',
+      },
+    ]}
+    classes={{ container: 'max-w-3xl' }}
+  />
+
+  <!-- BLOQUE 4 · CallToAction — Enlace al Mapa de Sucursales ──────────────────
+      El mapa interactivo está pendiente de implementación.
+      Dos acciones: mapa (primary) + canales de atención (secondary).
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CallToAction
+    title="¿Prefiere visitarnos en persona?"
+    subtitle="Consulte la ubicación exacta de todas nuestras sucursales, cajas de ahorro y cajeros automáticos en el mapa interactivo de la provincia."
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Ver mapa de sucursales',
+        href:    '/herramientas/mapa',
+        icon:    'tabler:map-pin',
+      },
+      {
+        variant: 'secondary',
+        text:    'Canales de atención',
+        href:    '/sobre-nosotros/nuestra-red/canales-de-atencion',
+        icon:    'tabler:headset',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
+      Página terminal del portal: sin botón next.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Volver a Inicio', href: '/' }}
+  />
+
+</Layout>
