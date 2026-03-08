@@ -7,22 +7,22 @@
  *   · Binding de campos con v-model
  *   · Validación client-side antes del envío
  *   · Estados del ciclo de vida del envío: idle → enviando → éxito | error
- *   · Petición a PocketBase (colección mensajes_feedback)
+ *   · Petición a PocketBase — colecciones: mensajes / quejas_sugerencias
  *
- * @lo-que-NO-hace-este-componente
+ * @lo_que_NO_hace_este_componente
  *   El layout exterior (grid 2/3 + 1/3), el aside informativo, el título
  *   "Escríbanos", el WidgetWrapper y el fondo de sección son responsabilidad
  *   de ContactoBPA.astro — generado en build, sin JS en el cliente.
  *
- * @coleccion  mensajes_feedback
- *   tipo(Text) · nombre(Text) · correo(Email) · asunto(Text) · mensaje(Text)
- *   direccion(Text) · municipio(Text) · telefono(Text) · motivo(Text) · leido(Bool)
+ * @colecciones
+ *   mensajes: nombre(Text) · correo(Email) · asunto(Text) · mensaje(Text) · leido(Bool)
+ *   quejas_sugerencias: tipo(Text) · nombre(Text) · direccion(Text) · municipio(Text) · telefono(Text) · motivo(Text) · mensaje(Text) · leido(Bool)
  *
  * @dependencias  ~/lib/pocketbase
  * @directiva     client:load  (en ContactoBPA.astro)
  */
 
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import { pb } from '~/lib/pocketbase';
 
 // ── Pestaña activa ───────────────────────────────────────────────────────────
@@ -38,7 +38,8 @@ const errServer = ref('');
 const feedback = reactive({ nombre: '', correo: '', asunto: '', mensaje: '' });
 
 const queja = reactive({
-  nombre: '', direccion: '', municipio: '', telefono: '', motivo: '', mensaje: '',
+  tipo: 'queja' as 'queja' | 'sugerencia',
+  nombre: '', direccion: '', municipio: '', telefono: '', correo: '', motivo: '', mensaje: '',
 });
 
 // ── Catálogos estáticos ───────────────────────────────────────────────────────
@@ -74,16 +75,25 @@ const errFeedback = computed(() => {
 
 const errQueja = computed(() => {
   const e: Record<string, string> = {};
-  if (!queja.nombre.trim())  e.nombre    = 'El nombre y apellidos son obligatorios.';
-  if (!queja.municipio)      e.municipio = 'Seleccione el municipio.';
-  if (!queja.motivo)         e.motivo    = 'Seleccione el motivo de la reclamación.';
-  if (!queja.mensaje.trim()) e.mensaje   = 'Detalle su queja o sugerencia.';
+  if (!queja.nombre.trim())                       e.nombre    = 'El nombre y apellidos son obligatorios.';
+  if (!queja.municipio)                           e.municipio = 'Seleccione el municipio.';
+  if (queja.tipo === 'queja' && !queja.motivo)    e.motivo    = 'Seleccione el motivo de la queja.';
+  if (!queja.mensaje.trim())                      e.mensaje   = 'Describa su queja o sugerencia.';
   return e;
 });
 
 // Muestra el error de un campo solo después de que el usuario lo haya tocado
 const tocado = reactive<Record<string, boolean>>({});
 const tocar  = (c: string) => { tocado[c] = true; };
+
+// Limpia el motivo si el usuario cambia a "sugerencia" — evita enviar datos
+// de queja residuales en un registro de sugerencia.
+watch(() => queja.tipo, (nuevoTipo) => {
+  if (nuevoTipo === 'sugerencia') {
+    queja.motivo = '';
+    delete tocado['motivo'];
+  }
+});
 
 // ── Clases reactivas para inputs (centraliza la lógica de error visual) ───────
 function claseInput(campo: string, errores: Record<string, string>) {
@@ -100,14 +110,14 @@ function claseInput(campo: string, errores: Record<string, string>) {
   return base.join(' ');
 }
 
-// ── Envío Feedback ────────────────────────────────────────────────────────────
+// ── Envío Tab 1 · Mensaje ─────────────────────────────────────────────────────
 async function enviarFeedback() {
   ['nombre', 'correo', 'asunto', 'mensaje'].forEach(tocar);
   if (Object.keys(errFeedback.value).length) return;
   estado.value = 'enviando';
   try {
-    await pb.collection('mensajes_feedback').create({
-      tipo: 'feedback', leido: false,
+    await pb.collection('mensajes').create({
+      leido: false,
       nombre:  feedback.nombre.trim(),
       correo:  feedback.correo.trim(),
       asunto:  feedback.asunto.trim(),
@@ -122,23 +132,27 @@ async function enviarFeedback() {
   }
 }
 
-// ── Envío Queja ───────────────────────────────────────────────────────────────
+// ── Envío Tab 2 · Queja o Sugerencia ─────────────────────────────────────────
 async function enviarQueja() {
-  ['nombre', 'municipio', 'motivo', 'mensaje'].forEach(tocar);
+  const camposRequeridos = ['nombre', 'municipio', 'mensaje'];
+  if (queja.tipo === 'queja') camposRequeridos.push('motivo');
+  camposRequeridos.forEach(tocar);
   if (Object.keys(errQueja.value).length) return;
   estado.value = 'enviando';
   try {
-    await pb.collection('mensajes_feedback').create({
-      tipo: 'queja', leido: false,
+    await pb.collection('quejas_sugerencias').create({
+      leido: false,
+      tipo:      queja.tipo,
       nombre:    queja.nombre.trim(),
       direccion: queja.direccion.trim(),
       municipio: queja.municipio,
       telefono:  queja.telefono.trim(),
       motivo:    queja.motivo,
+      correo:    queja.correo.trim(),
       mensaje:   queja.mensaje.trim(),
     });
     estado.value = 'exito';
-    Object.assign(queja, { nombre: '', direccion: '', municipio: '', telefono: '', motivo: '', mensaje: '' });
+    Object.assign(queja, { tipo: 'queja', nombre: '', direccion: '', municipio: '', telefono: '', correo: '', motivo: '', mensaje: '' });
     Object.keys(tocado).forEach(k => delete tocado[k]);
   } catch (err: unknown) {
     estado.value = 'error';
@@ -184,9 +198,10 @@ function cambiarTab(tab: TabId) {
       ]"
     >
       <!-- tabler:message -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 20l3-3H20a1 1 0 001-1V4a1 1 0 00-1-1H4a1 1 0 00-1 1v13a1 1 0 001 1z"/>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M8 9h8" /><path d="M8 13h6" />
+        <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12" />
       </svg>
       Mensaje
     </button>
@@ -204,10 +219,11 @@ function cambiarTab(tab: TabId) {
       ]"
     >
       <!-- tabler:file-description -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M14 3v4a1 1 0 001 1h4"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6M9 17h4"/>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+        <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+        <path d="M9 17h6" /><path d="M9 13h6" />
       </svg>
       Queja o Sugerencia
     </button>
@@ -221,8 +237,10 @@ function cambiarTab(tab: TabId) {
     class="flex flex-col items-center justify-center text-center py-16 px-6 rounded-xl border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20"
   >
     <!-- tabler:circle-check -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-14 h-14 text-green-500 dark:text-green-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-14 h-14 text-green-500 dark:text-green-400 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+      <path d="M9 12l2 2l4 -4" />
     </svg>
     <h3 class="text-xl font-bold font-heading text-green-800 dark:text-green-300 mb-2">
       Mensaje enviado con éxito
@@ -233,7 +251,7 @@ function cambiarTab(tab: TabId) {
         y un representante lo atenderá a la brevedad posible.
       </template>
       <template v-else>
-        Su reclamación ha quedado registrada oficialmente. Tiene derecho a
+        Su queja o sugerencia ha quedado registrada. Tiene derecho a
         recibir respuesta en un plazo de <strong>30 días hábiles</strong>
         a partir de la fecha de recepción.
       </template>
@@ -254,8 +272,11 @@ function cambiarTab(tab: TabId) {
     class="flex flex-col items-center justify-center text-center py-12 px-6 rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20"
   >
     <!-- tabler:alert-triangle -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-red-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4m0 4h.01"/>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-red-400 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <path d="M12 9v4" />
+      <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" />
+      <path d="M12 16h.01" />
     </svg>
     <h3 class="text-lg font-bold font-heading text-red-700 dark:text-red-400 mb-1">
       Error al enviar
@@ -272,7 +293,7 @@ function cambiarTab(tab: TabId) {
   <template v-else>
 
     <!-- ────────────────────────────────────────────────────────────────
-        TAB 1 · Mensaje / Sugerencia
+        TAB 1 · Mensaje
     ──────────────────────────────────────────────────────────────── -->
     <form v-if="tabActiva === 'feedback'" @submit.prevent="enviarFeedback" novalidate class="space-y-5">
 
@@ -324,7 +345,7 @@ function cambiarTab(tab: TabId) {
           Mensaje <span class="text-red-500">*</span>
         </label>
         <textarea id="fb-mensaje" v-model="feedback.mensaje" @blur="tocar('mensaje')"
-          rows="5" placeholder="Describa su consulta o sugerencia con el mayor detalle posible…"
+          rows="5" placeholder="Escriba aquí su consulta o pregunta con el mayor detalle posible…"
           :class="claseInput('mensaje', errFeedback) + ' resize-none'"
         />
         <p v-if="tocado['mensaje'] && errFeedback['mensaje']" class="mt-1 text-xs text-red-500 dark:text-red-400">
@@ -340,30 +361,34 @@ function cambiarTab(tab: TabId) {
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
         </svg>
         <!-- tabler:send -->
-        <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10 14L21 3m0 0l-6.5 18a.55.55 0 01-1 0L10 14l-7-3.5a.55.55 0 010-1L21 3"/>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <path d="M10 14l11 -11" />
+          <path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5" />
         </svg>
         {{ estado === 'enviando' ? 'Enviando…' : 'Enviar mensaje' }}
       </button>
     </form>
 
     <!-- ────────────────────────────────────────────────────────────────
-        TAB 2 · Queja / Reclamación formal
+        TAB 2 · Queja o Sugerencia
     ──────────────────────────────────────────────────────────────── -->
     <form v-else-if="tabActiva === 'queja'" @submit.prevent="enviarQueja" novalidate class="space-y-5">
 
-      <!-- Aviso: plazo legal (30 días) -->
-      <div class="flex gap-3 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-sm text-blue-800 dark:text-blue-300">
-        <!-- tabler:info-circle -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0 mt-0.5 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8h.01M11 12h1v4h1"/>
-        </svg>
-        <span>
-          Complete los datos con exactitud y claridad. Tiene derecho a recibir
-          respuesta formal en <strong>30 días hábiles</strong> a partir del registro
-          de su reclamación.
-        </span>
+      <!-- Selector de tipo: Queja / Sugerencia -->
+      <div class="flex gap-6">
+        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+          <input type="radio" v-model="queja.tipo" value="queja"
+            class="w-4 h-4 text-primary border-gray-300 dark:border-slate-600 focus:ring-primary/40"
+          />
+          Queja
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+          <input type="radio" v-model="queja.tipo" value="sugerencia"
+            class="w-4 h-4 text-primary border-gray-300 dark:border-slate-600 focus:ring-primary/40"
+          />
+          Sugerencia
+        </label>
       </div>
 
       <!-- Nombre y apellidos -->
@@ -412,8 +437,16 @@ function cambiarTab(tab: TabId) {
         />
       </div>
 
-      <!-- Motivo categorizado -->
+      <!-- Correo electrónico -->
       <div>
+        <label for="qj-correo" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Correo electrónico</label>
+        <input id="qj-correo" v-model="queja.correo" type="email" autocomplete="email" placeholder="ejemplo@correo.cu"
+          class="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+        />
+      </div>
+
+      <!-- Motivo categorizado — solo visible para quejas -->
+      <div v-if="queja.tipo === 'queja'">
         <label for="qj-motivo" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           Motivo <span class="text-red-500">*</span>
         </label>
@@ -434,7 +467,7 @@ function cambiarTab(tab: TabId) {
           Descripción detallada <span class="text-red-500">*</span>
         </label>
         <textarea id="qj-mensaje" v-model="queja.mensaje" @blur="tocar('mensaje')"
-          rows="6" placeholder="Describa los hechos con exactitud y claridad: cuándo ocurrió, en qué sucursal, qué trámite realizaba…"
+          rows="6" placeholder="Describa con exactitud y claridad su queja o sugerencia…"
           :class="claseInput('mensaje', errQueja) + ' resize-none'"
         />
         <p v-if="tocado['mensaje'] && errQueja['mensaje']" class="mt-1 text-xs text-red-500 dark:text-red-400">
@@ -450,10 +483,13 @@ function cambiarTab(tab: TabId) {
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
         </svg>
         <!-- tabler:clipboard-check -->
-        <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+          <path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" />
+          <path d="M9 14l2 2l4 -4" />
         </svg>
-        {{ estado === 'enviando' ? 'Registrando…' : 'Registrar reclamación' }}
+        {{ estado === 'enviando' ? 'Registrando…' : 'Enviar queja o sugerencia' }}
       </button>
     </form>
 
