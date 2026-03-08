@@ -101,10 +101,10 @@ export const footerData = {
     {
       title: 'Sobre Nosotros',
       links: [
-        { text: 'Misión',                  href: getPermalink('/sobre-nosotros/mision') },
-        { text: 'Visión',                  href: getPermalink('/sobre-nosotros/vision') },
-        { text: 'Historia',                href: getPermalink('/sobre-nosotros/historia') },
-        { text: 'Directorio Institucional', href: getPermalink('/sobre-nosotros/directorio') },
+        { text: 'Misión',      href: getPermalink('/sobre-nosotros/mision') },
+        { text: 'Visión',      href: getPermalink('/sobre-nosotros/vision') },
+        { text: 'Historia',    href: getPermalink('/sobre-nosotros/historia') },
+        { text: 'Nuestra Red', href: getPermalink('/sobre-nosotros/nuestra-red') },
       ],
     },
 
@@ -115,7 +115,6 @@ export const footerData = {
         { text: 'Tasa de Cambio',         href: getPermalink('/herramientas/tasas-de-cambio') },
         { text: 'Mapa Interactivo',       href: getPermalink('/herramientas/mapa') },
         { text: 'Calendario',             href: getPermalink('/herramientas/calendario') },
-        { text: 'Contáctenos',            href: getPermalink('/contacto') },
       ],
     },
 
