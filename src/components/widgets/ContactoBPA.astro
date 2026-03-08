@@ -1,0 +1,176 @@
+---
+/**
+ * @widget   src/components/widgets/ContactoBPA.astro
+ * @ruta     src/components/widgets/ContactoBPA.astro
+ *
+ * @descripcion
+ * Widget de contacto personalizado del BPA. Sigue exactamente el patrón
+ * de todos los widgets de AstroWind (WidgetWrapper + Headline + contenido),
+ * adaptado a las necesidades específicas del banco:
+ *
+ *   · WidgetWrapper  — padding, max-width, bg de sección, animación intersect
+ *   · Headline       — tagline + title + subtitle (SSG, cero JS)
+ *   · Grid 2/3 + 1/3 — layout generado en build
+ *       IZQUIERDA: cabecera "Escríbanos" + <FormularioContacto client:load />
+ *                  La isla Vue maneja SOLO lo reactivo: tabs, campos,
+ *                  validación, estados y envío a PocketBase.
+ *       DERECHA:   aside 100% estático — card sede provincial, nota 30 días
+ *                  y enlace a canales. Generado en build, cero JS.
+ *
+ * @porque-este-patron
+ *   El aside informativo nunca cambia. No necesita Vue. Sacarlo del .vue y
+ *   ponerlo aquí significa que se genera en el build de Astro como HTML puro,
+ *   en lugar de hidratarse en el cliente. Esto respeta el principio SSG del
+ *   proyecto y elimina JS innecesario, algo especialmente valioso en el
+ *   entorno air-gapped del banco.
+ *
+ * @props  Extiende Widget de AstroWind (id, isDark, classes, bg)
+ *         + tagline, title, subtitle propios de Headline.
+ *
+ * @colecciones  Ninguna — el widget es estático. La isla Vue maneja PocketBase.
+ *
+ * NOTA PARA EL ADMINISTRADOR:
+ * Los campos [COMPLETAR] del aside derecho deben sustituirse por los datos
+ * reales de la Dirección Provincial antes del despliegue en producción.
+ */
+
+import WidgetWrapper      from '~/components/ui/WidgetWrapper.astro';
+import Headline           from '~/components/ui/Headline.astro';
+import FormularioContacto from '~/components/vue/FormularioContacto.vue';
+import { Icon }           from 'astro-icon/components';
+import type { Widget }    from '~/types';
+
+export interface Props extends Widget {
+  tagline?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+const {
+  tagline  = await Astro.slots.render('tagline'),
+  title    = await Astro.slots.render('title'),
+  subtitle = await Astro.slots.render('subtitle'),
+
+  id,
+  isDark   = false,
+  classes  = {},
+  bg       = await Astro.slots.render('bg'),
+} = Astro.props;
+---
+
+<WidgetWrapper
+  id={id}
+  isDark={isDark}
+  containerClass={`max-w-6xl mx-auto ${classes?.container ?? ''}`}
+  bg={bg}
+>
+
+  <!-- Headline — renderiza solo si se pasan los props desde la página ──────── -->
+  <Headline
+    tagline={tagline}
+    title={title}
+    subtitle={subtitle}
+    classes={classes?.headline as Record<string, string>}
+  />
+
+  <!-- Grid principal: 2/3 formulario + 1/3 aside ─────────────────────────── -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-14 items-start">
+
+    <!-- ══════════════════════════════════════════════════════════════════
+        COLUMNA IZQUIERDA (2/3) — Isla Vue
+        Cabecera "Escríbanos" generada aquí en Astro (SSG).
+        La isla Vue arranca justo debajo, solo con lo reactivo.
+    ══════════════════════════════════════════════════════════════════ -->
+    <div class="lg:col-span-2">
+
+      <!-- Cabecera de columna — SSG, sin JS ────────────────────────────── -->
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold font-heading text-default dark:text-white">
+          Escríbanos
+        </h2>
+        <p class="mt-1 text-muted text-sm">
+          Seleccione el tipo de comunicación que desea enviarnos.
+        </p>
+      </div>
+
+      <!-- Isla Vue: tabs + formularios + estados de envío ────────────────── -->
+      <FormularioContacto client:load />
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+        COLUMNA DERECHA (1/3) — Aside estático (SSG, cero JS)
+        lg:pt-[4.5rem] alinea la card visualmente con el inicio del
+        formulario (debajo de la cabecera "Escríbanos" + las pestañas).
+    ══════════════════════════════════════════════════════════════════ -->
+    <aside class="space-y-5 lg:pt-[4.5rem]">
+
+      <!-- Card: datos de contacto de la Sede Provincial ─────────────────── -->
+      <div class="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
+        <h3 class="text-base font-semibold font-heading text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+          <Icon name="tabler:building-bank" class="w-5 h-5 text-primary shrink-0" />
+          Sede Provincial
+        </h3>
+
+        <ul class="space-y-3.5 text-sm text-slate-600 dark:text-slate-400">
+
+          <!-- Dirección -->
+          <li class="flex gap-3">
+            <Icon name="tabler:map-pin" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+            <span>[COMPLETAR: Calle, número, entre calles, Santiago de Cuba]</span>
+          </li>
+
+          <!-- Teléfonos -->
+          <li class="flex gap-3">
+            <Icon name="tabler:phone" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+            <span>
+              Recepción: <strong class="text-slate-700 dark:text-slate-300">[COMPLETAR]</strong><br/>
+              Atención al Cliente: <strong class="text-slate-700 dark:text-slate-300">[COMPLETAR]</strong>
+            </span>
+          </li>
+
+          <!-- Correo -->
+          <li class="flex gap-3">
+            <Icon name="tabler:mail" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+            <span>[COMPLETAR: atencion@bpa.scu.cu]</span>
+          </li>
+
+          <!-- Horario -->
+          <li class="flex gap-3">
+            <Icon name="tabler:clock" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+            <span>
+              Lunes a Viernes<br/>
+              <strong class="text-slate-700 dark:text-slate-300">[COMPLETAR: 8:00 am – 4:00 pm]</strong>
+            </span>
+          </li>
+
+        </ul>
+      </div>
+
+      <!-- Card: nota sobre el plazo legal de respuesta ──────────────────── -->
+      <div class="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-5 text-sm text-amber-800 dark:text-amber-300">
+        <p class="font-semibold mb-1.5 flex items-center gap-2">
+          <Icon name="tabler:info-circle" class="w-4 h-4 shrink-0" />
+          Plazo de respuesta
+        </p>
+        <p>
+          Las reclamaciones formales tienen garantizado un plazo máximo de
+          <strong>30 días hábiles</strong>. Si no recibe contestación en ese
+          período, puede escalar directamente a la Dirección Provincial.
+        </p>
+      </div>
+
+      <!-- Enlace rápido a Canales de Atención ────────────────────────────── -->
+      <a
+        href="/sobre-nosotros/nuestra-red/canales-de-atencion"
+        class="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+      >
+        <Icon name="tabler:arrow-right" class="w-4 h-4 shrink-0" />
+        Ver todos los canales de atención
+      </a>
+
+    </aside>
+
+  </div>
+
+</WidgetWrapper>
