@@ -1,0 +1,88 @@
+---
+/**
+ * @pagina  src/pages/herramientas/tasas-de-cambio.astro
+ * @ruta    /herramientas/tasas-de-cambio
+ *
+ * @descripcion
+ * Página del módulo Tasas de Cambio. Declara los bloques de la página
+ * y no sabe nada de Vue ni de PocketBase — responsabilidad exclusiva
+ * de TasasDeCambioWidget.astro y TasasDeCambio.vue respectivamente.
+ *
+ * Estructura:
+ *   BLOQUE 1 · HeroText              → tagline + title + subtitle
+ *   BLOQUE 2 · TasasDeCambioWidget   → widget propio (bg-blue-50)
+ *                                      Headline + isla Vue
+ *   BLOQUE 3 · CallToAction          → cierre institucional
+ *   BLOQUE 4 · PageNav               → prev: "Volver a Herramientas"
+ *
+ * @colecciones  ninguna en build time
+ *   tasas_cambio → consultada en el cliente por TasasDeCambio.vue
+ */
+
+import Layout              from '~/layouts/PageLayout.astro';
+import HeroText            from '~/components/widgets/HeroText.astro';
+import TasasDeCambioWidget from '~/components/widgets/TasasDeCambioWidget.astro';
+import CallToAction        from '~/components/widgets/CallToAction.astro';
+import PageNav             from '~/components/widgets/PageNav.astro';
+
+const metadata = {
+  title: 'Tasas de Cambio — BPA Santiago de Cuba',
+  description:
+    'Consulte las tasas de cambio oficiales del Banco Popular de Ahorro: compra y venta de divisas en tiempo real. Incluye conversor rápido de moneda extranjera a pesos cubanos.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
+      Tagline "Herramientas" sitúa al usuario dentro del módulo.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    tagline="Herramientas"
+    title="Tasas de Cambio"
+    subtitle="Consulte las tasas oficiales de compra y venta de divisas del BPA, actualizadas directamente desde nuestro sistema. Use el conversor rápido para estimar equivalencias."
+  />
+
+  <!-- BLOQUE 2 · TasasDeCambioWidget ──────────────────────────────────────────
+      Widget propio: WidgetWrapper + Headline + isla Vue TasasDeCambio.
+      Sin Headline — el HeroText ya cumple ese rol en esta página.
+      bg-blue-50 alterna con el blanco del HeroText y del CallToAction.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <TasasDeCambioWidget id="tasas">
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </TasasDeCambioWidget>
+
+  <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
+      Cierre del módulo. Ofrece dos salidas naturales desde una consulta
+      de tasas: ir al mapa para encontrar la sucursal más cercana,
+      o contactar al banco para una consulta específica.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CallToAction
+    title="¿Necesita realizar una operación de cambio?"
+    subtitle="Acérquese a cualquiera de nuestras sucursales con su documento de identidad. Nuestros especialistas le atenderán y orientarán sobre los requisitos vigentes."
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Localizar sucursal',
+        href:    '/herramientas/mapa',
+        icon:    'tabler:map-pin',
+      },
+      {
+        variant: 'secondary',
+        text:    'Contáctenos',
+        href:    '/contacto',
+        icon:    'tabler:headset',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
+      Solo botón izquierdo: regresa al índice del módulo Herramientas.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Volver a Herramientas', href: '/herramientas' }}
+  />
+
+</Layout>
