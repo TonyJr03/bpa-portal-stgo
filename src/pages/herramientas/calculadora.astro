@@ -1,0 +1,87 @@
+---
+/**
+ * @pagina  src/pages/herramientas/calculadora.astro
+ * @ruta    /herramientas/calculadora
+ *
+ * @descripcion
+ * Página del módulo Calculadora Financiera. Declara los bloques de la
+ * página y no sabe nada de Vue ni de cálculos — responsabilidad
+ * exclusiva de CalculadoraWidget.astro y CalculadoraFinanciera.vue.
+ *
+ * Estructura:
+ *   BLOQUE 1 · HeroText            → tagline + title + subtitle
+ *   BLOQUE 2 · CalculadoraWidget   → widget propio (bg-blue-50)
+ *                                     Headline + isla Vue
+ *   BLOQUE 3 · CallToAction        → cierre institucional
+ *   BLOQUE 4 · PageNav             → prev: "Volver a Herramientas"
+ *
+ * @colecciones  ninguna — componente completamente autónomo
+ */
+
+import Layout              from '~/layouts/PageLayout.astro';
+import HeroText            from '~/components/widgets/HeroText.astro';
+import CalculadoraWidget   from '~/components/widgets/CalculadoraWidget.astro';
+import CallToAction        from '~/components/widgets/CallToAction.astro';
+import PageNav             from '~/components/widgets/PageNav.astro';
+
+const metadata = {
+  title: 'Calculadora Financiera — BPA Santiago de Cuba',
+  description:
+    'Calcule los intereses de su cuenta a la vista, el rendimiento de un depósito a plazo fijo y la cuota mensual de su crédito con el Banco Popular de Ahorro.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
+      Tagline "Herramientas" sitúa al usuario dentro del módulo.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    tagline="Herramientas"
+    title="Calculadora Financiera"
+    subtitle="Estime los intereses de su ahorro, el rendimiento de un depósito a plazo o la cuota mensual de su crédito. Tres herramientas de cálculo en una sola página."
+  />
+
+  <!-- BLOQUE 2 · CalculadoraWidget ────────────────────────────────────────────
+      Widget propio: WidgetWrapper + isla Vue CalculadoraFinanciera.
+      Sin Headline — el HeroText ya cumple ese rol en esta página.
+      max-w-2xl en el widget: la calculadora es más legible en columna
+      estrecha sin desperdiciar espacio en pantallas anchas.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CalculadoraWidget id="calculadora">
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </CalculadoraWidget>
+
+  <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
+      El siguiente paso natural tras calcular es ir a la sucursal o
+      consultar las tasas de cambio.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CallToAction
+    title="¿Listo para abrir su producto financiero?"
+    subtitle="Nuestros especialistas le orientarán sobre los requisitos y condiciones vigentes de cada producto. Visítenos en cualquiera de nuestras sucursales."
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Localizar sucursal',
+        href:    '/herramientas/mapa',
+        icon:    'tabler:map-pin',
+      },
+      {
+        variant: 'secondary',
+        text:    'Ver productos',
+        href:    '/productos',
+        icon:    'tabler:layout-grid',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
+      Solo botón izquierdo: regresa al índice del módulo Herramientas.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Volver a Herramientas', href: '/herramientas' }}
+  />
+
+</Layout>
