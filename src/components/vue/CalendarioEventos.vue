@@ -28,7 +28,6 @@ import { ref, computed, onMounted } from 'vue';
 import { pb } from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
-
 interface Evento {
   id: string;
   titulo: string;
@@ -44,11 +43,9 @@ interface DiaCalendario {
   esHoy: boolean;
   fecha: Date;
   eventos: Evento[];
-  tooltipVisible: boolean;
 }
 
 // ── Estado principal ──────────────────────────────────────────────────────────
-
 const todosLosEventos = ref<Evento[]>([]);
 const cargando        = ref(true);
 const errorDB         = ref(false);
@@ -59,7 +56,6 @@ const mesActual  = ref(hoy.getMonth());      // 0-11
 const anioActual = ref(hoy.getFullYear());
 
 // ── Catálogos estáticos ───────────────────────────────────────────────────────
-
 const NOMBRES_MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -99,7 +95,6 @@ const CONFIG_TIPO = {
 } as const;
 
 // ── Computed ──────────────────────────────────────────────────────────────────
-
 /** Título del mes/año visible en la barra de navegación */
 const tituloMes = computed(
   () => `${NOMBRES_MESES[mesActual.value]} ${anioActual.value}`
@@ -134,7 +129,7 @@ const diasGrilla = computed<DiaCalendario[]>(() => {
   for (let i = inicioSemana - 1; i >= 0; i--) {
     const num   = diasMesAnterior - i;
     const fecha = new Date(anioActual.value, mesActual.value - 1, num);
-    dias.push({ numero: num, esDelMes: false, esHoy: false, fecha, eventos: [], tooltipVisible: false });
+    dias.push({ numero: num, esDelMes: false, esHoy: false, fecha, eventos: [] });
   }
 
   // Días del mes actual
@@ -145,14 +140,14 @@ const diasGrilla = computed<DiaCalendario[]>(() => {
       const evFecha = new Date(ev.fecha);
       return evFecha.getDate() === d;
     });
-    dias.push({ numero: d, esDelMes: true, esHoy, fecha, eventos, tooltipVisible: false });
+    dias.push({ numero: d, esDelMes: true, esHoy, fecha, eventos });
   }
 
   // Relleno del mes siguiente para completar filas
   const restantes = dias.length % 7 === 0 ? 0 : 7 - (dias.length % 7);
   for (let d = 1; d <= restantes; d++) {
     const fecha = new Date(anioActual.value, mesActual.value + 1, d);
-    dias.push({ numero: d, esDelMes: false, esHoy: false, fecha, eventos: [], tooltipVisible: false });
+    dias.push({ numero: d, esDelMes: false, esHoy: false, fecha, eventos: [] });
   }
 
   return dias;
@@ -165,7 +160,6 @@ const tiposEnMes = computed(() => {
 });
 
 // ── Navegación temporal ───────────────────────────────────────────────────────
-
 function mesAnterior() {
   if (mesActual.value === 0) {
     mesActual.value = 11;
@@ -190,7 +184,6 @@ function irAHoy() {
 }
 
 // ── Utilidades de presentación ───────────────────────────────────────────────
-
 /**
  * Extrae la etiqueta corta para mostrar dentro de la celda del día.
  * Lógica:
@@ -236,18 +229,30 @@ function tieneCoexistencia(dia: DiaCalendario): boolean {
   return new Set(dia.eventos.map((e) => e.tipo)).size > 1;
 }
 
-// ── Tooltip ───────────────────────────────────────────────────────────────────
+// ── Panel de detalle del día ──────────────────────────────────────────────────
+/** Día actualmente seleccionado. null = panel cerrado. */
+const diaSeleccionado = ref<DiaCalendario | null>(null);
 
-function mostrarTooltip(dia: DiaCalendario) {
-  if (dia.eventos.length > 0) dia.tooltipVisible = true;
+function seleccionarDia(dia: DiaCalendario) {
+  if (dia.esDelMes && dia.eventos.length > 0) diaSeleccionado.value = dia;
 }
 
-function ocultarTooltip(dia: DiaCalendario) {
-  dia.tooltipVisible = false;
+function cerrarDetalle() {
+  diaSeleccionado.value = null;
 }
+
+/** Fecha formateada para el título del panel. Ej: "Martes, 19 de marzo de 2026" */
+const fechaDetalle = computed(() => {
+  if (!diaSeleccionado.value) return '';
+  return diaSeleccionado.value.fecha.toLocaleDateString('es-CU', {
+    weekday: 'long',
+    day:     'numeric',
+    month:   'long',
+    year:    'numeric',
+  });
+});
 
 // ── Carga de datos ────────────────────────────────────────────────────────────
-
 async function cargarEventos() {
   cargando.value = true;
   errorDB.value  = false;
@@ -404,12 +409,12 @@ onMounted(cargarEventos);
               /* Fondo sólido solo cuando NO hay coexistencia */
               !tieneCoexistencia(dia) && dia.esDelMes && eventoBottom(dia)
                 ? [CONFIG_TIPO[eventoBottom(dia)!.tipo]?.fondo,
-                   CONFIG_TIPO[eventoBottom(dia)!.tipo]?.anillo]
+                  CONFIG_TIPO[eventoBottom(dia)!.tipo]?.anillo]
                 : '',
               !dia.esDelMes ? 'bg-slate-50/60 dark:bg-slate-900/20' : '',
+              dia.esDelMes && dia.eventos.length > 0 ? 'cursor-pointer' : '',
             ]"
-            @mouseenter="mostrarTooltip(dia)"
-            @mouseleave="ocultarTooltip(dia)"
+            @click="seleccionarDia(dia)"
           >
 
             <!--
@@ -509,44 +514,105 @@ onMounted(cargarEventos);
               </div>
             </div>
 
-            <!-- ── Tooltip con detalles del evento ──────────────────────────── -->
-            <Transition
-              enter-active-class="transition-all duration-150 ease-out"
-              enter-from-class="opacity-0 scale-95 -translate-y-1"
-              enter-to-class="opacity-100 scale-100 translate-y-0"
-              leave-active-class="transition-all duration-100 ease-in"
-              leave-from-class="opacity-100 scale-100 translate-y-0"
-              leave-to-class="opacity-0 scale-95 -translate-y-1"
-            >
-              <div
-                v-if="dia.tooltipVisible && dia.eventos.length > 0"
-                class="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs pointer-events-none"
-              >
-                <!-- Flecha del tooltip -->
-                <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white dark:border-t-slate-800" />
-
-                <div class="p-3 space-y-2">
-                  <div v-for="ev in dia.eventos" :key="ev.id">
-                    <span
-                      class="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold mb-1"
-                      :class="CONFIG_TIPO[ev.tipo]?.badge"
-                    >
-                      {{ CONFIG_TIPO[ev.tipo]?.label }}
-                    </span>
-                    <p class="font-semibold text-slate-800 dark:text-slate-100 leading-tight">
-                      {{ ev.titulo }}
-                    </p>
-                    <p v-if="ev.descripcion"
-                      class="text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
-                      {{ ev.descripcion }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Transition>
-
           </div>
         </div>
+
+        <!-- ── Panel de detalle del día ───────────────────────────────────────
+          Se superpone sobre la grilla completa cuando hay un día seleccionado.
+          El backdrop semitransparente permite ver el calendario de fondo.
+          Clic en el backdrop también cierra el panel.
+        ─────────────────────────────────────────────────────────────────────── -->
+        <Transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="opacity-0 scale-95"
+          enter-to-class="opacity-100 scale-100"
+          leave-active-class="transition-all duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100"
+          leave-to-class="opacity-0 scale-95"
+        >
+          <div
+            v-if="diaSeleccionado"
+            class="absolute inset-0 z-40 flex items-center justify-center p-4"
+            @click.self="cerrarDetalle"
+          >
+            <!-- Backdrop -->
+            <div
+              class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px]"
+              @click="cerrarDetalle"
+            />
+
+            <!-- Tarjeta del panel -->
+            <div class="relative w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 overflow-hidden">
+
+              <!-- Cabecera: fecha + botón cerrar -->
+              <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-0.5">
+                    Eventos del día
+                  </p>
+                  <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm capitalize leading-tight">
+                    {{ fechaDetalle }}
+                  </h3>
+                </div>
+                <button
+                  @click="cerrarDetalle"
+                  aria-label="Cerrar"
+                  class="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <!-- tabler:x -->
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="w-4 h-4">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M18 6l-12 12" />
+                    <path d="M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Lista de eventos del día -->
+              <div class="divide-y divide-slate-100 dark:divide-slate-700">
+                <div
+                  v-for="ev in diaSeleccionado.eventos"
+                  :key="ev.id"
+                  class="px-5 py-4"
+                >
+                  <!-- Badge del tipo -->
+                  <span
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold mb-2"
+                    :class="CONFIG_TIPO[ev.tipo]?.badge"
+                  >
+                    <span class="inline-block w-1.5 h-1.5 rounded-full" :class="CONFIG_TIPO[ev.tipo]?.dot" />
+                    {{ CONFIG_TIPO[ev.tipo]?.label }}
+                  </span>
+                  <!-- Título -->
+                  <p class="font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                    {{ ev.titulo }}
+                  </p>
+                  <!-- Descripción -->
+                  <p
+                    v-if="ev.descripcion"
+                    class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mt-1"
+                  >
+                    {{ ev.descripcion }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Pie con botón cerrar -->
+              <div class="px-5 py-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 flex justify-end">
+                <button
+                  @click="cerrarDetalle"
+                  class="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </Transition>
+
       </div>
 
       <!-- Leyenda de tipos (solo muestra los presentes en el mes) ─────────── -->
