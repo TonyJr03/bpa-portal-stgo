@@ -28,6 +28,7 @@ import { ref, computed, onMounted } from 'vue';
 import { pb } from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
+
 interface Evento {
   id: string;
   titulo: string;
@@ -47,6 +48,7 @@ interface DiaCalendario {
 }
 
 // ── Estado principal ──────────────────────────────────────────────────────────
+
 const todosLosEventos = ref<Evento[]>([]);
 const cargando        = ref(true);
 const errorDB         = ref(false);
@@ -57,6 +59,7 @@ const mesActual  = ref(hoy.getMonth());      // 0-11
 const anioActual = ref(hoy.getFullYear());
 
 // ── Catálogos estáticos ───────────────────────────────────────────────────────
+
 const NOMBRES_MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -70,26 +73,33 @@ const CONFIG_TIPO = {
     label:    'Pago a Jubilados',
     dot:      'bg-blue-500',
     badge:    'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300',
-    celda:    'bg-blue-50 dark:bg-blue-950/40 ring-1 ring-blue-300 dark:ring-blue-700',
+    fondo:    'bg-blue-50 dark:bg-blue-950/40',
+    anillo:   'ring-1 ring-blue-300 dark:ring-blue-700',
+    borde:    'border-blue-300 dark:border-blue-700',
     numColor: 'text-blue-700 dark:text-blue-300 font-bold',
   },
   feriado: {
     label:    'Día Feriado',
     dot:      'bg-red-500',
     badge:    'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300',
-    celda:    'bg-red-50 dark:bg-red-950/40 ring-1 ring-red-300 dark:ring-red-700',
+    fondo:    'bg-red-50 dark:bg-red-950/40',
+    anillo:   'ring-1 ring-red-300 dark:ring-red-700',
+    borde:    'border-red-300 dark:border-red-700',
     numColor: 'text-red-700 dark:text-red-300 font-bold',
   },
   aviso: {
     label:    'Aviso',
     dot:      'bg-amber-500',
     badge:    'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300',
-    celda:    'bg-amber-50 dark:bg-amber-950/40 ring-1 ring-amber-300 dark:ring-amber-700',
+    fondo:    'bg-amber-50 dark:bg-amber-950/40',
+    anillo:   'ring-1 ring-amber-300 dark:ring-amber-700',
+    borde:    'border-amber-300 dark:border-amber-700',
     numColor: 'text-amber-700 dark:text-amber-300 font-bold',
   },
 } as const;
 
 // ── Computed ──────────────────────────────────────────────────────────────────
+
 /** Título del mes/año visible en la barra de navegación */
 const tituloMes = computed(
   () => `${NOMBRES_MESES[mesActual.value]} ${anioActual.value}`
@@ -155,6 +165,7 @@ const tiposEnMes = computed(() => {
 });
 
 // ── Navegación temporal ───────────────────────────────────────────────────────
+
 function mesAnterior() {
   if (mesActual.value === 0) {
     mesActual.value = 11;
@@ -178,7 +189,55 @@ function irAHoy() {
   anioActual.value = hoy.getFullYear();
 }
 
+// ── Utilidades de presentación ───────────────────────────────────────────────
+
+/**
+ * Extrae la etiqueta corta para mostrar dentro de la celda del día.
+ * Lógica:
+ *   · Si el título contiene " — " o " - ", devuelve lo que hay después del guión.
+ *     Ej: "Pago Jubilados — Grupo III" → "Grupo III"
+ *         "Último día de pago — Cierre" → "Cierre"
+ *   · Si no hay guión, devuelve las primeras 2 palabras del título.
+ *     Ej: "Último día de pago" → "Último día"
+ */
+function etiquetaEvento(titulo: string): string {
+  const sep = titulo.includes(' — ') ? ' — ' : titulo.includes(' - ') ? ' - ' : null;
+  if (sep) return titulo.split(sep)[1]?.trim() ?? titulo;
+  return titulo.split(/\s+/).slice(0, 2).join(' ');
+}
+
+/**
+ * Prioridad para ocupar la mitad inferior de la celda en caso de coexistencia.
+ * Mayor número → mitad inferior. Menor número → mitad superior.
+ *   pago_jubilados (3) > feriado (2) > aviso (1)
+ */
+const PRIORIDAD_BOTTOM: Record<string, number> = {
+  aviso: 1, feriado: 2, pago_jubilados: 3,
+};
+
+/** Evento que ocupa la mitad inferior (mayor prioridad). */
+function eventoBottom(dia: DiaCalendario): Evento | null {
+  if (!dia.esDelMes || dia.eventos.length === 0) return null;
+  return [...dia.eventos].sort(
+    (a, b) => (PRIORIDAD_BOTTOM[b.tipo] ?? 0) - (PRIORIDAD_BOTTOM[a.tipo] ?? 0)
+  )[0];
+}
+
+/** Evento que ocupa la mitad superior (menor prioridad). Null si solo hay uno. */
+function eventoTop(dia: DiaCalendario): Evento | null {
+  if (dia.eventos.length < 2) return null;
+  const bottom = eventoBottom(dia);
+  return dia.eventos.find((e) => e !== bottom) ?? null;
+}
+
+/** True cuando el día tiene dos tipos distintos de evento y pertenece al mes visible. */
+function tieneCoexistencia(dia: DiaCalendario): boolean {
+  if (!dia.esDelMes || dia.eventos.length < 2) return false;
+  return new Set(dia.eventos.map((e) => e.tipo)).size > 1;
+}
+
 // ── Tooltip ───────────────────────────────────────────────────────────────────
+
 function mostrarTooltip(dia: DiaCalendario) {
   if (dia.eventos.length > 0) dia.tooltipVisible = true;
 }
@@ -188,6 +247,7 @@ function ocultarTooltip(dia: DiaCalendario) {
 }
 
 // ── Carga de datos ────────────────────────────────────────────────────────────
+
 async function cargarEventos() {
   cargando.value = true;
   errorDB.value  = false;
@@ -339,24 +399,71 @@ onMounted(cargarEventos);
           <div
             v-for="(dia, idx) in diasGrilla"
             :key="idx"
-            class="relative min-h-[3.5rem] p-1.5 border-b border-r border-slate-100 dark:border-slate-700/50 transition-colors"
+            class="relative min-h-[4rem] p-1.5 border-b border-r border-slate-100 dark:border-slate-700/50 transition-colors overflow-hidden"
             :class="[
-              dia.eventos.length > 0
-                ? CONFIG_TIPO[dia.eventos[0].tipo]?.celda
+              /* Fondo sólido solo cuando NO hay coexistencia */
+              !tieneCoexistencia(dia) && dia.esDelMes && eventoBottom(dia)
+                ? [CONFIG_TIPO[eventoBottom(dia)!.tipo]?.fondo,
+                   CONFIG_TIPO[eventoBottom(dia)!.tipo]?.anillo]
                 : '',
               !dia.esDelMes ? 'bg-slate-50/60 dark:bg-slate-900/20' : '',
             ]"
             @mouseenter="mostrarTooltip(dia)"
             @mouseleave="ocultarTooltip(dia)"
           >
-            <!-- Número del día -->
+
+            <!--
+              ── Fondos diagonales (solo cuando hay dos tipos distintos) ────────
+              Triángulo SUPERIOR (top-right): eventoTop → menor prioridad
+              Triángulo INFERIOR (bottom-left): eventoBottom → mayor prioridad
+              clip-path: diagonal desde esquina superior-izquierda a inferior-derecha
+            -->
+            <template v-if="tieneCoexistencia(dia) && eventoTop(dia) && eventoBottom(dia)">
+              <!-- Triángulo superior-derecha -->
+              <div
+                class="absolute inset-0 pointer-events-none"
+                :class="CONFIG_TIPO[eventoTop(dia)!.tipo]?.fondo"
+                style="clip-path: polygon(0 0, 100% 0, 100% 100%)"
+              />
+              <!-- Triángulo inferior-izquierda -->
+              <div
+                class="absolute inset-0 pointer-events-none"
+                :class="CONFIG_TIPO[eventoBottom(dia)!.tipo]?.fondo"
+                style="clip-path: polygon(0 0, 0 100%, 100% 100%)"
+              />
+              <!--
+                Bordes split: borde superior+derecho con color de eventoTop,
+                borde inferior+izquierdo con color de eventoBottom.
+                Cada div cubre todo el recuadro pero solo dibuja 2 lados.
+              -->
+              <div
+                class="absolute inset-0 pointer-events-none border-t border-r"
+                :class="CONFIG_TIPO[eventoTop(dia)!.tipo]?.borde"
+              />
+              <div
+                class="absolute inset-0 pointer-events-none border-b border-l"
+                :class="CONFIG_TIPO[eventoBottom(dia)!.tipo]?.borde"
+              />
+            </template>
+
+            <!--
+              ── Punto del tipo superior en esquina superior-derecha ─────────
+              Solo visible cuando hay coexistencia. Marca la mitad de arriba.
+            -->
             <span
-              class="inline-flex items-center justify-center w-7 h-7 rounded-full text-sm transition-colors"
+              v-if="tieneCoexistencia(dia) && eventoTop(dia)"
+              class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full z-10 pointer-events-none"
+              :class="CONFIG_TIPO[eventoTop(dia)!.tipo]?.dot"
+            />
+
+            <!-- ── Número del día ────────────────────────────────────────────── -->
+            <span
+              class="relative z-10 inline-flex items-center justify-center w-7 h-7 rounded-full text-sm transition-colors"
               :class="[
                 dia.esHoy
                   ? 'bg-blue-600 text-white font-bold'
-                  : dia.eventos.length > 0
-                    ? CONFIG_TIPO[dia.eventos[0].tipo]?.numColor
+                  : dia.esDelMes && eventoBottom(dia)
+                    ? CONFIG_TIPO[eventoBottom(dia)!.tipo]?.numColor
                     : dia.esDelMes
                       ? 'text-slate-700 dark:text-slate-300'
                       : 'text-slate-300 dark:text-slate-600',
@@ -365,18 +472,44 @@ onMounted(cargarEventos);
               {{ dia.numero }}
             </span>
 
-            <!-- Puntos indicadores de eventos -->
-            <div v-if="dia.eventos.length > 0 && dia.esDelMes"
-              class="flex flex-wrap gap-0.5 mt-0.5 px-0.5">
-              <span
-                v-for="ev in dia.eventos.slice(0, 3)"
-                :key="ev.id"
-                class="inline-block w-1.5 h-1.5 rounded-full"
-                :class="CONFIG_TIPO[ev.tipo]?.dot"
-              />
+            <!--
+              ── Contenido informativo del evento bottom ──────────────────────
+              Anclado al fondo de la celda (absolute bottom) para quedar
+              visualmente dentro del triángulo inferior.
+              pago_jubilados → punto + etiqueta corta (Grupo III, Último día…)
+              feriado / aviso → solo punto(s) de color
+            -->
+            <div
+              v-if="dia.esDelMes && eventoBottom(dia)"
+              class="absolute bottom-1.5 left-1.5 right-1.5 z-10"
+            >
+              <!-- pago_jubilados: • Etiqueta -->
+              <div
+                v-if="eventoBottom(dia)!.tipo === 'pago_jubilados'"
+                class="flex items-center gap-1"
+              >
+                <span class="inline-block w-2 h-2 rounded-full flex-shrink-0"
+                  :class="CONFIG_TIPO.pago_jubilados.dot" />
+                <span
+                  class="text-[11px] font-bold leading-tight truncate"
+                  :class="CONFIG_TIPO.pago_jubilados.numColor"
+                >
+                  {{ etiquetaEvento(eventoBottom(dia)!.titulo) }}
+                </span>
+              </div>
+
+              <!-- feriado / aviso: punto(s) -->
+              <div v-else class="flex gap-0.5">
+                <span
+                  v-for="ev in dia.eventos.slice(0, tieneCoexistencia(dia) ? 1 : 3)"
+                  :key="ev.id"
+                  class="inline-block w-2 h-2 rounded-full"
+                  :class="CONFIG_TIPO[ev.tipo]?.dot"
+                />
+              </div>
             </div>
 
-            <!-- Tooltip con detalles del evento -->
+            <!-- ── Tooltip con detalles del evento ──────────────────────────── -->
             <Transition
               enter-active-class="transition-all duration-150 ease-out"
               enter-from-class="opacity-0 scale-95 -translate-y-1"
@@ -394,7 +527,6 @@ onMounted(cargarEventos);
 
                 <div class="p-3 space-y-2">
                   <div v-for="ev in dia.eventos" :key="ev.id">
-                    <!-- Badge tipo -->
                     <span
                       class="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold mb-1"
                       :class="CONFIG_TIPO[ev.tipo]?.badge"
@@ -412,6 +544,7 @@ onMounted(cargarEventos);
                 </div>
               </div>
             </Transition>
+
           </div>
         </div>
       </div>
@@ -428,14 +561,6 @@ onMounted(cargarEventos);
             :class="CONFIG_TIPO[tipo]?.dot"
           />
           {{ CONFIG_TIPO[tipo]?.label }}
-        </div>
-
-        <!-- Leyenda de "Hoy" siempre visible -->
-        <div class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex-shrink-0">
-            {{ hoy.getDate() }}
-          </span>
-          Hoy
         </div>
       </div>
 
