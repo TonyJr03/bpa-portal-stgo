@@ -185,7 +185,7 @@ onMounted(cargarTasas);
         class="w-10 h-10 mx-auto mb-3 text-red-500">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
         <path d="M12 9v4" />
-        <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.871l-8.106 -13.534a1.914 1.914 0 0 0 -3.274 0z" />
+        <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" />
         <path d="M12 16h.01" />
       </svg>
       <p class="font-semibold text-red-700 dark:text-red-400 mb-1">No se pudo conectar con el servidor</p>
@@ -211,15 +211,15 @@ onMounted(cargarTasas);
     <!-- ── ESTADO: Sin tasas activas ────────────────────────────────────── -->
     <div v-else-if="!tasasActivas.length"
       class="rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700 p-10 text-center">
-      <!-- tabler:currency-off -->
+      <!-- tabler:database-off -->
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
         class="w-10 h-10 mx-auto mb-3 text-slate-400">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M12.983 8.978c3.955 -.182 7.017 -1.446 7.017 -2.978c0 -1.657 -3.582 -3 -8 -3c-1.661 0 -3.204 .19 -4.483 .515m-2.783 1.228c-.471 .382 -.734 .808 -.734 1.257c0 1.22 1.944 2.271 4.734 2.74" />
+        <path d="M4 6v6c0 1.657 3.582 3 8 3c.986 0 1.93 -.067 2.802 -.19m3.187 -.82c1.251 -.53 2.011 -1.228 2.011 -1.99v-6" />
+        <path d="M4 12v6c0 1.657 3.582 3 8 3c3.217 0 5.991 -.712 7.261 -1.74m.739 -3.26v-4" />
         <path d="M3 3l18 18" />
-        <path d="M16.7 16.7a4 4 0 0 1 -5.4 -5.4m-1.1 -2.3a4 4 0 0 1 5.6 5.6" />
-        <path d="M4 8h2.343" />
-        <path d="M8 4v2.343m0 3.657v10" />
       </svg>
       <p class="font-semibold text-slate-600 dark:text-slate-300 mb-1">No hay tasas publicadas</p>
       <p class="text-sm text-slate-500 dark:text-slate-400">
@@ -237,11 +237,13 @@ onMounted(cargarTasas);
         <!-- Cabecera de la tabla -->
         <div class="bg-blue-700 dark:bg-blue-900 px-6 py-4 flex items-center justify-between">
           <div class="flex items-center gap-2 text-white">
-            <!-- tabler:currency-exchange -->
+            <!-- tabler:exchange -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="w-5 h-5">
-              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.7 8A3 3 0 0 0 14 6h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1-2.7-2M12 3v3m0 12v3" />
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M3 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0M17 6a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
+              <path d="M19 8v5a5 5 0 0 1-5 5h-3l3-3m0 6l-3-3m-6-2v-5a5 5 0 0 1 5-5h3l-3-3m0 6l3-3" />
             </svg>
             <span class="font-semibold text-sm">Tasas Oficiales BPA — Santiago de Cuba</span>
           </div>
