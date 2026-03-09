@@ -1,0 +1,89 @@
+---
+/**
+ * @pagina  src/pages/herramientas/calendario.astro
+ * @ruta    /herramientas/calendario
+ *
+ * @descripcion
+ * Página del módulo Calendario de Eventos. Declara los bloques de la
+ * página y no sabe nada de Vue ni de PocketBase — responsabilidad
+ * exclusiva de CalendarioWidget.astro y CalendarioEventos.vue.
+ *
+ * Estructura:
+ *   BLOQUE 1 · HeroText          → tagline + title + subtitle
+ *   BLOQUE 2 · CalendarioWidget  → widget propio (bg-blue-50)
+ *                                   Headline + isla Vue
+ *   BLOQUE 3 · CallToAction      → cierre institucional
+ *   BLOQUE 4 · PageNav           → prev: "Volver a Herramientas"
+ *
+ * @colecciones  ninguna en build time
+ *   eventos → consultada en el cliente por CalendarioEventos.vue
+ */
+
+import Layout            from '~/layouts/PageLayout.astro';
+import HeroText          from '~/components/widgets/HeroText.astro';
+import CalendarioWidget  from '~/components/widgets/CalendarioWidget.astro';
+import CallToAction      from '~/components/widgets/CallToAction.astro';
+import PageNav           from '~/components/widgets/PageNav.astro';
+
+const metadata = {
+  title: 'Calendario de Eventos — BPA Santiago de Cuba',
+  description:
+    'Consulte el calendario de pagos a jubilados, días feriados bancarios y avisos del Banco Popular de Ahorro en Santiago de Cuba. Navegue por mes para planificar con antelación.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
+      Tagline "Herramientas" sitúa al usuario dentro del módulo.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    tagline="Herramientas"
+    title="Calendario de Eventos"
+    subtitle="Consulte las fechas de pago a jubilados, días feriados bancarios y avisos institucionales. Navegue entre meses para planificar sus visitas al banco con antelación."
+  />
+
+  <!-- BLOQUE 2 · CalendarioWidget ─────────────────────────────────────────────
+      Widget propio: WidgetWrapper + Headline + isla Vue CalendarioEventos.
+      Sin Headline — el HeroText ya cumple ese rol en esta página.
+      bg-blue-50 alterna con el blanco del HeroText y del CallToAction.
+      max-w-3xl en el widget: el calendario mensual es más legible en
+      columna estrecha que estirado en pantallas anchas.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CalendarioWidget id="calendario">
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </CalendarioWidget>
+
+  <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
+      El siguiente paso natural tras consultar el calendario es ir a la
+      sucursal o ver la herramienta de tasas — se ofrecen ambas salidas.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CallToAction
+    title="¿Tiene alguna duda sobre los pagos?"
+    subtitle="Si necesita confirmar su fecha de cobro o tiene alguna consulta, acérquese a su sucursal más cercana o contáctenos directamente."
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Localizar sucursal',
+        href:    '/herramientas/mapa',
+        icon:    'tabler:map-pin',
+      },
+      {
+        variant: 'secondary',
+        text:    'Contáctenos',
+        href:    '/contacto',
+        icon:    'tabler:headset',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
+      Solo botón izquierdo: regresa al índice del módulo Herramientas.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Volver a Herramientas', href: '/herramientas' }}
+  />
+
+</Layout>

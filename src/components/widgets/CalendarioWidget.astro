@@ -1,0 +1,93 @@
+---
+/**
+ * @widget  src/components/widgets/CalendarioWidget.astro
+ *
+ * @descripcion
+ * Widget institucional del módulo Calendario de Eventos.
+ * Sigue el patrón WidgetWrapper + Headline + isla Vue,
+ * idéntico a TasasDeCambioWidget.astro y ContactoBPA.astro.
+ * Generado en build time — cero JS propio al cliente.
+ *
+ * Responsabilidades de este widget:
+ *   · WidgetWrapper  → padding, max-width, fondo de sección
+ *   · Headline       → tagline + title + subtitle (opcionales)
+ *   · Inyección de la isla Vue <CalendarioEventos client:load />
+ *
+ * Lo que NO hace este widget:
+ *   · Consultar PocketBase (lo hace la isla en el cliente)
+ *   · Generar la grilla ni gestionar la navegación (lo hace la isla)
+ *
+ * @uso
+ * ```astro
+ * import CalendarioWidget from '~/components/widgets/CalendarioWidget.astro';
+ *
+ * <!-- Sin Headline — el HeroText de la página ya hace ese papel -->
+ * <CalendarioWidget id="calendario">
+ *   <Fragment slot="bg">
+ *     <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+ *   </Fragment>
+ * </CalendarioWidget>
+ *
+ * <!-- Con Headline completo (uso desde otras páginas) -->
+ * <CalendarioWidget
+ *   tagline="Herramientas"
+ *   title="Calendario de Pagos"
+ *   subtitle="Próximas fechas relevantes para nuestros clientes."
+ * />
+ * ```
+ *
+ * @props
+ *   tagline?  string  — etiqueta pequeña sobre el título
+ *   title?    string  — título principal de la sección
+ *   subtitle? string  — subtítulo descriptivo
+ *   Extiende Widget: id?, isDark?, bg (slot), classes?
+ */
+
+import WidgetWrapper      from '~/components/ui/WidgetWrapper.astro';
+import Headline           from '~/components/ui/Headline.astro';
+import CalendarioEventos  from '~/components/vue/CalendarioEventos.vue';
+
+interface Props {
+  tagline?:  string;
+  title?:    string;
+  subtitle?: string;
+  id?:       string;
+  isDark?:   boolean;
+  classes?:  Record<string, string>;
+}
+
+const {
+  tagline,
+  title,
+  subtitle,
+  id,
+  isDark = false,
+  classes = {},
+} = Astro.props;
+
+const tieneHeadline = tagline || title || subtitle;
+---
+
+<WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-3xl mx-auto ${classes?.container ?? ''}`}>
+
+  <Fragment slot="bg">
+    <slot name="bg" />
+  </Fragment>
+
+  <!-- Headline opcional ───────────────────────────────────────────────────── -->
+  {tieneHeadline && (
+    <Headline
+      tagline={tagline}
+      title={title}
+      subtitle={subtitle}
+      classes={{
+        container: 'mb-8',
+        title:     'text-2xl md:text-3xl',
+      }}
+    />
+  )}
+
+  <!-- Isla Vue — grilla mensual, navegación, tooltips, estados ───────────── -->
+  <CalendarioEventos client:load />
+
+</WidgetWrapper>
