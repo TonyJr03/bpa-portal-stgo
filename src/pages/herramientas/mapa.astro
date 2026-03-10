@@ -1,0 +1,82 @@
+---
+/**
+ * @pagina   src/pages/herramientas/mapa.astro
+ * @ruta     /herramientas/mapa
+ *
+ * @descripcion
+ *   Página de la herramienta "Mapa de Oficinas".
+ *   Muestra el mapa SVG interactivo de las sucursales, cajas de ahorro
+ *   y cajeros ATM del BPA en la provincia de Santiago de Cuba.
+ *
+ * @bloques
+ *   1. HeroText  — Título + subtítulo de sección
+ *   2. MapaWidget — Isla Vue con mapa + panel de lista (contenido dinámico)
+ *   3. CallToAction — Enlace al directorio de canales de atención
+ *   4. PageNav — Navegación entre herramientas
+ *
+ * @no_CDN  Sin Leaflet, sin OpenStreetMap, sin APIs externas.
+ *          El mapa es un SVG local con paths interactivos.
+ */
+
+import Layout         from '~/layouts/PageLayout.astro';
+import HeroText       from '~/components/widgets/HeroText.astro';
+import MapaWidget     from '~/components/widgets/MapaWidget.astro';
+import CallToAction   from '~/components/widgets/CallToAction.astro';
+import PageNav        from '~/components/widgets/PageNav.astro';
+
+const meta = {
+  title:       'Mapa de Oficinas — BPA Santiago de Cuba',
+  description: 'Localice sucursales, cajas de ahorro y cajeros automáticos del Banco Popular de Ahorro en la provincia de Santiago de Cuba.',
+};
+---
+
+<Layout metadata={meta}>
+
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Hero sin imagen, centrado, texto institucional.
+      tagline vincula con la sección Herramientas para orientación contextual.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    tagline="Herramientas"
+    title="Mapa de Oficinas"
+    subtitle="Localice la sucursal, caja de ahorro o cajero automático del BPA más cercano a usted en la provincia de Santiago de Cuba. Filtre por municipio o tipo de punto de atención."
+  />
+
+  <!-- BLOQUE 2 · MapaWidget ────────────────────────────────────────────────────
+      Isla Vue con el mapa SVG interactivo.
+      Se pasa bg-white para diferenciar visualmente del HeroText anterior.
+      No se pasa título porque ya lo muestra el HeroText superior.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <MapaWidget />
+
+  <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
+      Derivación a la página de canales de atención donde están los teléfonos
+      y horarios generales de cada tipo de oficina.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CallToAction
+    title="¿Necesita más información sobre las oficinas?"
+    subtitle="Consulte los horarios generales, teléfonos institucionales y canales de atención disponibles en toda la provincia."
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Ver canales de atención',
+        href:    '/sobre-nosotros/nuestra-red/canales-de-atencion',
+        icon:    'tabler:phone',
+      },
+      {
+        variant: 'secondary',
+        text:    'Sobre nuestra red',
+        href:    '/sobre-nosotros/nuestra-red/sucursales',
+        icon:    'tabler:building-bank',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
+      Volver a herramientas
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Volver a Herramientas', href: '/herramientas' }}
+  />
+
+</Layout>

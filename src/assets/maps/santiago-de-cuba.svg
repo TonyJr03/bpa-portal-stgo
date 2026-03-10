@@ -1,0 +1,76 @@
+<!--
+  Mapa esquemático de la provincia de Santiago de Cuba
+  9 municipios — cada <path> tiene id="[slug-municipio]"
+  Ruta destino: src/assets/maps/santiago-de-cuba.svg
+  viewBox: 0 0 800 480
+  Nota: representación cartográfica simplificada, no de precisión GIS.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 800 480"
+  role="img"
+  aria-label="Mapa de la provincia de Santiago de Cuba"
+>
+  <!-- ─── GUAMÁ (oeste, Sierra Maestra) ─────────────────────────────── -->
+  <path
+    id="guama"
+    d="M 0,55 L 125,30 L 138,180 L 130,390 L 0,410 Z"
+    data-nombre="Guamá"
+  />
+
+  <!-- ─── SEGUNDO FRENTE (noroeste) ──────────────────────────────────── -->
+  <path
+    id="segundo-frente"
+    d="M 125,30 L 285,8 L 305,170 L 195,195 L 138,180 Z"
+    data-nombre="Segundo Frente"
+  />
+
+  <!-- ─── TERCER FRENTE (suroeste) ───────────────────────────────────── -->
+  <path
+    id="tercer-frente"
+    d="M 138,180 L 195,195 L 220,340 L 180,435 L 130,430 L 130,390 Z"
+    data-nombre="Tercer Frente"
+  />
+
+  <!-- ─── CONTRAMAESTRE (norte) ──────────────────────────────────────── -->
+  <path
+    id="contramaestre"
+    d="M 285,8 L 480,0 L 490,170 L 305,170 Z"
+    data-nombre="Contramaestre"
+  />
+
+  <!-- ─── PALMA SORIANO (centro) ─────────────────────────────────────── -->
+  <path
+    id="palma-soriano"
+    d="M 305,170 L 490,170 L 510,355 L 390,385 L 255,350 L 220,340 L 195,195 Z"
+    data-nombre="Palma Soriano"
+  />
+
+  <!-- ─── SANTIAGO DE CUBA (sur, capital) ────────────────────────────── -->
+  <path
+    id="santiago-de-cuba"
+    d="M 220,340 L 255,350 L 390,385 L 405,460 L 295,472 L 175,458 L 180,435 Z"
+    data-nombre="Santiago de Cuba"
+  />
+
+  <!-- ─── SAN LUIS (este de la capital) ──────────────────────────────── -->
+  <path
+    id="san-luis"
+    d="M 390,385 L 510,355 L 535,455 L 490,470 L 405,460 Z"
+    data-nombre="San Luis"
+  />
+
+  <!-- ─── SONGO-LA MAYA (este) ────────────────────────────────────────── -->
+  <path
+    id="songo-la-maya"
+    d="M 490,170 L 645,88 L 655,315 L 535,340 L 510,355 L 490,170 Z"
+    data-nombre="Songo - La Maya"
+  />
+
+  <!-- ─── MELLA (extremo este) ────────────────────────────────────────── -->
+  <path
+    id="mella"
+    d="M 645,88 L 800,62 L 800,472 L 535,472 L 490,470 L 535,455 L 535,340 L 655,315 Z"
+    data-nombre="Mella"
+  />
+</svg>
