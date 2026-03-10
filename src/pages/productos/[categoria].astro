@@ -1,42 +1,37 @@
 ---
 /**
- * @pagina src/pages/productos/[categoria].astro
- * @ruta   /productos/[categoria]
- * @ejemplo /productos/banca-personal
+ * @pagina   src/pages/productos/[categoria].astro
+ * @ruta     /productos/[categoria]
+ * @ejemplo  /productos/banca-personal
  *
  * @descripcion
  * Página dinámica generada en build time para cada categoría de productos.
- * getStaticPaths consulta la colección `categorias` y genera una ruta por
- * cada registro. Cada ruta precarga también sus `productos` asociados en la
- * misma función, evitando una segunda consulta al renderizar.
+ * getStaticPaths itera sobre las 5 categorías definidas en src/data/categorias.ts
+ * y por cada una carga sus productos publicados desde PocketBase.
+ *
+ * El campo `categoria` de la colección `productos` es de tipo Select y almacena
+ * el slug de la categoría (ej: "banca-personal"), por lo que el filtro usa el
+ * slug directamente — sin necesidad de IDs de PocketBase.
  *
  * @colecciones
- *   `categorias` → nombre, slug, descripcion, icono, orden
- *   `productos`  → nombre, slug, categoria (Relation), descripcion,
- *                  icono, orden, publicado
+ *   productos → nombre, slug, categoria (Select = slug), descripcion,
+ *               icono, orden, publicado
  */
 
 // ── Imports ────────────────────────────────────────────────────────────────────
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
-import Layout from '~/layouts/PageLayout.astro';
-import HeroText from '~/components/widgets/HeroText.astro';
-import Features2 from '~/components/widgets/Features2.astro';
-import CallToAction from '~/components/widgets/CallToAction.astro';
-import PageNav from '~/components/widgets/PageNav.astro';
+import Layout          from '~/layouts/PageLayout.astro';
+import HeroText        from '~/components/widgets/HeroText.astro';
+import Features2       from '~/components/widgets/Features2.astro';
+import CallToAction    from '~/components/widgets/CallToAction.astro';
+import PageNav         from '~/components/widgets/PageNav.astro';
 import EmptyCollection from '~/components/ui/EmptyCollection.astro';
-import DatabaseError from '~/components/ui/DatabaseError.astro';
-import { pb } from '~/lib/pocketbase';
+import DatabaseError   from '~/components/ui/DatabaseError.astro';
+import { CATEGORIAS }  from '~/data/categorias';
+import type { Categoria } from '~/data/categorias';
+import { pb }          from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
-interface Categoria {
-  id: string;
-  nombre: string;
-  slug: string;
-  descripcion: string;
-  icono: string;
-  orden: number;
-}
-
 interface Producto {
   id: string;
   nombre: string;
@@ -45,33 +40,33 @@ interface Producto {
   icono: string;
   orden: number;
   publicado: boolean;
-  // El campo `categoria` es una Relation — PocketBase devuelve el ID del registro
+  /** Valor del campo Select en PocketBase — coincide con el slug de la categoría. */
   categoria: string;
 }
 
-// ─── getStaticPaths ───────────────────────────────────────────────────────────
+// ── getStaticPaths ─────────────────────────────────────────────────────────────
+// Itera sobre las 5 categorías estáticas y carga los productos de cada una.
+// Toda la lógica de carga ocurre aquí. Cero consultas al renderizar.
 export const getStaticPaths = (async () => {
-  const categorias = await pb.collection('categorias').getFullList<Categoria>({ 
-    sort: 'orden'
-  });
-
   const paths = await Promise.all(
-    categorias.map(async (cat) => {
+    CATEGORIAS.map(async (cat: Categoria) => {
       let productos: Producto[] = [];
       let dbError = false;
 
       try {
         productos = await pb.collection('productos').getFullList<Producto>({
-            filter: `categoria = "${cat.id}" && publicado = true`,
-            sort: 'orden',
-          });
-      } catch {
+          // Filtra por el valor del campo Select, que es el slug de la categoría
+          filter: `categoria = "${cat.slug}" && publicado = true`,
+          sort:   'orden',
+        });
+      } catch (err) {
+        console.error(`[BPA] Error cargando productos para "${cat.slug}":`, err);
         dbError = true;
       }
 
       return {
         params: { categoria: cat.slug },
-        props: { categoria: cat, productos, dbError },
+        props:  { categoria: cat, productos, dbError },
       };
     })
   );
@@ -79,36 +74,35 @@ export const getStaticPaths = (async () => {
   return paths;
 }) satisfies GetStaticPaths;
 
-// ─── PROPS ────────────────────────────────────────────────────────────────────
+// ── Props ─────────────────────────────────────────────────────────────────────
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { categoria, productos, dbError } = Astro.props;
 
-// ─── MAPEO A Item[] para Features2 ───────────────────────────────────────────
+// ── Mapeo a Item[] para Features2 ─────────────────────────────────────────────
 const items = productos.map((prod) => ({
-  title: prod.nombre,
+  title:       prod.nombre,
   description: prod.descripcion,
-  icon: `tabler:${prod.icono}`,
+  icon:        `tabler:${prod.icono}`,
   callToAction: {
-    text: 'Ver detalles',
-    href: `/productos/${categoria.slug}/${prod.slug}`,
+    text:    'Ver detalles',
+    href:    `/productos/${categoria.slug}/${prod.slug}`,
     variant: 'link' as const,
-    icon: 'tabler:arrow-right',
+    icon:    'tabler:arrow-right',
   },
 }));
 
-// ─── METADATA SEO ─────────────────────────────────────────────────────────────
+// ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
-  title: `${categoria.nombre} — BPA Santiago de Cuba`,
+  title:       `${categoria.nombre} — BPA Santiago de Cuba`,
   description: categoria.descripcion,
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
-      Nombre de la categoría como título principal.
-      Descripción de PocketBase como subtítulo.
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Tagline contextualiza la ubicación dentro del portal.
+      Title = nombre de la categoría. Subtitle = descripción de la categoría.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
     tagline="Productos y Servicios"
@@ -116,11 +110,11 @@ const metadata = {
     subtitle={categoria.descripcion}
   />
 
-  <!-- BLOQUE 2 · Grid de productos / estados ──────────────────────────────────
-      Tres casos posibles:
-        1. Error de conexión en build time → DatabaseError
-        2. Categoría sin productos         → EmptyCollection
-        3. Productos disponibles           → Features2
+  <!-- BLOQUE 2 · Features2 / estados ──────────────────────────────────────────
+      Tres casos posibles según el resultado de la consulta a PocketBase:
+        1. Error de conexión → DatabaseError
+        2. Sin productos     → EmptyCollection
+        3. Con productos     → Features2 con el grid
   ─────────────────────────────────────────────────────────────────────────── -->
   {dbError ? (
     <DatabaseError coleccion="productos" />
@@ -143,8 +137,8 @@ const metadata = {
     </Features2>
   )}
 
-  <!-- BLOQUE 3 · CallToAction ─────────────────────────────────────────────────
-      Mismo cierre institucional que el resto del módulo.
+  <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
+      Cierre institucional consistente con el resto del módulo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
     title="¿Necesita orientación personalizada?"
@@ -152,15 +146,15 @@ const metadata = {
     actions={[
       {
         variant: 'primary',
-        text: 'Contáctenos',
-        href: '/contacto',
-        icon: 'tabler:headset',
+        text:    'Contáctenos',
+        href:    '/contacto',
+        icon:    'tabler:headset',
       },
     ]}
   />
 
-  <!-- NAVEGACIÓN · PageNav ────────────────────────────────────────────────────
-      ← Volver a Productos y Servicios
+  <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
+      Navegación contextual: regresa al índice de Productos y Servicios.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
     prev={{ text: 'Volver a Productos y Servicios', href: '/productos' }}

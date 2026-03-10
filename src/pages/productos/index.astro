@@ -1,111 +1,71 @@
 ---
 /**
  * @pagina src/pages/productos/index.astro
- * @ruta  /productos
+ * @ruta   /productos
  *
  * @descripcion
- * Página estática de índice de "Productos y Servicios".
+ * Página de índice de "Productos y Servicios".
  * Lista las 5 categorías de la cartera comercial del BPA Santiago de Cuba.
  * Cada categoría enlaza a su página dinámica /productos/[categoria].
  *
- * @colecciones
- *   Campos: nombre, slug, descripcion, icono, orden
+ * Las categorías son datos estáticos definidos en src/data/categorias.ts —
+ * no se consulta PocketBase en esta página.
  */
 
- // ── Imports ────────────────────────────────────────────────────────────────────
-import Layout          from '~/layouts/PageLayout.astro';
-import HeroText        from '~/components/widgets/HeroText.astro';
-import Features2       from '~/components/widgets/Features2.astro';
-import CallToAction    from '~/components/widgets/CallToAction.astro';
-import PageNav         from '~/components/widgets/PageNav.astro';
-import DatabaseError   from '~/components/ui/DatabaseError.astro';
-import EmptyCollection from '~/components/ui/EmptyCollection.astro';
-import { pb } from '~/lib/pocketbase';
+// ── Imports ────────────────────────────────────────────────────────────────────
+import Layout       from '~/layouts/PageLayout.astro';
+import HeroText     from '~/components/widgets/HeroText.astro';
+import Features2    from '~/components/widgets/Features2.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav      from '~/components/widgets/PageNav.astro';
+import { CATEGORIAS } from '~/data/categorias';
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
-interface Categoria {
-  id: string;
-  nombre: string;
-  slug: string;
-  descripcion: string;
-  icono: string;
-  orden: number;
-}
-
-// ─── CARGA DESDE POCKETBASE ───────────────────────────────────────────────────
-let categorias: Categoria[] = [];
-let dbError = false;
-
-try {
-  categorias = await pb.collection('categorias').getFullList<Categoria>({
-    sort: 'orden'
-  });
-} catch {
-  dbError = true;
-}
-
-// ─── MAPEO A Item[] para Features2 ───────────────────────────────────────────
-// Solo si hay datos. Si la coleccion esta vacia, items = [] y el template
-// muestra el estado vacio en lugar del grid.
-const items = categorias.map((cat) => ({
-  title: cat.nombre,
+// ── Mapeo a Item[] para Features2 ─────────────────────────────────────────────
+const items = CATEGORIAS.map((cat) => ({
+  title:       cat.nombre,
   description: cat.descripcion,
-  icon: `tabler:${cat.icono}`,
+  icon:        `tabler:${cat.icono}`,
   callToAction: {
-    text: 'Ver productos',
-    href: `/productos/${cat.slug}`,
+    text:    'Ver productos',
+    href:    `/productos/${cat.slug}`,
     variant: 'link' as const,
-    icon: 'tabler:arrow-right',
+    icon:    'tabler:arrow-right',
   },
 }));
 
-// ─── METADATA SEO ─────────────────────────────────────────────────────────────
+// ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
-  title: 'Productos y Servicios — BPA Santiago de Cuba',
-  description:
-    'Conozca toda la cartera de productos y servicios del Banco Popular de Ahorro en Santiago de Cuba: ahorro, creditos, banca electronica, servicios internacionales y mas.',
+  title:       'Productos y Servicios — BPA Santiago de Cuba',
+  description: 'Conozca toda la cartera de productos y servicios del Banco Popular de Ahorro en Santiago de Cuba: ahorro, créditos, banca electrónica, servicios internacionales y más.',
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
-      Titulo y subtitulo institucional de la seccion. Sin tagline.
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Título y subtítulo institucional de la sección. Sin tagline.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
     title="Productos y Servicios"
     subtitle="Conozca la cartera completa de productos financieros diseñados para personas naturales, empresas y la comunidad en general."
   />
 
-  <!-- BLOQUE 2 · Features2 / estados de error ────────────────────────────────
-      Tres casos posibles segun el resultado de la consulta a PocketBase:
-        1. Error de conexion → DatabaseError
-        2. Coleccion vacia   → EmptyCollection
-        3. Datos disponibles → Features2 con el grid de categorias
+  <!-- BLOQUE 2 · Features2 ─────────────────────────────────────────────────────
+      Grid de las 5 categorías. Datos estáticos — sin estados de error ni vacío.
   ─────────────────────────────────────────────────────────────────────────── -->
-  {dbError ? (
-    <DatabaseError coleccion="categorias" />
-  ) : items.length === 0 ? (
-    <EmptyCollection
-      coleccion="categorias"
-      mensaje="No hay categorias disponibles en este momento."
-      icono="tabler:layout-grid-remove"
-    />
-  ) : (
-    <Features2
-      id="categorias"
-      tagline="Seleccione una categoría"
-      columns={3}
-      items={items}
-    >
-      <Fragment slot="bg">
-        <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-      </Fragment>
-    </Features2>
-  )}
+  <Features2
+    id="categorias"
+    tagline="Seleccione una categoría"
+    columns={3}
+    items={items}
+  >
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Features2>
 
-  <!-- BLOQUE 3 · CallToAction ─────────────────────────────────────────────────
-      Cierre institucional. Un solo boton hacia Contacto.
+  <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
+      Cierre institucional. Un solo botón hacia Contacto.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
     title="¿No sabe cuál producto es el adecuado para usted?"
@@ -113,15 +73,15 @@ const metadata = {
     actions={[
       {
         variant: 'primary',
-        text: 'Contáctenos',
-        href: '/contacto',
-        icon: 'tabler:headset',
+        text:    'Contáctenos',
+        href:    '/contacto',
+        icon:    'tabler:headset',
       },
     ]}
   />
 
-  <!-- BLOQUE 4 · PageNav ────────────────────────────────────────────────────
-      Boton izquierdo para volver a Inicio.
+  <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
+      Botón izquierdo para volver a Inicio.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
     prev={{ text: 'Volver a Inicio', href: '/' }}

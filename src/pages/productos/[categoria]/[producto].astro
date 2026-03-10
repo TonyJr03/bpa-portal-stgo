@@ -1,43 +1,43 @@
 ---
 /**
- * @pagina  src/pages/productos/[categoria]/[producto].astro
- * @ruta    /productos/[categoria]/[producto]
- * @ejemplo /productos/banca-personal/depositos-plazo-fijo
+ * @pagina   src/pages/productos/[categoria]/[producto].astro
+ * @ruta     /productos/[categoria]/[producto]
+ * @ejemplo  /productos/banca-personal/depositos-plazo-fijo
+ *
  * @descripcion
- * Pagina dinamica generada en build time para cada producto o servicio.
- * getStaticPaths consulta todas las categorias, sus productos publicados
- * y los documentos descargables de cada producto en una sola pasada.
+ * Página de detalle de un producto o servicio individual. Muestra el contenido
+ * completo renderizado desde HTML almacenado en PocketBase, más un bloque de
+ * descarga de documentos asociados.
+ *
+ * getStaticPaths itera sobre las 5 categorías estáticas (src/data/categorias.ts),
+ * carga los productos de cada una filtrando por el slug de la categoría, y por
+ * cada producto carga sus documentos descargables. Todo el fetching ocurre aquí.
  *
  * @colecciones
- *   categorias  -> id, nombre, slug
- *   productos   -> id, nombre, slug, categoria (Relation), descripcion,
- *                  contenido (Plain Text / HTML), icono, orden, publicado
- *   documentos  -> id, nombre, archivo, referencia, tipo, orden,
- *                  collectionId, collectionName
- *                  Filtro: referencia = "{producto.slug}" && tipo = "producto"
+ *   productos  → nombre, slug, categoria (Select = slug), descripcion,
+ *                contenido (Plain Text / HTML), icono, orden, publicado
+ *   documentos → nombre, archivo, referencia, tipo, orden,
+ *                collectionId, collectionName
+ *                Filtro: referencia = "{producto.slug}" && tipo = "producto"
  *
- * @patron getStaticPaths: TODO el fetching ocurre aqui. Cero consultas al renderizar.
+ * @patron  getStaticPaths: TODO el fetching ocurre aquí. Cero consultas al renderizar.
  */
 
 // ── Imports ────────────────────────────────────────────────────────────────────
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
-import Layout                 from '~/layouts/PageLayout.astro';
-import HeroText               from '~/components/widgets/HeroText.astro';
-import CallToAction           from '~/components/widgets/CallToAction.astro';
-import PageNav                from '~/components/widgets/PageNav.astro';
-import ProseContent           from '~/components/widgets/ProseContent.astro';
-import DocumentosDescargables from '~/components/widgets/DocumentosDescargables.astro';
-import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
+import Layout                  from '~/layouts/PageLayout.astro';
+import HeroText                from '~/components/widgets/HeroText.astro';
+import ProseContent            from '~/components/widgets/ProseContent.astro';
+import DocumentosDescargables  from '~/components/widgets/DocumentosDescargables.astro';
+import CallToAction            from '~/components/widgets/CallToAction.astro';
+import PageNav                 from '~/components/widgets/PageNav.astro';
+import EmptyCollection         from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
-import { pb } from '~/lib/pocketbase';
+import { CATEGORIAS }          from '~/data/categorias';
+import type { Categoria }      from '~/data/categorias';
+import { pb }                  from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
-interface Categoria {
-  id: string;
-  nombre: string;
-  slug: string;
-}
-
 interface Producto {
   id: string;
   nombre: string;
@@ -47,6 +47,7 @@ interface Producto {
   icono: string;
   orden: number;
   publicado: boolean;
+  /** Valor del campo Select en PocketBase — coincide con el slug de la categoría. */
   categoria: string;
 }
 
@@ -63,23 +64,21 @@ interface Documento {
 
 // ── getStaticPaths ─────────────────────────────────────────────────────────────
 export const getStaticPaths = (async () => {
-  const categorias = await pb.collection('categorias').getFullList<Categoria>({ 
-    sort: 'orden' 
-  });
-
   const paths = await Promise.all(
-    categorias.map(async (cat) => {
+    CATEGORIAS.map(async (cat: Categoria) => {
       let productos: Producto[] = [];
 
       try {
         productos = await pb.collection('productos').getFullList<Producto>({
-            filter: `categoria = "${cat.id}" && publicado = true`,
-            sort: 'orden',
-          });
-      } catch {
+          filter: `categoria = "${cat.slug}" && publicado = true`,
+          sort:   'orden',
+        });
+      } catch (err) {
+        console.error(`[BPA] Error cargando productos para "${cat.slug}":`, err);
         return [];
       }
 
+      // Por cada producto, cargar sus documentos descargables
       return Promise.all(
         productos.map(async (prod) => {
           let documentos: Documento[] = [];
@@ -87,25 +86,17 @@ export const getStaticPaths = (async () => {
 
           try {
             documentos = await pb.collection('documentos').getFullList<Documento>({
-                filter: `referencia = "${prod.slug}" && tipo = "producto"`,
-                sort: 'orden',
-              });
+              filter: `referencia = "${prod.slug}" && tipo = "producto"`,
+              sort:   'orden',
+            });
           } catch (err) {
             console.error(`[BPA] Error cargando documentos para "${prod.slug}":`, err);
             dbErrorDocs = true;
           }
 
           return {
-            params: {
-              categoria: cat.slug,
-              producto: prod.slug,
-            },
-            props: {
-              producto: prod,
-              categoria: cat,
-              documentos,
-              dbErrorDocs,
-            },
+            params: { categoria: cat.slug, producto: prod.slug },
+            props:  { producto: prod, categoria: cat, documentos, dbErrorDocs },
           };
         })
       );
@@ -120,7 +111,6 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { producto, categoria, documentos, dbErrorDocs } = Astro.props;
 
 // ── Construcción de URLs de descarga ──────────────────────────────────────────
-// pb.files.getURL construye la URL local completa del archivo en PocketBase.
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   id:      doc.id,
   nombre:  doc.nombre,
@@ -131,41 +121,40 @@ const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
 
 // ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
-  title:       `${producto.nombre} - BPA Santiago de Cuba`,
+  title:       `${producto.nombre} — BPA Santiago de Cuba`,
   description: producto.descripcion,
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 - HeroText ──────────────────────────────────────────────────────
-      Nombre del producto como titulo principal.
-      Tagline = nombre de la categoria para contextualizar la ubicacion.
-      Sin subtitle: el contenido del campo `contenido` habla por si mismo.
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Tagline = nombre de la categoría para contextualizar la ubicación.
+      Title = nombre del producto. Sin subtitle: el contenido habla por sí mismo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
     tagline={categoria.nombre}
     title={producto.nombre}
   />
 
-  <!-- BLOQUE 2 - ProseContent ───────────────────────────────
+  <!-- BLOQUE 2 · ProseContent / EmptyCollection ───────────────────────────────
       Si el campo `contenido` tiene datos → renderiza el HTML con Typography.
       Si está vacío → EmptyCollection avisa que falta información detallada.
   ─────────────────────────────────────────────────────────────────────────── -->
-  {producto.contenido
+  {producto.contenido?.trim()
     ? <ProseContent contenido={producto.contenido} />
-    : <EmptyCollection 
-        coleccion="productos" 
+    : <EmptyCollection
+        coleccion="productos"
         mensaje="Aún no hay información detallada acerca de este servicio."
         icono="tabler:info-circle"
       />
   }
 
-  <!-- BLOQUE 3 - DocumentosDescargables ───────────────────────────────────────
-      Grid de archivos asociados a este producto (planillas, guias, etc.).
-      - Si dbErrorDocs=true -> aviso ambar discreto (no bloquea la pagina).
-      - Si no hay documentos -> el componente no renderiza nada (silencioso).
-      - Si hay documentos    -> grid de tarjetas con boton de descarga.
+  <!-- BLOQUE 3 · DocumentosDescargables ───────────────────────────────────────
+      Grid de archivos descargables asociados a este producto.
+      - Si error=true  → aviso ámbar discreto (no bloquea la página).
+      - Si array vacío → el componente no renderiza nada (silencioso).
+      - Si hay docs    → grid de tarjetas con botón de descarga.
   ─────────────────────────────────────────────────────────────────────────── -->
   <DocumentosDescargables
     documentos={documentosConUrl}
@@ -173,8 +162,8 @@ const metadata = {
     titulo="Documentos relacionados"
   />
 
-  <!-- BLOQUE 4 - CallToAction ──────────────────────────────────────────────────
-      Cierre institucional consistente con el resto del modulo.
+  <!-- BLOQUE 4 · CallToAction ──────────────────────────────────────────────────
+      Cierre institucional consistente con el resto del módulo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
     title="¿Necesita más información sobre este servicio?"
@@ -189,12 +178,14 @@ const metadata = {
     ]}
   />
 
-  <!-- NAVEGACION - PageNav ───────────────────────────────────────────────────────
-      Boton izquierdo: volver a la pagina de la categoria padre.
-      La URL y el texto se construyen dinamicamente con los datos de la categoria.
+  <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
+      Navegación contextual: regresa al listado de la categoría padre.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: `Volver a ${categoria.nombre}`, href: `/productos/${categoria.slug}`}}
+    prev={{
+      text: `Volver a ${categoria.nombre}`,
+      href: `/productos/${categoria.slug}`,
+    }}
   />
 
 </Layout>
