@@ -131,7 +131,7 @@ const NOMBRE_MUNICIPIO: Record<string, string> = {
 const ORDEN_TIPOS: TipoPunto[] = ['S', 'AN', 'CA', 'CAE', 'AT'];
 
 // ── Estado reactivo ──────────────────────────────────────────────────────────
-const montado           = ref(false);  // true solo en cliente — evita hydration mismatch del Teleport
+const expandidoId       = ref<string | null>(null);
 const cargando          = ref(true);
 const errorDB           = ref(false);
 const todos             = ref<PuntoAtencion[]>([]);
@@ -140,7 +140,6 @@ const disponibilidades  = ref<DisponibilidadAT[]>([]);
 const municipioActivo   = ref<string | null>(null);
 const busqueda          = ref('');
 const filtrosTipo       = ref<Set<TipoPunto>>(new Set());  // vacío = todos activos
-const puntoModal        = ref<PuntoAtencion | null>(null);
 
 // ── Mapa de disponibilidad AT ────────────────────────────────────────────────
 /**
@@ -226,7 +225,7 @@ function seleccionarMunicipio(slug: string) {
   municipioActivo.value = municipioActivo.value === slug ? null : slug;
   busqueda.value        = '';
   filtrosTipo.value     = new Set();
-  puntoModal.value      = null;
+  expandidoId.value     = null;
 }
 
 function colorPath(slug: string): string {
@@ -247,12 +246,8 @@ function limpiarFiltros() {
   filtrosTipo.value = new Set();
 }
 
-function abrirModal(punto: PuntoAtencion) {
-  puntoModal.value = punto;
-}
-
-function cerrarModal() {
-  puntoModal.value = null;
+function toggleExpansion(id: string) {
+  expandidoId.value = expandidoId.value === id ? null : id;
 }
 
 // ── Helpers de display ───────────────────────────────────────────────────────
@@ -294,10 +289,7 @@ async function cargarDatos() {
   }
 }
 
-onMounted(() => {
-  montado.value = true;
-  cargarDatos();
-});
+onMounted(cargarDatos);
 </script>
 
 <template>
@@ -319,8 +311,8 @@ onMounted(() => {
     <!-- ── ESTADO: Error ─────────────────────────────────────────────────── -->
     <div v-else-if="errorDB"
       class="flex flex-col items-center justify-center gap-4 py-20 rounded-xl
-             border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30
-             text-red-600 dark:text-red-400">
+            border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30
+            text-red-600 dark:text-red-400">
       <!-- tabler:alert-circle -->
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -333,7 +325,7 @@ onMounted(() => {
       <p class="text-xs text-red-500">Verifique la conexión con el servidor.</p>
       <button @click="cargarDatos"
         class="inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700
-               text-white text-sm font-medium px-4 py-2 transition-colors">
+              text-white text-sm font-medium px-4 py-2 transition-colors">
         <!-- tabler:refresh -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -360,13 +352,14 @@ onMounted(() => {
       </div>
 
       <!-- Layout bicolumna: SVG | Panel -->
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 lg:h-[calc(100vh-10rem)]">
 
-        <!-- ════════════════════════════════════════════════════════════════
-             COLUMNA IZQUIERDA — Mapa SVG interactivo
-             ════════════════════════════════════════════════════════════════ -->
+        <!--  ════════════════════════════════════════════════════════════════
+            COLUMNA IZQUIERDA — Mapa SVG interactivo
+            ════════════════════════════════════════════════════════════════ -->
         <div class="rounded-2xl border border-slate-200 dark:border-slate-700
-                    bg-slate-50 dark:bg-slate-800/50 p-4 overflow-hidden">
+                    bg-slate-50 dark:bg-slate-800/50 p-4 overflow-hidden
+                    lg:h-full flex flex-col">
 
           <!-- Instrucción contextual -->
           <p class="text-xs text-slate-500 dark:text-slate-400 text-center mb-3">
@@ -379,7 +372,7 @@ onMounted(() => {
 
           <!-- SVG del mapa -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480"
-            class="w-full h-auto" role="img" aria-label="Mapa de Santiago de Cuba">
+            class="w-full h-auto lg:flex-1 lg:min-h-0" role="img" aria-label="Mapa de Santiago de Cuba">
 
             <!-- Guamá -->
             <path id="guama"
@@ -482,7 +475,7 @@ onMounted(() => {
 
             <!-- Etiquetas de municipios -->
             <g font-size="11" font-family="system-ui, sans-serif"
-               fill="white" text-anchor="middle" pointer-events="none">
+              fill="white" text-anchor="middle" pointer-events="none">
               <text x="65"  y="230">Guamá</text>
               <text x="200" y="100">II Frente</text>
               <text x="158" y="310">III Frente</text>
@@ -497,15 +490,15 @@ onMounted(() => {
         </div>
 
         <!-- ════════════════════════════════════════════════════════════════
-             COLUMNA DERECHA — Panel de oficinas
-             ════════════════════════════════════════════════════════════════ -->
-        <div class="flex flex-col gap-4 min-h-[400px]">
+            COLUMNA DERECHA — Panel de oficinas
+            ════════════════════════════════════════════════════════════════ -->
+        <div class="flex flex-col gap-4 lg:h-full lg:overflow-hidden min-h-[400px]">
 
           <!-- Estado inicial: ningún municipio seleccionado -->
           <div v-if="!municipioActivo"
             class="flex-1 flex flex-col items-center justify-center gap-3 rounded-2xl
-                   border-2 border-dashed border-slate-200 dark:border-slate-700
-                   text-slate-400 dark:text-slate-500 p-8 text-center">
+                  border-2 border-dashed border-slate-200 dark:border-slate-700
+                  text-slate-400 dark:text-slate-500 p-8 text-center">
             <!-- tabler:map-pin -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
@@ -527,7 +520,7 @@ onMounted(() => {
               </h3>
               <button @click="municipioActivo = null; limpiarFiltros()"
                 class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200
-                       hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
+                      hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
                 title="Deseleccionar municipio">
                 <!-- tabler:x -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -552,12 +545,12 @@ onMounted(() => {
               <input v-model="busqueda"
                 type="text" placeholder="Buscar por nombre o dirección…"
                 class="w-full pl-9 pr-9 py-2 text-sm rounded-lg border border-slate-200
-                       dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900
-                       dark:text-white placeholder-slate-400 focus:outline-none
-                       focus:ring-2 focus:ring-blue-500 transition" />
+                      dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900
+                      dark:text-white placeholder-slate-400 focus:outline-none
+                      focus:ring-2 focus:ring-blue-500 transition" />
               <button v-if="busqueda" @click="busqueda = ''"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400
-                       hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                      hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
                   class="w-3.5 h-3.5">
@@ -573,7 +566,7 @@ onMounted(() => {
                 v-show="(conteoTipo[tipo] ?? 0) > 0"
                 @click="toggleFiltroTipo(tipo)"
                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs
-                       font-semibold border transition-colors"
+                      font-semibold border transition-colors"
                 :class="filtrosTipo.size === 0 || filtrosTipo.has(tipo)
                   ? [CONFIG_TIPO[tipo].badgeBg, CONFIG_TIPO[tipo].badgeText, CONFIG_TIPO[tipo].borderColor]
                   : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-600'">
@@ -583,9 +576,9 @@ onMounted(() => {
               <button v-if="filtrosTipo.size > 0 || busqueda"
                 @click="limpiarFiltros"
                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs
-                       font-medium text-slate-500 dark:text-slate-400 border
-                       border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800
-                       hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                      font-medium text-slate-500 dark:text-slate-400 border
+                      border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800
+                      hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                 <!-- tabler:x -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
@@ -604,16 +597,16 @@ onMounted(() => {
             </div>
 
             <!-- Lista agrupada con scroll -->
-            <div v-else class="flex-1 overflow-y-auto space-y-5 pr-1 max-h-[520px]
-                               [&::-webkit-scrollbar]:w-1.5
-                               [&::-webkit-scrollbar-track]:rounded-full
-                               [&::-webkit-scrollbar-track]:bg-slate-100
-                               dark:[&::-webkit-scrollbar-track]:bg-slate-700/50
-                               [&::-webkit-scrollbar-thumb]:rounded-full
-                               [&::-webkit-scrollbar-thumb]:bg-slate-300
-                               dark:[&::-webkit-scrollbar-thumb]:bg-slate-500
-                               hover:[&::-webkit-scrollbar-thumb]:bg-slate-400
-                               dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
+            <div v-else class="flex-1 overflow-y-auto space-y-5 pr-1 min-h-0
+                              [&::-webkit-scrollbar]:w-1.5
+                              [&::-webkit-scrollbar-track]:rounded-full
+                              [&::-webkit-scrollbar-track]:bg-slate-100
+                              dark:[&::-webkit-scrollbar-track]:bg-slate-700/50
+                              [&::-webkit-scrollbar-thumb]:rounded-full
+                              [&::-webkit-scrollbar-thumb]:bg-slate-300
+                              dark:[&::-webkit-scrollbar-thumb]:bg-slate-500
+                              hover:[&::-webkit-scrollbar-thumb]:bg-slate-400
+                              dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
 
               <div v-for="grupo in puntosAgrupados" :key="grupo.tipo">
 
@@ -630,14 +623,14 @@ onMounted(() => {
                 <div class="space-y-2">
                   <div v-for="punto in grupo.items" :key="punto.id"
                     class="rounded-xl border bg-white dark:bg-slate-800 overflow-hidden
-                           transition-shadow hover:shadow-sm"
+                          transition-shadow hover:shadow-sm"
                     :class="CONFIG_TIPO[punto.tipo].borderColor">
 
-                    <!-- Tarjeta compacta — clic abre modal -->
+                    <!-- Cabecera de tarjeta — clic expande -->
                     <button
-                      @click="abrirModal(punto)"
+                      @click="toggleExpansion(punto.id)"
                       class="w-full flex items-center justify-between gap-2 px-3.5 py-3
-                             text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                       <div class="flex-1 min-w-0">
                         <!-- Nombre + badge de estado (AT) en la misma fila -->
                         <div class="flex items-center gap-2 min-w-0">
@@ -660,15 +653,149 @@ onMounted(() => {
                           {{ punto.direccion }}
                         </p>
                       </div>
-                      <!-- Icono "ver detalle" -->
-                      <!-- tabler:chevron-right -->
+                      <!-- Chevron rotable -->
+                      <!-- tabler:chevron-down -->
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                        class="w-4 h-4 flex-shrink-0 text-slate-300 dark:text-slate-600">
+                        class="w-4 h-4 flex-shrink-0 text-slate-400 transition-transform duration-200"
+                        :class="expandidoId === punto.id ? 'rotate-180' : ''">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M9 6l6 6l-6 6" />
+                        <path d="M6 9l6 6l6 -6" />
                       </svg>
                     </button>
+
+                    <!-- Detalle expandido -->
+                    <Transition
+                      enter-active-class="transition-all duration-200 ease-out"
+                      enter-from-class="opacity-0 max-h-0"
+                      enter-to-class="opacity-100 max-h-96"
+                      leave-active-class="transition-all duration-150 ease-in"
+                      leave-from-class="opacity-100 max-h-96"
+                      leave-to-class="opacity-0 max-h-0">
+                      <div v-if="expandidoId === punto.id"
+                        class="px-3.5 pb-3.5 pt-0 border-t border-slate-100
+                              dark:border-slate-700 space-y-2.5 overflow-hidden">
+
+                        <!-- Dirección -->
+                        <div class="flex items-start gap-2 pt-2.5">
+                          <!-- tabler:map-pin -->
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-slate-400">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                            <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
+                          </svg>
+                          <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                            {{ punto.direccion }}
+                          </p>
+                        </div>
+
+                        <!-- Teléfono -->
+                        <div v-if="punto.telefono" class="flex items-start gap-2">
+                          <!-- tabler:phone -->
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-slate-400">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2" />
+                          </svg>
+                          <p class="text-xs text-slate-600 dark:text-slate-400">
+                            {{ punto.telefono }}
+                          </p>
+                        </div>
+
+                        <!-- Horario -->
+                        <div v-if="punto.horario" class="flex items-start gap-2">
+                          <!-- tabler:clock -->
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-slate-400">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                            <path d="M12 7v5l3 3" />
+                          </svg>
+                          <p class="text-xs text-slate-600 dark:text-slate-400">
+                            {{ punto.horario }}
+                          </p>
+                        </div>
+
+                        <!-- Nota -->
+                        <div v-if="punto.nota" class="flex items-start gap-2">
+                          <!-- tabler:info-circle -->
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-slate-400">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                            <path d="M12 9h.01" /><path d="M11 12h1v4h1" />
+                          </svg>
+                          <p class="text-xs text-slate-600 dark:text-slate-400">
+                            {{ punto.nota }}
+                          </p>
+                        </div>
+
+                        <!-- ── Sección exclusiva cajeros AT ── -->
+                        <template v-if="punto.tipo === 'AT'">
+                          <div v-if="disponibilidadMap.get(punto.id)"
+                            class="mt-1 rounded-lg p-3 space-y-2"
+                            :class="{
+                              'bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50':
+                                disponibilidadMap.get(punto.id)!.estado === 'operativo',
+                              'bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50':
+                                disponibilidadMap.get(punto.id)!.estado === 'fuera_de_servicio',
+                              'bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-100 dark:border-yellow-900/50':
+                                disponibilidadMap.get(punto.id)!.estado === 'sin_efectivo',
+                            }">
+                            <!-- Estado + fecha actualización -->
+                            <div class="flex items-center justify-between gap-2">
+                              <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full"
+                                  :class="CONFIG_ESTADO[disponibilidadMap.get(punto.id)!.estado].dot"></span>
+                                <span class="text-xs font-semibold"
+                                  :class="CONFIG_ESTADO[disponibilidadMap.get(punto.id)!.estado].text">
+                                  {{ CONFIG_ESTADO[disponibilidadMap.get(punto.id)!.estado].label }}
+                                </span>
+                              </div>
+                              <span class="text-[10px] text-slate-400">
+                                {{ formatearFecha(disponibilidadMap.get(punto.id)!.updated) }}
+                              </span>
+                            </div>
+                            <!-- Billetes disponibles -->
+                            <div v-if="disponibilidadMap.get(punto.id)!.billetes?.length">
+                              <p class="text-[10px] font-semibold uppercase tracking-wide
+                                        text-slate-500 dark:text-slate-400 mb-1.5">
+                                Denominaciones disponibles
+                              </p>
+                              <div class="flex flex-wrap gap-1">
+                                <span v-for="b in [...disponibilidadMap.get(punto.id)!.billetes]
+                                  .map(Number).sort((a, b) => a - b)" :key="b"
+                                  class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold
+                                        bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200
+                                        border border-slate-200 dark:border-slate-600">
+                                  {{ b }} CUP
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Sin datos de disponibilidad -->
+                          <div v-else
+                            class="rounded-lg px-3 py-2.5 bg-slate-50 dark:bg-slate-700/50
+                                  border border-slate-200 dark:border-slate-600">
+                            <p class="text-xs text-slate-400 dark:text-slate-500 italic">
+                              Estado del cajero no disponible.
+                            </p>
+                          </div>
+                        </template>
+
+                        <!-- Código de sucursal -->
+                        <p v-if="punto.codigo_sucursal"
+                          class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                          Cód. sucursal: {{ punto.codigo_sucursal }}
+                        </p>
+
+                      </div>
+                    </Transition>
 
                   </div>
                 </div>
@@ -683,187 +810,6 @@ onMounted(() => {
       <!-- fin grid -->
 
     </template>
-
-    <!-- ══════════════════════════════════════════════════════════════════
-         MODAL — Detalle del punto de atención
-         Teleport a <body> para que quede por encima de todo el layout.
-         ══════════════════════════════════════════════════════════════════ -->
-    <Teleport v-if="montado" to="body">
-      <Transition
-        enter-active-class="transition-opacity duration-200 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition-opacity duration-150 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0">
-        <div v-if="puntoModal"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4">
-
-          <!-- Fondo oscuro -->
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="cerrarModal"></div>
-
-          <!-- Panel del modal -->
-          <div class="relative z-10 w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800
-                      shadow-2xl border overflow-hidden"
-            :class="CONFIG_TIPO[puntoModal.tipo].borderColor">
-
-            <!-- Cabecera del modal -->
-            <div class="flex items-start justify-between gap-3 px-5 pt-5 pb-4
-                        border-b border-slate-100 dark:border-slate-700">
-              <div class="flex-1 min-w-0">
-                <!-- Badge de tipo -->
-                <span class="inline-block text-[11px] font-bold uppercase tracking-widest
-                             px-2 py-0.5 rounded mb-2"
-                  :class="[CONFIG_TIPO[puntoModal.tipo].badgeBg, CONFIG_TIPO[puntoModal.tipo].badgeText]">
-                  {{ CONFIG_TIPO[puntoModal.tipo].label }}
-                </span>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white leading-snug">
-                  {{ puntoModal.nombre }}
-                </h3>
-                <p v-if="puntoModal.codigo_sucursal"
-                  class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                  Cód. sucursal: {{ puntoModal.codigo_sucursal }}
-                </p>
-              </div>
-              <!-- Botón cerrar -->
-              <button @click="cerrarModal"
-                class="flex-shrink-0 p-1.5 rounded-lg text-slate-400
-                       hover:text-slate-700 dark:hover:text-slate-200
-                       hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <!-- tabler:x -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                  class="w-4 h-4">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                  <path d="M18 6l-12 12" /><path d="M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- Cuerpo del modal -->
-            <div class="px-5 py-4 space-y-3">
-
-              <!-- Dirección -->
-              <div class="flex items-start gap-3">
-                <!-- tabler:map-pin -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-400">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                  <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
-                  <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
-                </svg>
-                <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                  {{ puntoModal.direccion }}
-                </p>
-              </div>
-
-              <!-- Teléfono -->
-              <div v-if="puntoModal.telefono" class="flex items-start gap-3">
-                <!-- tabler:phone -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-400">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                  <path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2" />
-                </svg>
-                <p class="text-sm text-slate-700 dark:text-slate-300">
-                  {{ puntoModal.telefono }}
-                </p>
-              </div>
-
-              <!-- Horario -->
-              <div v-if="puntoModal.horario" class="flex items-start gap-3">
-                <!-- tabler:clock -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-400">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-                  <path d="M12 7v5l3 3" />
-                </svg>
-                <p class="text-sm text-slate-700 dark:text-slate-300">
-                  {{ puntoModal.horario }}
-                </p>
-              </div>
-
-              <!-- Nota -->
-              <div v-if="puntoModal.nota" class="flex items-start gap-3">
-                <!-- tabler:info-circle -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-400">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-                  <path d="M12 9h.01" /><path d="M11 12h1v4h1" />
-                </svg>
-                <p class="text-sm text-slate-700 dark:text-slate-300">
-                  {{ puntoModal.nota }}
-                </p>
-              </div>
-
-              <!-- ── Sección exclusiva cajeros AT ── -->
-              <template v-if="puntoModal.tipo === 'AT'">
-                <div class="mt-1 rounded-xl p-4 space-y-3"
-                  :class="{
-                    'bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50':
-                      disponibilidadMap.get(puntoModal.id)?.estado === 'operativo',
-                    'bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50':
-                      disponibilidadMap.get(puntoModal.id)?.estado === 'fuera_de_servicio',
-                    'bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-100 dark:border-yellow-900/50':
-                      disponibilidadMap.get(puntoModal.id)?.estado === 'sin_efectivo',
-                    'bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600':
-                      !disponibilidadMap.get(puntoModal.id),
-                  }">
-
-                  <template v-if="disponibilidadMap.get(puntoModal.id)">
-                    <!-- Estado + última actualización -->
-                    <div class="flex items-center justify-between gap-2">
-                      <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full"
-                          :class="CONFIG_ESTADO[disponibilidadMap.get(puntoModal.id)!.estado].dot"></span>
-                        <span class="text-sm font-semibold"
-                          :class="CONFIG_ESTADO[disponibilidadMap.get(puntoModal.id)!.estado].text">
-                          {{ CONFIG_ESTADO[disponibilidadMap.get(puntoModal.id)!.estado].label }}
-                        </span>
-                      </div>
-                      <span class="text-[11px] text-slate-400">
-                        {{ formatearFecha(disponibilidadMap.get(puntoModal.id)!.updated) }}
-                      </span>
-                    </div>
-
-                    <!-- Billetes disponibles -->
-                    <div v-if="disponibilidadMap.get(puntoModal.id)!.billetes?.length">
-                      <p class="text-[11px] font-semibold uppercase tracking-wide
-                                text-slate-500 dark:text-slate-400 mb-2">
-                        Denominaciones disponibles
-                      </p>
-                      <div class="flex flex-wrap gap-1.5">
-                        <span v-for="b in [...disponibilidadMap.get(puntoModal.id)!.billetes]
-                          .map(Number).sort((a, b) => a - b)" :key="b"
-                          class="inline-block px-2.5 py-1 rounded-full text-xs font-bold
-                                 bg-white dark:bg-slate-700
-                                 text-slate-700 dark:text-slate-200
-                                 border border-slate-200 dark:border-slate-600">
-                          {{ b }} CUP
-                        </span>
-                      </div>
-                    </div>
-                  </template>
-
-                  <!-- Sin datos de disponibilidad -->
-                  <p v-else class="text-sm text-slate-400 dark:text-slate-500 italic">
-                    Estado del cajero no disponible.
-                  </p>
-                </div>
-              </template>
-
-            </div>
-          </div>
-
-        </div>
-      </Transition>
-    </Teleport>
 
   </div>
 </template>
