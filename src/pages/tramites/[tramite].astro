@@ -25,7 +25,7 @@ import ProseContent            from '~/components/widgets/ProseContent.astro';
 import DocumentosDescargables  from '~/components/widgets/DocumentosDescargables.astro';
 import EmptyCollection         from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
-import { pb } from '~/lib/pocketbase';
+import { pb, fetchParaBuild } from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 interface Tramite {
@@ -52,10 +52,16 @@ interface Documento {
 
 // ── getStaticPaths ─────────────────────────────────────────────────────────────
 export const getStaticPaths = (async () => {
-  const tramites = await pb.collection('tramites').getFullList<Tramite>({
-    filter: 'publicado = true',
-    sort:   'orden',
-  });
+  // ✅ fetchParaBuild envuelve el fetch en try/catch.
+  // Si PocketBase no está disponible (ej: GitHub Actions / CI), devuelve []
+  // y el build continúa generando 0 rutas en lugar de explotar con ECONNREFUSED.
+  const tramites = await fetchParaBuild<Tramite>(
+    () => pb.collection('tramites').getFullList<Tramite>({
+      filter: 'publicado = true',
+      sort:   'orden',
+    }),
+    'tramites'
+  );
 
   const paths = await Promise.all(
     tramites.map(async (tramite) => {

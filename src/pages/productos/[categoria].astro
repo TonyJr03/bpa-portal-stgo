@@ -29,7 +29,7 @@ import EmptyCollection from '~/components/ui/EmptyCollection.astro';
 import DatabaseError   from '~/components/ui/DatabaseError.astro';
 import { CATEGORIAS }  from '~/data/categorias';
 import type { Categoria } from '~/data/categorias';
-import { pb }          from '~/lib/pocketbase';
+import { pb, fetchParaBuild } from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 interface Producto {
@@ -50,19 +50,19 @@ interface Producto {
 export const getStaticPaths = (async () => {
   const paths = await Promise.all(
     CATEGORIAS.map(async (cat: Categoria) => {
-      let productos: Producto[] = [];
-      let dbError = false;
-
-      try {
-        productos = await pb.collection('productos').getFullList<Producto>({
+      // fetchParaBuild devuelve [] si PocketBase no está disponible (ej: CI/CD),
+      // evitando que el build falle. dbError=true activa el componente DatabaseError.
+      const productos = await fetchParaBuild<Producto>(
+        () => pb.collection('productos').getFullList<Producto>({
           // Filtra por el valor del campo Select, que es el slug de la categoría
           filter: `categoria = "${cat.slug}" && publicado = true`,
           sort:   'orden',
-        });
-      } catch (err) {
-        console.error(`[BPA] Error cargando productos para "${cat.slug}":`, err);
-        dbError = true;
-      }
+        }),
+        `productos/${cat.slug}`
+      );
+
+      // Si PocketBase no respondió, productos será [] y dbError lo refleja en la UI
+      const dbError = productos.length === 0;
 
       return {
         params: { categoria: cat.slug },

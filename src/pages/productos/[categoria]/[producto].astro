@@ -35,7 +35,7 @@ import EmptyCollection         from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
 import { CATEGORIAS }          from '~/data/categorias';
 import type { Categoria }      from '~/data/categorias';
-import { pb }                  from '~/lib/pocketbase';
+import { pb, fetchParaBuild }  from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 interface Producto {
@@ -66,17 +66,17 @@ interface Documento {
 export const getStaticPaths = (async () => {
   const paths = await Promise.all(
     CATEGORIAS.map(async (cat: Categoria) => {
-      let productos: Producto[] = [];
-
-      try {
-        productos = await pb.collection('productos').getFullList<Producto>({
+      // fetchParaBuild devuelve [] si PocketBase no está disponible (ej: CI/CD),
+      // lo que hace que este .map() produzca un array vacío y el build no falle.
+      const productos = await fetchParaBuild<Producto>(
+        () => pb.collection('productos').getFullList<Producto>({
           filter: `categoria = "${cat.slug}" && publicado = true`,
           sort:   'orden',
-        });
-      } catch (err) {
-        console.error(`[BPA] Error cargando productos para "${cat.slug}":`, err);
-        return [];
-      }
+        }),
+        `productos/${cat.slug}`
+      );
+
+      if (productos.length === 0) return [];
 
       // Por cada producto, cargar sus documentos descargables
       return Promise.all(
