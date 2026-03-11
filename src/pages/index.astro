@@ -68,11 +68,11 @@ const metadata = {
 <Layout metadata={metadata}>
 
   <!-- ══════════════════════════════════════════════════════════════════════
-       BLOQUE 1 · HERO — CTA Principal
-       ─────────────────────────────────────────────────────────────────────
-       El hero es 100 % estático. Sin imagen externa (restricción air-gapped).
-       Dos botones: acción primaria "Realizar un Trámite" y secundaria
-       "Explorar Productos".
+      BLOQUE 1 · HERO — CTA Principal
+      ─────────────────────────────────────────────────────────────────────
+      El hero es 100 % estático. Sin imagen externa (restricción air-gapped).
+      Dos botones: acción primaria "Realizar un Trámite" y secundaria
+      "Explorar Productos".
   ══════════════════════════════════════════════════════════════════════════ -->
   <Hero
     actions={[
@@ -110,12 +110,12 @@ const metadata = {
   </Hero>
 
   <!-- ══════════════════════════════════════════════════════════════════════
-       BLOQUE 2 · TABLÓN DE AVISOS — Isla Vue (runtime)
-       ─────────────────────────────────────────────────────────────────────
-       Posicionado en segundo lugar para que el usuario vea inmediatamente
-       cualquier aviso urgente antes de explorar el resto del portal.
-       Usa client:visible para hidratar solo al entrar en el viewport.
-       Fondo azul suave para romper visualmente con el Hero.
+      BLOQUE 2 · TABLÓN DE AVISOS — Isla Vue (runtime)
+      ─────────────────────────────────────────────────────────────────────
+      Posicionado en segundo lugar para que el usuario vea inmediatamente
+      cualquier aviso urgente antes de explorar el resto del portal.
+      Usa client:visible para hidratar solo al entrar en el viewport.
+      Fondo azul suave para romper visualmente con el Hero.
   ══════════════════════════════════════════════════════════════════════════ -->
   <NoticiasWidget id="avisos">
     <Fragment slot="bg">
@@ -124,20 +124,20 @@ const metadata = {
   </NoticiasWidget>
 
   <!-- ══════════════════════════════════════════════════════════════════════
-       BLOQUE 3 · ACCESO RÁPIDO — 4 Tarjetas (2 islas Vue + 2 estáticas)
-       ─────────────────────────────────────────────────────────────────────
-       Las tarjetas de Tasas y Calendario muestran datos en vivo desde
-       PocketBase. Calculadora y Mapa son enlaces estáticos.
+      BLOQUE 3 · ACCESO RÁPIDO — 4 Tarjetas (2 islas Vue + 2 estáticas)
+      ─────────────────────────────────────────────────────────────────────
+      Las tarjetas de Tasas y Calendario muestran datos en vivo desde
+      PocketBase. Calculadora y Mapa son enlaces estáticos.
   ══════════════════════════════════════════════════════════════════════════ -->
   <AccesoRapidoHome id="herramientas" />
 
   <!-- ══════════════════════════════════════════════════════════════════════
-       BLOQUE 4 · PRODUCTOS Y SERVICIOS — Datos de src/data/categorias.ts
-       ─────────────────────────────────────────────────────────────────────
-       Las 5 categorías provienen del archivo estático categorias.ts,
-       que es la fuente de verdad única para la estructura del catálogo.
-       Este bloque es 100 % SSG — cero peticiones en build ni en runtime.
-       Fondo azul suave: alterna con el bloque anterior (blanco).
+      BLOQUE 4 · PRODUCTOS Y SERVICIOS — Datos de src/data/categorias.ts
+      ─────────────────────────────────────────────────────────────────────
+      Las 5 categorías provienen del archivo estático categorias.ts,
+      que es la fuente de verdad única para la estructura del catálogo.
+      Este bloque es 100 % SSG — cero peticiones en build ni en runtime.
+      Fondo azul suave: alterna con el bloque anterior (blanco).
   ══════════════════════════════════════════════════════════════════════════ -->
   <Features2
     id="productos"
@@ -153,11 +153,11 @@ const metadata = {
   </Features2>
 
   <!-- ══════════════════════════════════════════════════════════════════════
-       BLOQUE 5 · APLICACIONES BANCARIAS — Estático
-       ─────────────────────────────────────────────────────────────────────
-       Información sobre EnZona y Transfermóvil, las plataformas de banca
-       móvil compatibles con las cuentas del BPA. Los enlaces apuntan a
-       páginas internas, no a CDNs externos (restricción air-gapped).
+      BLOQUE 5 · APLICACIONES BANCARIAS — Estático
+      ─────────────────────────────────────────────────────────────────────
+      Información sobre EnZona y Transfermóvil, las plataformas de banca
+      móvil compatibles con las cuentas del BPA. Los enlaces apuntan a
+      páginas internas, no a CDNs externos (restricción air-gapped).
   ══════════════════════════════════════════════════════════════════════════ -->
   <Features3
     id="apps"
@@ -192,11 +192,11 @@ const metadata = {
   />
 
   <!-- ══════════════════════════════════════════════════════════════════════
-       BLOQUE 6 · CALL TO ACTION — Contacto Rápido
-       ─────────────────────────────────────────────────────────────────────
-       Cierre de la página con acceso directo al formulario de contacto.
-       Un único botón para no dispersar la atención del usuario.
-       Fondo oscuro para crear contraste visual fuerte antes del footer.
+      BLOQUE 6 · CALL TO ACTION — Contacto Rápido
+      ─────────────────────────────────────────────────────────────────────
+      Cierre de la página con acceso directo al formulario de contacto.
+      Un único botón para no dispersar la atención del usuario.
+      Fondo oscuro para crear contraste visual fuerte antes del footer.
   ══════════════════════════════════════════════════════════════════════════ -->
   <CallToAction
     title="¿Necesita orientación personalizada?"
