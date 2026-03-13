@@ -1,0 +1,132 @@
+---
+/**
+ * @seccion   src/components/sections/Herramienta.astro
+ * @reemplaza CalendarioWidget.astro, CalculadoraWidget.astro,
+ *            TasasDeCambioWidget.astro, MapaWidget.astro
+ *
+ * @descripcion
+ * Sección unificada para las cuatro herramientas interactivas del portal BPA.
+ * Encapsula el patrón WidgetWrapper + Headline (opcional) + Isla Vue que antes
+ * estaba duplicado en cuatro archivos prácticamente idénticos.
+ *
+ * El prop `herramienta` determina qué isla Vue se monta y cuál es el ancho
+ * máximo del contenedor — cada herramienta tiene su propia densidad visual.
+ * Las islas se declaran de forma estática en el template (requisito de Astro)
+ * y se activan condicionalmente según el prop recibido.
+ *
+ * @props
+ *   herramienta  'calculadora' | 'tasas' | 'calendario' | 'mapa'  (requerido)
+ *   tagline?     string  — etiqueta pequeña sobre el título
+ *   title?       string  — título principal de la sección
+ *   subtitle?    string  — subtítulo descriptivo
+ *   id?          string  — id HTML del wrapper (para anclas y accesibilidad)
+ *   isDark?      boolean — activa variante oscura del WidgetWrapper
+ *   classes?     Record<string, string> — clases extra para el contenedor
+ *
+ * @uso
+ * ```astro
+ * import Herramienta from '~/components/sections/Herramienta.astro';
+ *
+ * <!-- Uso mínimo — sin Headline (la página ya tiene HeroText) -->
+ * <Herramienta herramienta="calculadora" id="calculadora">
+ *   <Fragment slot="bg">
+ *     <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+ *   </Fragment>
+ * </Herramienta>
+ *
+ * <!-- Uso con Headline completo (desde otra página o sección) -->
+ * <Herramienta
+ *   herramienta="tasas"
+ *   tagline="Herramientas"
+ *   title="Tasas de Cambio"
+ *   subtitle="Divisas operadas por el BPA, actualizadas en tiempo real."
+ * />
+ * ```
+ *
+ * @islas  Todas usan client:load — son el contenido principal de su página.
+ *   calculadora  →  CalculadoraFinanciera.vue  (autónoma, sin PocketBase)
+ *   tasas        →  TasasDeCambio.vue           (colección: tasas_cambio)
+ *   calendario   →  CalendarioEventos.vue       (colección: eventos)
+ *   mapa         →  MapaSucursales.vue          (colección: marcadores)
+ */
+
+import WidgetWrapper         from '~/components/ui/WidgetWrapper.astro';
+import Headline              from '~/components/ui/Headline.astro';
+import CalculadoraFinanciera from '~/components/vue/CalculadoraFinanciera.vue';
+import TasasDeCambio         from '~/components/vue/TasasDeCambio.vue';
+import CalendarioEventos     from '~/components/vue/CalendarioEventos.vue';
+import MapaSucursales        from '~/components/vue/MapaSucursales.vue';
+
+// ── Configuración de cada herramienta ─────────────────────────────────────────
+// El ancho máximo varía porque cada isla tiene distinta densidad visual:
+//   calculadora → formularios simples, columna estrecha es más legible
+//   tasas       → tabla de divisas + conversor, ancho medio
+//   calendario  → grilla mensual, ancho medio-alto
+//   mapa        → mapa SVG + panel lateral, necesita todo el ancho disponible
+const CONFIG = {
+  calculadora: { maxWidth: 'max-w-2xl' },
+  tasas:       { maxWidth: 'max-w-4xl' },
+  calendario:  { maxWidth: 'max-w-3xl' },
+  mapa:        { maxWidth: 'max-w-6xl' },
+} as const;
+
+type TipoHerramienta = keyof typeof CONFIG;
+
+// ── Props ──────────────────────────────────────────────────────────────────────
+interface Props {
+  /** Qué herramienta renderizar. Determina la isla Vue y el ancho del contenedor. */
+  herramienta: TipoHerramienta;
+  tagline?:    string;
+  title?:      string;
+  subtitle?:   string;
+  id?:         string;
+  isDark?:     boolean;
+  classes?:    Record<string, string>;
+}
+
+const {
+  herramienta,
+  tagline,
+  title,
+  subtitle,
+  id,
+  isDark  = false,
+  classes = {},
+} = Astro.props;
+
+// El Headline solo se monta si al menos un prop tiene valor
+const tieneHeadline = tagline || title || subtitle;
+const { maxWidth }  = CONFIG[herramienta];
+---
+
+<WidgetWrapper
+  id={id}
+  isDark={isDark}
+  containerClass={`${maxWidth} mx-auto ${classes?.container ?? ''}`}
+>
+  <!-- Slot para fondo personalizable desde la página padre -->
+  <Fragment slot="bg">
+    <slot name="bg" />
+  </Fragment>
+
+  <!-- Headline opcional ────────────────────────────────────────────────────── -->
+  {tieneHeadline && (
+    <Headline
+      tagline={tagline}
+      title={title}
+      subtitle={subtitle}
+      classes={{
+        container: 'mb-8',
+        title:     'text-2xl md:text-3xl',
+      }}
+    />
+  )}
+
+  <!-- Islas Vue — declaración estática requerida por Astro ─────────────────── -->
+  <!-- Solo se monta la que corresponde al prop `herramienta` recibido        -->
+  {herramienta === 'calculadora' && <CalculadoraFinanciera client:load />}
+  {herramienta === 'tasas'       && <TasasDeCambio         client:load />}
+  {herramienta === 'calendario'  && <CalendarioEventos      client:load />}
+  {herramienta === 'mapa'        && <MapaSucursales         client:load />}
+
+</WidgetWrapper>

@@ -1,7 +1,7 @@
 {
-  "name": "@onwidget/astrowind",
+  "name": "bpa-portal-stgo",
   "version": "1.0.0-beta.49",
-  "description": "AstroWind: A free template using Astro 5.0 and Tailwind CSS. Astro starter theme.",
+  "description": "Portal web institucional del Banco Popular de Ahorro, Sucursal Provincial Santiago de Cuba.",
   "type": "module",
   "private": true,
   "engines": {

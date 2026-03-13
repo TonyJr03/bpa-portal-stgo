@@ -15,6 +15,7 @@ metadata:
   robots:
     index: true
     follow: true
+  # Analizar la relevancia de estas dos al final
   openGraph:
     site_name: 'BPA Santiago de Cuba'
     images:
@@ -33,7 +34,7 @@ i18n:
 
 apps:
   blog:
-    isEnabled: true
+    isEnabled: false
     postsPerPage: 6
 
     post:

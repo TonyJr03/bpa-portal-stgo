@@ -74,10 +74,6 @@ export default defineConfig({
     vue(),
   ],
 
-  image: {
-    domains: ['cdn.pixabay.com', 'plus.unsplash.com'],
-  },
-
   markdown: {
     remarkPlugins: [readingTimeRemarkPlugin],
     rehypePlugins: [responsiveTablesRehypePlugin, lazyImagesRehypePlugin],
