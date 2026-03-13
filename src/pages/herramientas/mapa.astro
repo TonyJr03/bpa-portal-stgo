@@ -20,7 +20,7 @@
 
 import Layout         from '~/layouts/PageLayout.astro';
 import HeroText       from '~/components/widgets/HeroText.astro';
-import MapaWidget     from '~/components/widgets/MapaWidget.astro';
+import Herramienta from '~/components/sections/Herramienta.astro';
 import CallToAction   from '~/components/widgets/CallToAction.astro';
 import PageNav        from '~/components/widgets/PageNav.astro';
 
@@ -47,7 +47,7 @@ const meta = {
       Se pasa bg-white para diferenciar visualmente del HeroText anterior.
       No se pasa título porque ya lo muestra el HeroText superior.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <MapaWidget />
+  <Herramienta herramienta="mapa" id="mapa" /> 
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
       Derivación a la página de canales de atención donde están los teléfonos

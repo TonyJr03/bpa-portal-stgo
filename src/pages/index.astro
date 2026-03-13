@@ -35,8 +35,8 @@ import Hero             from '~/components/widgets/Hero.astro';
 import Features2        from '~/components/widgets/Features2.astro';
 import Features3        from '~/components/widgets/Features3.astro';
 import CallToAction     from '~/components/widgets/CallToAction.astro';
-import NoticiasWidget   from '~/components/widgets/NoticiasWidget.astro';
-import AccesoRapidoHome from '~/components/widgets/AccesoRapidoHome.astro';
+import Noticias         from '~/components/sections/Noticias.astro';
+import AccesoRapidoHome from '~/components/sections/AccesoRapidoHome.astro';
 
 // ── Datos estáticos de categorías ─────────────────────────────────────────
 // Fuente de verdad única: src/data/categorias.ts
@@ -117,11 +117,11 @@ const metadata = {
       Usa client:visible para hidratar solo al entrar en el viewport.
       Fondo azul suave para romper visualmente con el Hero.
   ══════════════════════════════════════════════════════════════════════════ -->
-  <NoticiasWidget id="avisos">
+  <Noticias id="avisos">
     <Fragment slot="bg">
       <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
     </Fragment>
-  </NoticiasWidget>
+  </Noticias>
 
   <!-- ══════════════════════════════════════════════════════════════════════
       BLOQUE 3 · ACCESO RÁPIDO — 4 Tarjetas (2 islas Vue + 2 estáticas)

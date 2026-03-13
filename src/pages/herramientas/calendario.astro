@@ -21,7 +21,7 @@
 
 import Layout            from '~/layouts/PageLayout.astro';
 import HeroText          from '~/components/widgets/HeroText.astro';
-import CalendarioWidget  from '~/components/widgets/CalendarioWidget.astro';
+import Herramienta from '~/components/sections/Herramienta.astro';
 import CallToAction      from '~/components/widgets/CallToAction.astro';
 import PageNav           from '~/components/widgets/PageNav.astro';
 
@@ -50,11 +50,11 @@ const metadata = {
       max-w-3xl en el widget: el calendario mensual es más legible en
       columna estrecha que estirado en pantallas anchas.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <CalendarioWidget id="calendario">
+  <Herramienta herramienta="calendario" id="calendario">
     <Fragment slot="bg">
       <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
     </Fragment>
-  </CalendarioWidget>
+  </Herramienta>
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
       El siguiente paso natural tras consultar el calendario es ir a la

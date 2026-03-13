@@ -21,7 +21,7 @@
 
 import Layout              from '~/layouts/PageLayout.astro';
 import HeroText            from '~/components/widgets/HeroText.astro';
-import TasasDeCambioWidget from '~/components/widgets/TasasDeCambioWidget.astro';
+import Herramienta from '~/components/sections/Herramienta.astro';
 import CallToAction        from '~/components/widgets/CallToAction.astro';
 import PageNav             from '~/components/widgets/PageNav.astro';
 
@@ -48,11 +48,11 @@ const metadata = {
       Sin Headline — el HeroText ya cumple ese rol en esta página.
       bg-blue-50 alterna con el blanco del HeroText y del CallToAction.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <TasasDeCambioWidget id="tasas">
+  <Herramienta herramienta="tasas" id="tasas">
     <Fragment slot="bg">
       <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
     </Fragment>
-  </TasasDeCambioWidget>
+  </Herramienta>
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
       Cierre del módulo. Ofrece dos salidas naturales desde una consulta

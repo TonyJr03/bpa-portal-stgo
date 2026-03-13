@@ -20,7 +20,7 @@
 
 import Layout              from '~/layouts/PageLayout.astro';
 import HeroText            from '~/components/widgets/HeroText.astro';
-import CalculadoraWidget   from '~/components/widgets/CalculadoraWidget.astro';
+import Herramienta from '~/components/sections/Herramienta.astro';
 import CallToAction        from '~/components/widgets/CallToAction.astro';
 import PageNav             from '~/components/widgets/PageNav.astro';
 
@@ -48,11 +48,11 @@ const metadata = {
       max-w-2xl en el widget: la calculadora es más legible en columna
       estrecha sin desperdiciar espacio en pantallas anchas.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <CalculadoraWidget id="calculadora">
+  <Herramienta herramienta="calculadora" id="calculadora">
     <Fragment slot="bg">
       <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
     </Fragment>
-  </CalculadoraWidget>
+  </Herramienta>
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
       El siguiente paso natural tras calcular es ir a la sucursal o

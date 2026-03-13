@@ -1,0 +1,96 @@
+---
+/**
+ * @componente  src/components/icons/Svg404.astro
+ *
+ * @descripcion
+ *   Ilustración institucional para la página de error 404.
+ *   Fachada bancaria estilizada con frontón clásico y globo de
+ *   advertencia superpuesto. El diseño evoca "el banco existe,
+ *   pero esta página no".
+ *
+ *   Sigue el mismo patrón que SvgMision.astro, SvgVision.astro,
+ *   SvgHistoria.astro y SvgDireccion.astro: SVG inline puro,
+ *   usa currentColor + clases Tailwind para adaptarse al modo
+ *   claro/oscuro, sin imágenes externas ni dependencias.
+ *
+ * @uso
+ * ```astro
+ * import Svg404 from '~/components/icons/Svg404.astro';
+ * <Svg404 />
+ * ```
+ */
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 240 180"
+  class="w-56 h-44"
+  role="presentation"
+  aria-hidden="true"
+>
+  <!-- Suelo -->
+  <rect x="10" y="158" width="220" height="4" rx="2"
+        fill="currentColor" class="text-slate-200 dark:text-slate-700" />
+
+  <!-- Cuerpo del edificio -->
+  <rect x="55" y="70" width="130" height="90" rx="3"
+        fill="currentColor" class="text-blue-50 dark:text-slate-800" />
+  <rect x="55" y="70" width="130" height="90" rx="3"
+        fill="none" stroke="currentColor" stroke-width="1.5"
+        class="text-blue-200 dark:text-slate-600" />
+
+  <!-- Frontón triangular clásico -->
+  <polygon points="45,70 120,30 195,70"
+           fill="currentColor" class="text-blue-100 dark:text-slate-700" />
+  <polygon points="45,70 120,30 195,70"
+           fill="none" stroke="currentColor" stroke-width="1.5"
+           class="text-blue-300 dark:text-slate-500" />
+
+  <!-- Columnas decorativas -->
+  <rect x="72"  y="70" width="8" height="88" rx="2"
+        fill="currentColor" class="text-blue-200 dark:text-slate-600" />
+  <rect x="116" y="70" width="8" height="88" rx="2"
+        fill="currentColor" class="text-blue-200 dark:text-slate-600" />
+  <rect x="160" y="70" width="8" height="88" rx="2"
+        fill="currentColor" class="text-blue-200 dark:text-slate-600" />
+
+  <!-- Puerta central -->
+  <rect x="103" y="120" width="34" height="38" rx="2"
+        fill="currentColor" class="text-blue-200 dark:text-slate-600" />
+  <rect x="106" y="123" width="28" height="32" rx="1"
+        fill="currentColor" class="text-white dark:text-slate-800" />
+
+  <!-- Ventanas simétricas -->
+  <rect x="68"  y="85" width="20" height="18" rx="2"
+        fill="currentColor" class="text-blue-100 dark:text-slate-700" />
+  <rect x="68"  y="85" width="20" height="18" rx="2"
+        fill="none" stroke="currentColor" stroke-width="1"
+        class="text-blue-300 dark:text-slate-500" />
+  <rect x="152" y="85" width="20" height="18" rx="2"
+        fill="currentColor" class="text-blue-100 dark:text-slate-700" />
+  <rect x="152" y="85" width="20" height="18" rx="2"
+        fill="none" stroke="currentColor" stroke-width="1"
+        class="text-blue-300 dark:text-slate-500" />
+
+  <!-- Letrero BPA en el frontón -->
+  <text x="120" y="56" text-anchor="middle" font-size="9" font-weight="700"
+        fill="currentColor" class="text-blue-400 dark:text-blue-400"
+        font-family="system-ui, sans-serif">BPA</text>
+
+  <!-- Globo de advertencia (arriba derecha) -->
+  <circle cx="183" cy="48" r="30"
+          fill="currentColor" class="text-white dark:text-slate-900" />
+  <circle cx="183" cy="48" r="30"
+          fill="none" stroke="currentColor" stroke-width="2"
+          class="text-amber-400 dark:text-amber-500" />
+
+  <!-- Signo de exclamación -->
+  <rect x="181" y="32" width="4" height="18" rx="2"
+        fill="currentColor" class="text-amber-400 dark:text-amber-500" />
+  <circle cx="183" cy="57" r="2.5"
+          fill="currentColor" class="text-amber-400 dark:text-amber-500" />
+
+  <!-- Sombra sutil del globo -->
+  <ellipse cx="183" cy="80" rx="14" ry="3"
+           fill="currentColor" class="text-slate-200/60 dark:text-slate-700/40" />
+</svg>
