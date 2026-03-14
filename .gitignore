@@ -28,3 +28,5 @@ bpa-backend/pocketbase.exe
 bpa-backend/pb_data/
 
 public/descargas/
+
+iniciar-dev.bat

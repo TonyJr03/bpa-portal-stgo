@@ -1,7 +1,22 @@
 import PocketBase from 'pocketbase';
 
-// Apuntamos a la dirección donde se ejecuta tu PocketBase local
-export const pb = new PocketBase('http://127.0.0.1:8090');
+/**
+ * URL del servidor PocketBase.
+ *
+ * Se lee desde la variable de entorno PUBLIC_PB_URL (definida en .env).
+ * El prefijo PUBLIC_ es obligatorio en Astro para que la variable esté
+ * disponible tanto en build time (SSG) como en runtime (islas Vue en el
+ * navegador del cliente).
+ *
+ * Fallback a 127.0.0.1 para entornos de CI/CD donde no hay .env.
+ *
+ * ⚠️ NUNCA hardcodear 127.0.0.1 aquí — esa dirección solo funciona en el
+ *    dispositivo donde corre PocketBase. Los clientes en red local necesitan
+ *    la IP real del servidor (ej: http://192.168.1.105:8090).
+ */
+const PB_URL = import.meta.env.PUBLIC_PB_URL ?? 'http://127.0.0.1:8090';
+
+export const pb = new PocketBase(PB_URL);
 
 // Desactivamos la cancelación automática para evitar errores en Astro (SSR)
 pb.autoCancellation(false);
