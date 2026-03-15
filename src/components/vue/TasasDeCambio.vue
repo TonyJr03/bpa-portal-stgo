@@ -327,7 +327,7 @@ onMounted(cargarTasas);
       </div>
 
       <!-- Nota informativa sobre compra/venta -->
-      <div class="flex gap-3 rounded-lg border border-blue-100 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/30 px-5 py-4">
+      <div class="flex gap-3 rounded-lg border border-blue-100 dark:border-blue-900/50 bg-bpa-alt dark:bg-blue-950/30 px-5 py-4">
         <!-- tabler:info-circle -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"

@@ -10,7 +10,7 @@
  *
  * Estructura:
  *   BLOQUE 1 · HeroText              → tagline + title + subtitle
- *   BLOQUE 2 · TasasDeCambioWidget   → widget propio (bg-blue-50)
+ *   BLOQUE 2 · TasasDeCambioWidget   → widget propio (bg-bpa-alt)
  *                                      Headline + isla Vue
  *   BLOQUE 3 · CallToAction          → cierre institucional
  *   BLOQUE 4 · PageNav               → prev: "Volver a Herramientas"
@@ -46,13 +46,9 @@ const metadata = {
   <!-- BLOQUE 2 · TasasDeCambioWidget ──────────────────────────────────────────
       Widget propio: WidgetWrapper + Headline + isla Vue TasasDeCambio.
       Sin Headline — el HeroText ya cumple ese rol en esta página.
-      bg-blue-50 alterna con el blanco del HeroText y del CallToAction.
+      bg-bpa-alt alterna con el blanco del HeroText y del CallToAction.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <Herramienta herramienta="tasas" id="tasas">
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Herramienta>
+  <Herramienta herramienta="tasas" id="tasas" />
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
       Cierre del módulo. Ofrece dos salidas naturales desde una consulta

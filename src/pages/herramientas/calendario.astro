@@ -10,7 +10,7 @@
  *
  * Estructura:
  *   BLOQUE 1 · HeroText          → tagline + title + subtitle
- *   BLOQUE 2 · CalendarioWidget  → widget propio (bg-blue-50)
+ *   BLOQUE 2 · CalendarioWidget  → widget propio (bg-bpa-alt)
  *                                   Headline + isla Vue
  *   BLOQUE 3 · CallToAction      → cierre institucional
  *   BLOQUE 4 · PageNav           → prev: "Volver a Herramientas"
@@ -46,15 +46,11 @@ const metadata = {
   <!-- BLOQUE 2 · CalendarioWidget ─────────────────────────────────────────────
       Widget propio: WidgetWrapper + Headline + isla Vue CalendarioEventos.
       Sin Headline — el HeroText ya cumple ese rol en esta página.
-      bg-blue-50 alterna con el blanco del HeroText y del CallToAction.
+      bg-bpa-alt alterna con el blanco del HeroText y del CallToAction.
       max-w-3xl en el widget: el calendario mensual es más legible en
       columna estrecha que estirado en pantallas anchas.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <Herramienta herramienta="calendario" id="calendario">
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Herramienta>
+  <Herramienta herramienta="calendario" id="calendario" />
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
       El siguiente paso natural tras consultar el calendario es ir a la

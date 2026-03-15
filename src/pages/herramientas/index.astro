@@ -11,7 +11,7 @@
  *
  * Estructura:
  *   BLOQUE 1 · HeroText    → tagline + title + subtitle
- *   BLOQUE 2 · Features2   → 4 cards de herramientas (bg-blue-50)
+ *   BLOQUE 2 · Features2   → 4 cards de herramientas (bg-bpa-alt)
  *   BLOQUE 3 · CallToAction → cierre institucional → /contacto
  *   BLOQUE 4 · PageNav     → prev: "Volver a Inicio"
  *
@@ -45,7 +45,7 @@ const metadata = {
 
   <!-- BLOQUE 2 · Features2 — Catálogo de herramientas ─────────────────────────
       Cuatro tarjetas, una por herramienta. Cada callToAction apunta directamente
-      a la subpágina correspondiente. El fondo bg-blue-50 alterna con el blanco
+      a la subpágina correspondiente. El fondo bg-bpa-alt alterna con el blanco
       del HeroText superior y del CallToAction inferior.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features2
@@ -96,11 +96,7 @@ const metadata = {
         },
       },
     ]}
-  >
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Features2>
+  />
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
       Cierre del módulo. Si el usuario no encuentra lo que busca con las

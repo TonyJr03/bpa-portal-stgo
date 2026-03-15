@@ -9,7 +9,7 @@
  *
  * Estructura:
  *   BLOQUE 1 · HeroText      → title + subtitle, sin tagline
- *   BLOQUE 2 · ContactoBPA   → widget propio (bg-blue-50)
+ *   BLOQUE 2 · ContactoBPA   → widget propio (bg-bpa-alt)
  *                               Headline + grid SSG + isla Vue
  *   BLOQUE 3 · Steps         → proceso oficial de quejas (4 pasos, max-w-3xl)
  *   BLOQUE 4 · CallToAction  → enlaces a /herramientas/mapa y canales
@@ -48,15 +48,9 @@ const metadata = {
   <!-- BLOQUE 2 · ContactoBPA ───────────────────────────────────────────────────
       Widget propio que sigue el patrón AstroWind:
         WidgetWrapper → Headline → grid SSG (aside) + isla Vue (formulario).
-      bg-blue-50 alterna con el blanco del HeroText y del Steps siguiente.
+      bg-bpa-alt alterna con el blanco del HeroText y del Steps siguiente.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <ContactoBPA
-    id="formulario"
-  >
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </ContactoBPA>
+  <ContactoBPA id="formulario" />
 
   <!-- BLOQUE 3 · Steps — Proceso oficial de quejas ────────────────────────────
       Basado literalmente en "Parámetros que se necesitan para el tratamiento

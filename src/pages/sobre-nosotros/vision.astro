@@ -11,13 +11,13 @@
  *                         isReversed=true: SVG a la izquierda, texto a la derecha.
  *                         Invierte la composición respecto a mision.astro
  *                         para dar variedad visual al módulo "Sobre Nosotros".
- *                         Fondo azul suave (bg-blue-50).
+ *                         Fondo azul suave (bg-bpa-alt).
  *
  *   BLOQUE 3 · Steps2   → 4 pilares estratégicos extraídos del texto de la Visión,
  *                         cada uno con icono, título y desarrollo propio.
  *                         Layout: izquierda = encabezado del bloque,
  *                                 derecha  = lista de pilares numerados con icono.
- *                         isAfterContent=true + mismo fondo bg-blue-50 → continuidad
+ *                         isAfterContent=true + mismo fondo bg-bpa-alt → continuidad
  *                         visual con el bloque Content superior.
  *
  * Nota sobre el SVG: componente separado en src/components/icons/SvgVision.astro.
@@ -77,9 +77,6 @@ const metadata = {
     "
   >
     <SvgVision slot="image" />
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
   </Content>
 
   <!-- BLOQUE 3 · Steps2 — Pilares estratégicos ─────────────────────────────────
@@ -88,7 +85,7 @@ const metadata = {
       Steps2 divide la pantalla en dos mitades:
         - Izquierda: título y subtítulo del bloque.
         - Derecha:   lista vertical de items con círculo-icono y descripción.
-      isAfterContent=true + mismo fondo bg-blue-50: continuidad visual con el
+      isAfterContent=true + mismo fondo bg-bpa-alt: continuidad visual con el
       bloque Content — el usuario percibe una sola sección unificada de Visión.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Steps
@@ -120,11 +117,7 @@ const metadata = {
         icon: 'tabler:shield-check',
       },
     ]}
-  >
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Steps>
+  />
 
   <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
       Izquierda: retrocede a Misión (sección anterior del módulo).

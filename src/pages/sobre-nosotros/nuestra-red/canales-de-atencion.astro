@@ -14,7 +14,7 @@
  * Estructura:
  *   BLOQUE 1 · HeroText  → tagline "Nuestra Red" + title + subtitle
  *   BLOQUE 2 · Features2 → 4 canales de atención (columns=2)
- *                           fondo bg-blue-50
+ *                           fondo bg-bpa-alt
  *   BLOQUE 3 · Steps     → 4 pasos del proceso de queja/reclamación
  *   BLOQUE 4 · PageNav   → prev: Sucursales y Oficinas (último del módulo)
  *
@@ -57,7 +57,7 @@ const metadata = {
 
   <!-- BLOQUE 2 · Features2 — Los cuatro canales ────────────────────────────────
       columns=2: cuatro cards en dos filas de dos en desktop, apiladas en móvil.
-      Fondo bg-blue-50: sección principal de la página, predominante visualmente.
+      Fondo bg-bpa-alt: sección principal de la página, predominante visualmente.
       Los campos de contacto real están marcados [COMPLETAR] para facilitar
       la actualización por parte del administrador.
       Se usa set:html implícito en description a través del widget — los <br/>
@@ -104,11 +104,7 @@ const metadata = {
         icon: 'tabler:clock',
       },
     ]}
-  >
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Features2>
+  />
 
   <!-- BLOQUE 3 · Steps — Proceso de queja o reclamación ───────────────────────
       4 pasos extraídos del rol del Oficial de Salón y del Departamento de

@@ -69,7 +69,7 @@ const CONFIG_TIPO = {
     label:    'Pago a Jubilados',
     dot:      'bg-blue-500',
     badge:    'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300',
-    fondo:    'bg-blue-50 dark:bg-blue-950/40',
+    fondo:    'bg-bpa-alt dark:bg-blue-950/40',
     anillo:   'ring-1 ring-blue-300 dark:ring-blue-700',
     borde:    'border-blue-300 dark:border-blue-700',
     numColor: 'text-blue-700 dark:text-blue-300 font-bold',

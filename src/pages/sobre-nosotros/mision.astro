@@ -9,12 +9,12 @@
  *
  *   BLOQUE 2 · Content    → Texto oficial de la Misión (§2 del documento).
  *                           SVG institucional inyectado vía slot `image`.
- *                           Fondo azul suave (bg-blue-50).
+ *                           Fondo azul suave (bg-bpa-alt).
  *
  *   BLOQUE 3 · Features3  → 4 principios clave a ancho completo (2 columnas).
  *                           isAfterContent=true elimina el padding superior para
  *                           que visualmente sea continuo con el bloque Content.
- *                           Mismo fondo bg-blue-50 → sección unificada visualmente.
+ *                           Mismo fondo bg-bpa-alt → sección unificada visualmente.
  *
  *   BLOQUE 4 · Features3  → 6 funciones principales del banco (3 columnas),
  *                           orientadas al cliente, extraídas del §4 del documento.
@@ -79,9 +79,6 @@ const metadata = {
     "
   >
     <SvgMision slot="image" />
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
   </Content>
 
   <!-- BLOQUE 3 · Features3 — Principios (ancho completo) ──────────────────────
@@ -89,7 +86,7 @@ const metadata = {
       visualmente pegado al Content superior, formando una sola sección.
       columns=2: 4 items en grid 2×2, ocupando los dos "carriles" de la página
       (el del texto y el del SVG), no solo el izquierdo.
-      Mismo fondo bg-blue-50 que el Content: continuidad visual sin separación.
+      Mismo fondo bg-bpa-alt que el Content: continuidad visual sin separación.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features3
     columns={4}
@@ -120,11 +117,7 @@ const metadata = {
         icon: 'tabler:heart-handshake',
       },
     ]}
-  >
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Features3>
+  />
 
   <!-- BLOQUE 4 · Features3 — Funciones ────────────────────────────────────────
       Seis funciones principales del BPA (§4 del documento oficial), redactadas

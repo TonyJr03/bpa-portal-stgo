@@ -15,7 +15,7 @@
  * Estructura:
  *   BLOQUE 1 · HeroText  → tagline "Nuestra Red" + title
  *   BLOQUE 2 · Content   → párrafo institucional + SvgDireccion
- *                           fondo bg-blue-50
+ *                           fondo bg-bpa-alt
  *   BLOQUE 3 · Features2 → 4 áreas de servicio al cliente (columns=2)
  *                           isAfterContent para continuidad visual
  *   BLOQUE 4 · Features2 → datos de contacto de la sede (columns=2)
@@ -60,7 +60,7 @@ const metadata = {
   <!-- BLOQUE 2 · Content ───────────────────────────────────────────────────────
       Presentación institucional de la Dirección Provincial.
       SVG a la derecha (sin isReversed): patrón estándar del módulo.
-      Fondo bg-blue-50: establece el tono visual de la sección.
+      Fondo bg-bpa-alt: establece el tono visual de la sección.
       Sin items: las áreas de servicio van en Features2 a continuación.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Content
@@ -87,9 +87,6 @@ const metadata = {
     "
   >
     <SvgDireccion slot="image" />
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
   </Content>
 
   <!-- BLOQUE 3 · Features2 — Áreas de servicio al cliente ─────────────────────
@@ -97,7 +94,7 @@ const metadata = {
       en la atención ciudadana, extraídas del documento oficial y reescritas
       en lenguaje accesible.
       columns=2: cuatro items en dos filas de dos en desktop.
-      Sin fondo propio: hereda el bg-blue-50 del Content anterior para que
+      Sin fondo propio: hereda el bg-bpa-alt del Content anterior para que
       se perciban como una sola sección unificada.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features2
@@ -138,7 +135,7 @@ const metadata = {
       NOTA: Los valores marcados con [COMPLETAR] deben ser sustituidos
       por los datos reales antes del despliegue en producción.
       columns=2: cuatro items en dos filas de dos.
-      Fondo bg-blue-50 para alternar el ritmo visual con el bloque anterior.
+      Fondo bg-bpa-alt para alternar el ritmo visual con el bloque anterior.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features
     tagline="Contáctenos"
@@ -167,11 +164,7 @@ const metadata = {
         icon: 'tabler:clock',
       },
     ]}
-  >
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Features>
+  />
 
   <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
       Izquierda: regresa al índice del módulo Nuestra Red.

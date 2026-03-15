@@ -1,63 +1,123 @@
 ---
-import '@fontsource-variable/inter';
+/**
+ * @componente  src/components/CustomStyles.astro
+ *
+ * @descripcion
+ *   Tema visual institucional del portal BPA Santiago de Cuba.
+ *   Variables CSS consumidas por Tailwind (tailwind.config.js) y por
+ *   los componentes vía @apply o clase directa.
+ *
+ *   Fuente: Inter Variable — local, air-gapped, sin CDN.
+ *
+ * ════════════════════════════════════════════════════════════════════════
+ *  PALETA — Extraída de las tarjetas físicas del BPA
+ * ════════════════════════════════════════════════════════════════════════
+ *
+ *  ☀  MODO CLARO — Tarjeta blanca BPA
+ *      primary       → #006A3A  Verde BPA      (botones, íconos, links)
+ *      secondary     → #009150  Verde Acento   (hover, viñetas)
+ *      accent        → #B8860B  Ámbar logo     (CTAs, bordes premium)
+ *      bg-page       → #F4FBF7  Menta tenue    (fondo general de página)
+ *      bpa-bg-alt    → #FFFFFF  Blanco puro    (fondo de secciones alt.)
+ *
+ *  ☾  MODO OSCURO — Tarjeta verde oscura BPA
+ *      primary       → #B8860B  Ámbar logo     (botones, íconos, links)
+ *      secondary     → #8B6508  Ámbar hover    (hover — tono más oscuro)
+ *      accent        → #B8860B  Ámbar logo     (igual que primary)
+ *      bg-page       → #0D1F15  Verde noche    (fondo general de página)
+ *      bpa-bg-alt    → #FFFFFF / 5%  Blanco muy sutil (fondo secciones alt.)
+ *
+ * ─── Texto ───────────────────────────────────────────────────────────────
+ *   Día            #1E293B   Gris carbón — nunca negro puro
+ *   Noche          #F8FAFC   Gris perlado
+ *
+ * ─── Escala tonal verde BPA ──────────────────────────────────────────────
+ *   --bpa-green-50   #E8F5EE
+ *   --bpa-green-100  #C8E6D5
+ *   --bpa-green-200  #86C7A5
+ *   --bpa-green-400  #009150
+ *   --bpa-green-600  #006A3A  ★ primario claro
+ *   --bpa-green-800  #004424
+ *   --bpa-green-950  #0D1F15
+ */
 
-// 'DM Sans'
-// Nunito
-// Dosis
-// Outfit
-// Roboto
-// Literata
-// 'IBM Plex Sans'
-// Karla
-// Poppins
-// 'Fira Sans'
-// 'Libre Franklin'
-// Inconsolata
-// Raleway
-// Oswald
-// 'Space Grotesk'
-// Urbanist
+import '@fontsource-variable/inter';
 ---
 
 <style is:inline>
+  /* ════════════════════════════════════════════════════════════════════════
+   * ☀  MODO CLARO
+   *    Fondo general: #F4FBF7 (menta tenue — toda la página respira verde)
+   *    Fondo alt:     #FFFFFF (blanco — para secciones que deban destacar)
+   * ════════════════════════════════════════════════════════════════════════ */
   :root {
-    --aw-font-sans: 'Inter Variable';
-    --aw-font-serif: 'Inter Variable';
+    --aw-font-sans:    'Inter Variable';
+    --aw-font-serif:   'Inter Variable';
     --aw-font-heading: 'Inter Variable';
 
-    --aw-color-primary: rgb(1 97 239);
-    --aw-color-secondary: rgb(1 84 207);
-    --aw-color-accent: rgb(109 40 217);
+    /* Colores principales */
+    --aw-color-primary:   rgb(0 106 58);    /* Verde BPA    #006A3A */
+    --aw-color-secondary: rgb(0 145 80);    /* Verde Acento #009150 */
+    --aw-color-accent:    rgb(184 134 11);  /* Ámbar logo   #B8860B */
 
-    --aw-color-text-heading: rgb(0 0 0);
-    --aw-color-text-default: rgb(16 16 16);
-    --aw-color-text-muted: rgb(16 16 16 / 66%);
-    --aw-color-bg-page: rgb(255 255 255);
+    /* Texto */
+    --aw-color-text-heading: rgb(30 41 59);       /* Gris carbón #1E293B */
+    --aw-color-text-default: rgb(30 41 59);
+    --aw-color-text-muted:   rgb(30 41 59 / 60%);
 
-    --aw-color-bg-page-dark: rgb(3 6 32);
+    /* Fondos */
+    --aw-color-bg-page:      rgb(244 251 247);  /* Menta tenue #F4FBF7 — fondo general */
+    --aw-color-bg-page-dark: rgb(13 31 21);     /* Verde noche #0D1F15 */
+
+    /* Fondo de sección alternada (blanco — para contrastar con el menta) */
+    --bpa-bg-alt: rgb(255 255 255);
+
+    /* Escala tonal verde BPA */
+    --bpa-green-50:  #E8F5EE;
+    --bpa-green-100: #C8E6D5;
+    --bpa-green-200: #86C7A5;
+    --bpa-green-400: #009150;
+    --bpa-green-600: #006A3A;
+    --bpa-green-800: #004424;
+    --bpa-green-950: #0D1F15;
 
     ::selection {
-      background-color: lavender;
+      background-color: rgb(0 106 58 / 20%);
+      color: rgb(0 68 36);
     }
   }
 
+  /* ════════════════════════════════════════════════════════════════════════
+   * ☾  MODO OSCURO
+   *    Fondo general: #0D1F15 (verde noche — color real de la tarjeta oscura)
+   *    Fondo alt:     rgba(255 255 255 / 4%) (blanco muy sutil para secciones)
+   *    primary y secondary: ámbar del logo BPA
+   * ════════════════════════════════════════════════════════════════════════ */
   .dark {
-    --aw-font-sans: 'Inter Variable';
-    --aw-font-serif: 'Inter Variable';
+    --aw-font-sans:    'Inter Variable';
+    --aw-font-serif:   'Inter Variable';
     --aw-font-heading: 'Inter Variable';
 
-    --aw-color-primary: rgb(1 97 239);
-    --aw-color-secondary: rgb(1 84 207);
-    --aw-color-accent: rgb(109 40 217);
+    /* Colores principales */
+    --aw-color-primary:   rgb(184 134 11);  /* Ámbar logo   #B8860B */
+    --aw-color-secondary: rgb(139 101 8);   /* Ámbar hover  #8B6508 */
+    --aw-color-accent:    rgb(184 134 11);  /* Ámbar logo   #B8860B — igual */
 
-    --aw-color-text-heading: rgb(247, 248, 248);
-    --aw-color-text-default: rgb(229 236 246);
-    --aw-color-text-muted: rgb(229 236 246 / 66%);
-    --aw-color-bg-page: rgb(3 6 32);
+    /* Texto */
+    --aw-color-text-heading: rgb(248 250 252);      /* Gris perlado #F8FAFC */
+    --aw-color-text-default: rgb(248 250 252);
+    --aw-color-text-muted:   rgb(248 250 252 / 60%);
+
+    /* Fondos */
+    --aw-color-bg-page:      rgb(13 31 21);  /* Verde noche #0D1F15 */
+    --aw-color-bg-page-dark: rgb(13 31 21);
+
+    /* Fondo de sección alternada (blanco muy sutil sobre verde oscuro) */
+    --bpa-bg-alt: rgb(255 255 255 / 4%);
 
     ::selection {
-      background-color: black;
-      color: snow;
+      background-color: rgb(184 134 11 / 30%);
+      color: rgb(255 243 200);
     }
   }
 </style>

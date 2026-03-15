@@ -17,10 +17,10 @@
  *
  * Estructura (Opción B acordada):
  *   BLOQUE 1 · HeroText   → título del módulo + subtítulo institucional
- *   BLOQUE 2 · Content    → Misión · SvgMision · bg-blue-50
+ *   BLOQUE 2 · Content    → Misión · SvgMision · bg-bpa-alt
  *   BLOQUE 3 · Content    → Visión · SvgVision · isReversed
  *   BLOQUE 4 · Features2  → Historia + Nuestra Red (columns=2)
- *                            fondo bg-blue-50
+ *                            fondo bg-bpa-alt
  *   BLOQUE 5 · PageNav    → sin prev (es el índice) / sin next (el usuario
  *                            avanza por las tarjetas y los botones de cada bloque)
  *
@@ -58,7 +58,7 @@ const metadata = {
 
   <!-- BLOQUE 2 · Content — Misión ──────────────────────────────────────────────
       SVG a la derecha, texto a la izquierda (sin isReversed).
-      Fondo bg-blue-50: abre el recorrido visual del módulo con color.
+      Fondo bg-bpa-alt: abre el recorrido visual del módulo con color.
       El callToAction dentro de items[] invita a leer la página completa.
       Extracto del texto oficial de la Misión — lo suficiente para presentar,
       sin reemplazar la página dedicada.
@@ -88,15 +88,12 @@ const metadata = {
     ]}
   >
     <SvgMision slot="image" />
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
   </Content>
 
   <!-- BLOQUE 3 · Content — Visión ──────────────────────────────────────────────
       isReversed=true: SVG a la izquierda, texto a la derecha.
-      Sin fondo propio: el blanco contrasta con el bg-blue-50 del bloque anterior
-      y con el bg-blue-50 del Features2 que viene a continuación,
+      Sin fondo propio: el blanco contrasta con el bg-bpa-alt del bloque anterior
+      y con el bg-bpa-alt del Features2 que viene a continuación,
       creando el ritmo alternado color/blanco/color.
       Mismo patrón: extracto oficial + callToAction hacia la página completa.
   ─────────────────────────────────────────────────────────────────────────── -->
@@ -133,7 +130,7 @@ const metadata = {
       Dos tarjetas de acceso rápido para las secciones de menor peso narrativo
       en esta página de presentación.
       columns=2: una tarjeta por columna en desktop, apiladas en móvil.
-      Fondo bg-blue-50: cierra el módulo con el mismo tono que lo abrió,
+      Fondo bg-bpa-alt: cierra el módulo con el mismo tono que lo abrió,
       creando simetría visual con el bloque 2.
       callToAction variant='link' → discreto, no compite con los Content.
   ─────────────────────────────────────────────────────────────────────────── -->
@@ -166,11 +163,7 @@ const metadata = {
         },
       },
     ]}
-  >
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Features2>
+  />
 
   <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
       Sin prev ni next explícitos: esta es la página raíz del módulo.

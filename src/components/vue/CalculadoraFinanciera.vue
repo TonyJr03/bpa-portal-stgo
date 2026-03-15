@@ -363,7 +363,7 @@ onMounted(cargarTasas);
 
           <!-- Nota de tasa vigente -->
           <div v-if="vistaTasaActual"
-            class="flex items-start gap-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 px-4 py-3">
+            class="flex items-start gap-2.5 rounded-lg bg-bpa-alt dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 px-4 py-3">
             <!-- tabler:info-circle -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0 text-blue-500 mt-0.5">
               <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -446,7 +446,7 @@ onMounted(cargarTasas);
                 leave-active-class="transition-all duration-100 ease-in"
                 leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-1">
                 <div v-if="mostrarCalendario"
-                  class="mt-2 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 space-y-3">
+                  class="mt-2 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-bpa-alt dark:bg-blue-950/40 space-y-3">
                   <p class="text-xs text-blue-700 dark:text-blue-400 font-semibold">Seleccione el rango</p>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -488,7 +488,7 @@ onMounted(cargarTasas);
                 <p class="text-xl font-bold text-green-600 dark:text-green-400">{{ fmt(resultadoVista.interes) }}</p>
                 <p class="text-xs text-slate-400 mt-0.5">{{ vistaMoneda }}</p>
               </div>
-              <div class="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/40">
+              <div class="text-center p-3 rounded-lg bg-bpa-alt dark:bg-blue-900/40">
                 <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Monto al vencimiento</p>
                 <p class="text-xl font-bold text-blue-700 dark:text-blue-300">{{ fmt(resultadoVista.monto) }}</p>
                 <p class="text-xs text-slate-400 mt-0.5">{{ vistaMoneda }}</p>
@@ -589,7 +589,7 @@ onMounted(cargarTasas);
                 <p class="text-xl font-bold text-green-600 dark:text-green-400">{{ fmt(resultadoPlazo.interes) }}</p>
                 <p class="text-xs text-slate-400 mt-0.5">{{ plazoMoneda }}</p>
               </div>
-              <div class="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/40">
+              <div class="text-center p-3 rounded-lg bg-bpa-alt dark:bg-blue-900/40">
                 <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Capital + Intereses</p>
                 <p class="text-xl font-bold text-blue-700 dark:text-blue-300">{{ fmt(resultadoPlazo.total) }}</p>
                 <p class="text-xs text-slate-400 mt-0.5">{{ plazoMoneda }}</p>
@@ -611,7 +611,7 @@ onMounted(cargarTasas);
         mode="out-in">
         <div v-if="tabActiva === 'credito'" key="credito" class="space-y-5">
 
-          <div class="flex items-start gap-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 px-4 py-3">
+          <div class="flex items-start gap-2.5 rounded-lg bg-bpa-alt dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 px-4 py-3">
             <!-- tabler:info-circle -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0 text-blue-500 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
             <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
@@ -661,7 +661,7 @@ onMounted(cargarTasas);
                 <span class="font-semibold text-sm">Resultado del crédito</span>
               </div>
               <div class="bg-white dark:bg-slate-800 p-5">
-                <div class="text-center mb-5 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800">
+                <div class="text-center mb-5 p-4 rounded-xl bg-bpa-alt dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800">
                   <p class="text-xs text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide font-semibold">Cuota mensual fija</p>
                   <p class="text-3xl font-bold text-blue-700 dark:text-blue-300">
                     {{ fmt(resultadoCredito.cuota) }}
@@ -707,7 +707,7 @@ onMounted(cargarTasas);
                     <template v-for="(fila, idx) in filasVisibles" :key="idx">
                       <tr v-if="fila !== 'ellipsis'"
                         class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                        :class="fila.mes === resultadoCredito.n ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''">
+                        :class="fila.mes === resultadoCredito.n ? 'bg-bpa-alt/50 dark:bg-blue-950/20' : ''">
                         <td class="text-center px-3 py-2 text-slate-600 dark:text-slate-400 font-mono text-xs">{{ fila.mes }}</td>
                         <td class="text-right px-3 py-2 text-slate-700 dark:text-slate-300 font-medium">{{ fmt(fila.cuota) }}</td>
                         <td class="text-right px-3 py-2 text-amber-600 dark:text-amber-400">{{ fmt(fila.interes) }}</td>

@@ -24,7 +24,7 @@
  *   BLOQUE 3 · Features3  → 3 tipos de oficina (columns=3)
  *                            isAfterContent → continuidad con bloque 2
  *   BLOQUE 4 · Content    → qué es un ATM, cómo usarlo
- *                            + SvgATM · fondo bg-blue-50
+ *                            + SvgATM · fondo bg-bpa-alt
  *   BLOQUE 5 · CallToAction → Ver todas las oficinas en el mapa
  *   BLOQUE 6 · PageNav    → prev: Dirección Provincial / next: Canales
  *
@@ -97,7 +97,7 @@ const metadata = {
       Tres columnas: una por cada tipo de oficina bancaria.
       isAfterContent=true: elimina el padding-top para que se una visualmente
       al Content del bloque anterior como una sola sección.
-      Fondo bg-blue-50 en ambos bloques (Content + Features3): misma sección.
+      Fondo bg-bpa-alt en ambos bloques (Content + Features3): misma sección.
       El usuario percibe: presentación arriba → detalle abajo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features3
@@ -126,17 +126,13 @@ const metadata = {
         icon: 'tabler:pig-money',
       },
     ]}
-  >
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
-  </Features3>
+  />
 
   <!-- BLOQUE 4 · Content — Cajeros Automáticos ─────────────────────────────────
       Sección dedicada a los ATM: qué son, qué permiten hacer, recomendaciones.
       SvgATM a la derecha (sin isReversed): alterna la composición respecto al
       Content del bloque 2 (que sí tenía isReversed).
-      Fondo bg-blue-50 para separar visualmente del bloque Features3 anterior.
+      Fondo bg-bpa-alt para separar visualmente del bloque Features3 anterior.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Content
     title="Cajeros Automáticos (ATM)"
@@ -167,9 +163,6 @@ const metadata = {
     "
   >
     <SvgATM slot="image" />
-    <Fragment slot="bg">
-      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
-    </Fragment>
   </Content>
 
   <!-- BLOQUE 5 · CallToAction — Enlace al mapa ─────────────────────────────────
