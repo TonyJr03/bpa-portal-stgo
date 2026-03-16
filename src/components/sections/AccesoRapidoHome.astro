@@ -1,29 +1,32 @@
 ---
 /**
- * @componente  src/components/widgets/AccesoRapidoHome.astro
+ * @componente  src/components/sections/AccesoRapidoHome.astro
  *
  * @descripcion
  *   Sección "Acceso Rápido" de la página de inicio.
- *   Presenta una cuadrícula de 4 tarjetas (2×2 en tablet, 4×1 en desktop)
- *   que agrupan las herramientas de uso diario del banco.
+ *   Cuadrícula de 4 tarjetas con las herramientas de uso diario.
  *
  *   Dos tarjetas son islas Vue con datos en tiempo real:
- *     → TasasMiniWidget.vue   (USD/EUR compra/venta desde PocketBase)
- *     → CalendarioMiniWidget.vue (próximo evento desde PocketBase)
+ *     → TasasMiniWidget.vue    (colección tasas_cambio)
+ *     → CalendarioMiniWidget.vue (colección eventos)
  *
- *   Las otras dos son enlaces estáticos a las herramientas de:
+ *   Dos son enlaces estáticos:
  *     → Calculadora Financiera
- *     → Localizador de Sucursales (Mapa)
+ *     → Mapa de Sucursales
+ *
+ *   Paleta unificada BPA: todos los íconos usan bg-bpa-100/text-primary
+ *   para coherencia con la identidad visual del banco.
  *
  * @islas
- *   TasasMiniWidget.vue    client:visible  →  colección tasas_cambio
- *   CalendarioMiniWidget.vue client:visible →  colección eventos
+ *   TasasMiniWidget.vue      client:visible  →  colección tasas_cambio
+ *   CalendarioMiniWidget.vue client:visible  →  colección eventos
  */
 
-import WidgetWrapper      from '~/components/ui/WidgetWrapper.astro';
-import Headline           from '~/components/ui/Headline.astro';
-import TasasMiniWidget    from '~/components/vue/TasasMiniWidget.vue';
+import WidgetWrapper        from '~/components/ui/WidgetWrapper.astro';
+import Headline             from '~/components/ui/Headline.astro';
+import TasasMiniWidget      from '~/components/vue/TasasMiniWidget.vue';
 import CalendarioMiniWidget from '~/components/vue/CalendarioMiniWidget.vue';
+import { Icon }             from 'astro-icon/components';
 
 export interface Props {
   id?: string;
@@ -45,27 +48,19 @@ const { id, isDark = false } = Astro.props;
   <!-- Cuadrícula 2×2 en sm/md, 4 columnas en lg -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-    <!-- ── TARJETA 1: Tasas de Cambio (isla Vue activa) ────────────────── -->
-    <div class="flex flex-col rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-      <!-- Cabecera de la tarjeta -->
-      <div class="px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-700">
+    <!-- ── TARJETA 1: Tasas de Cambio (isla Vue) ──────────────────────── -->
+    <div class="flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+
+      <div class="px-5 pt-5 pb-3 border-b border-bpa-200/50 dark:border-bpa-amber-800/50">
         <div class="flex items-center gap-3 mb-1">
-          <!-- tabler:currency-exchange -->
-          <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="w-5 h-5">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-              <path d="M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 0 0 4h-2a2 2 0 0 1 -1.8 -1" />
-              <path d="M12 7v10" />
-            </svg>
+          <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary shrink-0">
+            <Icon name="tabler:currency-dollar" class="w-5 h-5" />
           </span>
           <div>
-            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm leading-tight">
+            <h3 class="font-bold text-default dark:text-default text-sm leading-tight">
               Tasas de Cambio
             </h3>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Valores en CUP</p>
+            <p class="text-xs text-muted dark:text-muted">Valores en CUP</p>
           </div>
         </div>
       </div>
@@ -75,117 +70,77 @@ const { id, isDark = false } = Astro.props;
         <TasasMiniWidget client:visible />
       </div>
 
-      <!-- Pie: enlace a la herramienta completa -->
+      <!-- Pie -->
       <a
         href="/herramientas/tasas-de-cambio"
-        class="flex items-center justify-between px-5 py-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 text-sm font-medium text-primary dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group"
+        class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary hover:bg-bpa-100/50 dark:hover:bg-bpa-800/30 transition-colors group"
       >
         <span>Ver detalles y conversor</span>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-          class="w-4 h-4 group-hover:translate-x-0.5 transition-transform">
-          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-          <path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" />
-        </svg>
+        <Icon name="tabler:arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </a>
     </div>
 
-    <!-- ── TARJETA 2: Calculadora Financiera (estática) ────────────────── -->
+    <!-- ── TARJETA 2: Calculadora Financiera (estática) ───────────────── -->
     <a
       href="/herramientas/calculadora"
-      class="group flex flex-col rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-300 overflow-hidden"
+      class="group flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
     >
-      <!-- Contenido central -->
       <div class="flex-1 flex flex-col items-center justify-center px-5 py-8 text-center">
-        <span class="flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 mb-4 group-hover:scale-110 transition-transform duration-300">
-          <!-- tabler:calculator -->
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="w-7 h-7">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-            <path d="M4 3m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
-            <path d="M8 7m0 1a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1z" />
-            <path d="M8 14l0 .01" /><path d="M12 14l0 .01" /><path d="M16 14l0 .01" />
-            <path d="M8 17l0 .01" /><path d="M12 17l0 .01" /><path d="M16 17l0 .01" />
-          </svg>
+        <span class="flex items-center justify-center w-14 h-14 rounded-2xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary mb-4 group-hover:scale-110 transition-transform duration-300">
+          <Icon name="tabler:calculator" class="w-7 h-7" />
         </span>
-        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base mb-2">
+        <h3 class="font-bold text-default dark:text-default text-base mb-2">
           Calculadora Financiera
         </h3>
-        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+        <p class="text-sm text-muted dark:text-muted leading-relaxed">
           Simule cuotas de créditos, rendimientos de ahorro y tablas de amortización.
         </p>
       </div>
 
       <!-- Pie -->
-      <div class="flex items-center justify-between px-5 py-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 text-sm font-medium text-primary dark:text-blue-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-700 transition-colors">
+      <div class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary group-hover:bg-bpa-100/50 dark:group-hover:bg-bpa-800/30 transition-colors">
         <span>Abrir calculadora</span>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-          class="w-4 h-4 group-hover:translate-x-0.5 transition-transform">
-          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-          <path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" />
-        </svg>
+        <Icon name="tabler:arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </div>
     </a>
 
-    <!-- ── TARJETA 3: Mapa de Sucursales (estática) ─────────────────────── -->
+    <!-- ── TARJETA 3: Mapa de Sucursales (estática) ────────────────────── -->
     <a
       href="/herramientas/mapa"
-      class="group flex flex-col rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md hover:border-sky-300 dark:hover:border-sky-700 transition-all duration-300 overflow-hidden"
+      class="group flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
     >
       <div class="flex-1 flex flex-col items-center justify-center px-5 py-8 text-center">
-        <span class="flex items-center justify-center w-14 h-14 rounded-2xl bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 mb-4 group-hover:scale-110 transition-transform duration-300">
-          <!-- tabler:map-pin -->
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="w-7 h-7">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-            <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
-            <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
-          </svg>
+        <span class="flex items-center justify-center w-14 h-14 rounded-2xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary mb-4 group-hover:scale-110 transition-transform duration-300">
+          <Icon name="tabler:map-pin" class="w-7 h-7" />
         </span>
-        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base mb-2">
+        <h3 class="font-bold text-default dark:text-default text-base mb-2">
           Localizador de Oficinas
         </h3>
-        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+        <p class="text-sm text-muted dark:text-muted leading-relaxed">
           Encuentre la sucursal, caja de ahorro o cajero ATM más cercano en Santiago de Cuba.
         </p>
       </div>
 
-      <div class="flex items-center justify-between px-5 py-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 text-sm font-medium text-primary dark:text-blue-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-700 transition-colors">
+      <!-- Pie -->
+      <div class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary group-hover:bg-bpa-100/50 dark:group-hover:bg-bpa-800/30 transition-colors">
         <span>Ver mapa interactivo</span>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-          class="w-4 h-4 group-hover:translate-x-0.5 transition-transform">
-          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-          <path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" />
-        </svg>
+        <Icon name="tabler:arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </div>
     </a>
 
-    <!-- ── TARJETA 4: Calendario de Eventos (isla Vue activa) ──────────── -->
-    <div class="flex flex-col rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-      <!-- Cabecera -->
-      <div class="px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-700">
+    <!-- ── TARJETA 4: Calendario de Eventos (isla Vue) ─────────────────── -->
+    <div class="flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+
+      <div class="px-5 pt-5 pb-3 border-b border-bpa-200/50 dark:border-bpa-amber-800/50">
         <div class="flex items-center gap-3">
-          <!-- tabler:calendar-star -->
-          <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="w-5 h-5">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
-              <path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" />
-              <path d="M12 13l.01 0" /><path d="M12 17l.01 0" />
-              <path d="M16 13l.01 0" /><path d="M8 13l.01 0" />
-            </svg>
+          <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary shrink-0">
+            <Icon name="tabler:calendar-event" class="w-5 h-5" />
           </span>
           <div>
-            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm leading-tight">
+            <h3 class="font-bold text-default dark:text-default text-sm leading-tight">
               Próximo Evento
             </h3>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Calendario de pagos y feriados</p>
+            <p class="text-xs text-muted dark:text-muted">Calendario de pagos y feriados</p>
           </div>
         </div>
       </div>
@@ -198,15 +153,10 @@ const { id, isDark = false } = Astro.props;
       <!-- Pie -->
       <a
         href="/herramientas/calendario"
-        class="flex items-center justify-between px-5 py-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 text-sm font-medium text-primary dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group"
+        class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary hover:bg-bpa-100/50 dark:hover:bg-bpa-800/30 transition-colors group"
       >
         <span>Ver calendario completo</span>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-          class="w-4 h-4 group-hover:translate-x-0.5 transition-transform">
-          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-          <path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" />
-        </svg>
+        <Icon name="tabler:arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </a>
     </div>
 

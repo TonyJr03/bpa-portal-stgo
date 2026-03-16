@@ -134,9 +134,9 @@ function nombreDescarga(nombre: string, archivo: string): string {
     <div class="flex items-center gap-2 mb-5">
       <Icon
         name="tabler:paperclip"
-        class="w-5 h-5 text-primary dark:text-blue-400"
+        class="w-5 h-5 text-primary dark:text-primary"
       />
-      <h2 class="text-xl font-bold font-heading tracking-tight text-slate-800 dark:text-slate-200">
+      <h2 class="text-xl font-bold font-heading tracking-tight text-default dark:text-default">
         {titulo}
       </h2>
     </div>
@@ -148,11 +148,11 @@ function nombreDescarga(nombre: string, archivo: string): string {
             href={urlSameOrigin(doc.id, doc.archivo)}
             download={nombreDescarga(doc.nombre, doc.archivo)}
             class="
-              flex items-center gap-4 rounded-lg border border-slate-200
-              bg-white dark:bg-slate-800 dark:border-slate-700
+              flex items-center gap-4 rounded-lg border border-bpa-100
+              bg-white dark:bg-bpa-950/60 dark:border-bpa-amber-800
               px-4 py-3
               hover:border-primary hover:shadow-md
-              dark:hover:border-blue-500
+              dark:hover:border-primary
               transition-all duration-200
               group
             "
@@ -160,21 +160,21 @@ function nombreDescarga(nombre: string, archivo: string): string {
           >
             <Icon
               name={iconoPorExtension(doc.archivo)}
-              class="w-8 h-8 text-primary dark:text-blue-400 shrink-0 group-hover:scale-110 transition-transform"
+              class="w-8 h-8 text-primary dark:text-primary shrink-0 group-hover:scale-110 transition-transform"
             />
 
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+              <p class="text-sm font-semibold text-default dark:text-default truncate">
                 {doc.nombre}
               </p>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p class="text-xs text-muted dark:text-muted mt-0.5">
                 {extensionLegible(doc.archivo)}
               </p>
             </div>
 
             <Icon
               name="tabler:download"
-              class="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 group-hover:text-primary dark:group-hover:text-blue-400 transition-colors"
+              class="w-4 h-4 text-primary dark:text-primary shrink-0 group-hover:text-secondary dark:group-hover:text-secondary transition-colors"
             />
           </a>
         </li>

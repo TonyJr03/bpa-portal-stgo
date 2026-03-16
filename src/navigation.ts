@@ -93,8 +93,6 @@ export const footerData = {
         { text: 'Banca Corporativa',    href: getPermalink('/productos/banca-corporativa') },
         { text: 'Banca Electrónica',    href: getPermalink('/productos/banca-electronica') },
         { text: 'Banca Internacional',  href: getPermalink('/productos/banca-internacional') },
-        { text: 'Otros Servicios',      href: getPermalink('/productos/otros-servicios') },
-        { text: 'Trámites',             href: getPermalink('/tramites') },
       ],
     },
 

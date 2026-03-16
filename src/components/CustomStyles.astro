@@ -14,31 +14,44 @@
  * ════════════════════════════════════════════════════════════════════════
  *
  *  ☀  MODO CLARO — Tarjeta blanca BPA
- *      primary       → #006A3A  Verde BPA      (botones, íconos, links)
- *      secondary     → #009150  Verde Acento   (hover, viñetas)
- *      accent        → #B8860B  Ámbar logo     (CTAs, bordes premium)
- *      bg-page       → #F4FBF7  Menta tenue    (fondo general de página)
- *      bpa-bg-alt    → #FFFFFF  Blanco puro    (fondo de secciones alt.)
+ *      primary   → #006A3A  Verde BPA      (botones, íconos, links)
+ *      secondary → #009150  Verde Acento   (hover, viñetas)
+ *      accent    → #B8860B  Ámbar logo     (CTAs, bordes premium)
  *
  *  ☾  MODO OSCURO — Tarjeta verde oscura BPA
- *      primary       → #B8860B  Ámbar logo     (botones, íconos, links)
- *      secondary     → #8B6508  Ámbar hover    (hover — tono más oscuro)
- *      accent        → #B8860B  Ámbar logo     (igual que primary)
- *      bg-page       → #0D1F15  Verde noche    (fondo general de página)
- *      bpa-bg-alt    → #FFFFFF / 5%  Blanco muy sutil (fondo secciones alt.)
+ *      primary   → #B8860B  Ámbar logo     (botones, íconos, links)
+ *      secondary → #8B6508  Ámbar hover    (hover — tono más oscuro)
+ *      accent    → #B8860B  Ámbar logo     (igual que primary)
+ *
+ * ─── Fondos ──────────────────────────────────────────────────────────────
+ *   Claro página   #F4FBF7  Menta tenue (fondo general)
+ *   Claro alt      #FFFFFF  Blanco puro (secciones que destacan)
+ *   Oscuro página  #0D1F15  Verde noche (color real de la tarjeta oscura)
+ *   Oscuro alt     rgba(255 255 255 / 4%)  Blanco muy sutil
  *
  * ─── Texto ───────────────────────────────────────────────────────────────
- *   Día            #1E293B   Gris carbón — nunca negro puro
- *   Noche          #F8FAFC   Gris perlado
+ *   Día    #1E293B  Gris carbón — nunca negro puro
+ *   Noche  #F8FAFC  Gris perlado
  *
- * ─── Escala tonal verde BPA ──────────────────────────────────────────────
- *   --bpa-green-50   #E8F5EE
- *   --bpa-green-100  #C8E6D5
- *   --bpa-green-200  #86C7A5
- *   --bpa-green-400  #009150
- *   --bpa-green-600  #006A3A  ★ primario claro
- *   --bpa-green-800  #004424
- *   --bpa-green-950  #0D1F15
+ * ─── Escalas tonales ─────────────────────────────────────────────────────
+ *
+ *   VERDE BPA (modo claro — siempre verde, ambos modos)
+ *   --bpa-green-50   #E8F5EE  Fondos muy suaves
+ *   --bpa-green-100  #C8E6D5  Bordes suaves, badge
+ *   --bpa-green-200  #86C7A5  Íconos suaves, separadores
+ *   --bpa-green-400  #009150  Acento / hover activos
+ *   --bpa-green-600  #006A3A  ★ Primario claro
+ *   --bpa-green-800  #004424  Texto sobre fondos claros
+ *   --bpa-green-950  #0D1F15  Verde noche
+ *
+ *   ÁMBAR BPA (modo oscuro — siempre ámbar, ambos modos)
+ *   --bpa-amber-50   #FDF8E8  Fondos crema muy suaves
+ *   --bpa-amber-100  #F5E4A0  Dorado claro, fondos de badge
+ *   --bpa-amber-200  #E8C84A  Dorado medio, separadores
+ *   --bpa-amber-400  #C49A28  Dorado cálido — hover sobre primario ámbar
+ *   --bpa-amber-600  #B8860B  ★ Primario oscuro (dark goldenrod del logo)
+ *   --bpa-amber-800  #8B6508  Hover en dark / secondary oscuro
+ *   --bpa-amber-950  #3D2A03  Ámbar casi negro (fondos profundos)
  */
 
 import '@fontsource-variable/inter';
@@ -46,33 +59,32 @@ import '@fontsource-variable/inter';
 
 <style is:inline>
   /* ════════════════════════════════════════════════════════════════════════
-   * ☀  MODO CLARO
-   *    Fondo general: #F4FBF7 (menta tenue — toda la página respira verde)
-   *    Fondo alt:     #FFFFFF (blanco — para secciones que deban destacar)
+   * ☀  MODO CLARO — Verde institucional BPA (tarjeta blanca)
    * ════════════════════════════════════════════════════════════════════════ */
   :root {
+    /* ── Tipografía ───────────────────────────────────────────────────── */
     --aw-font-sans:    'Inter Variable';
     --aw-font-serif:   'Inter Variable';
     --aw-font-heading: 'Inter Variable';
 
-    /* Colores principales */
+    /* ── Colores principales · Verde BPA ──────────────────────────────── */
     --aw-color-primary:   rgb(0 106 58);    /* Verde BPA    #006A3A */
     --aw-color-secondary: rgb(0 145 80);    /* Verde Acento #009150 */
-    --aw-color-accent:    rgb(184 134 11);  /* Ámbar logo   #B8860B */
+    --aw-color-accent:    rgb(184 134 11);  /* Ámbar logo   #B8860B — siempre */
 
-    /* Texto */
+    /* ── Texto ────────────────────────────────────────────────────────── */
     --aw-color-text-heading: rgb(30 41 59);       /* Gris carbón #1E293B */
     --aw-color-text-default: rgb(30 41 59);
     --aw-color-text-muted:   rgb(30 41 59 / 60%);
 
-    /* Fondos */
-    --aw-color-bg-page:      rgb(244 251 247);  /* Menta tenue #F4FBF7 — fondo general */
+    /* ── Fondos ───────────────────────────────────────────────────────── */
+    --aw-color-bg-page:      rgb(244 251 247);  /* Menta tenue #F4FBF7 */
     --aw-color-bg-page-dark: rgb(13 31 21);     /* Verde noche #0D1F15 */
 
-    /* Fondo de sección alternada (blanco — para contrastar con el menta) */
-    --bpa-bg-alt: rgb(255 255 255);
+    /* ── Fondo de sección alternada ───────────────────────────────────── */
+    --bpa-bg-alt: rgb(255 255 255);             /* Blanco sobre menta */
 
-    /* Escala tonal verde BPA */
+    /* ── Escala tonal verde BPA ───────────────────────────────────────── */
     --bpa-green-50:  #E8F5EE;
     --bpa-green-100: #C8E6D5;
     --bpa-green-200: #86C7A5;
@@ -81,6 +93,17 @@ import '@fontsource-variable/inter';
     --bpa-green-800: #004424;
     --bpa-green-950: #0D1F15;
 
+    /* ── Escala tonal ámbar BPA ───────────────────────────────────────── */
+    /* Disponible en ambos modos — útil para accent, bordes premium, FAQs */
+    --bpa-amber-50:  #FDF8E8;
+    --bpa-amber-100: #F5E4A0;
+    --bpa-amber-200: #E8C84A;
+    --bpa-amber-400: #C49A28;
+    --bpa-amber-600: #B8860B;
+    --bpa-amber-800: #8B6508;
+    --bpa-amber-950: #3D2A03;
+
+    /* ── Selección de texto ───────────────────────────────────────────── */
     ::selection {
       background-color: rgb(0 106 58 / 20%);
       color: rgb(0 68 36);
@@ -88,33 +111,44 @@ import '@fontsource-variable/inter';
   }
 
   /* ════════════════════════════════════════════════════════════════════════
-   * ☾  MODO OSCURO
-   *    Fondo general: #0D1F15 (verde noche — color real de la tarjeta oscura)
-   *    Fondo alt:     rgba(255 255 255 / 4%) (blanco muy sutil para secciones)
-   *    primary y secondary: ámbar del logo BPA
+   * ☾  MODO OSCURO — Ámbar BPA (tarjeta verde oscura)
+   *
+   *    primary   = #B8860B  Ámbar logo (cuadrado dorado del isotipo BPA)
+   *    secondary = #8B6508  Ámbar hover — tono más oscuro
+   *
+   *    Las escalas tonales (bpa-green-* y bpa-amber-*) no cambian entre
+   *    modos — son escalas fijas. Lo que cambia son los tokens semánticos
+   *    primary / secondary, que apuntan a los valores correctos de cada modo.
    * ════════════════════════════════════════════════════════════════════════ */
   .dark {
+    /* ── Tipografía (igual al modo claro) ────────────────────────────── */
     --aw-font-sans:    'Inter Variable';
     --aw-font-serif:   'Inter Variable';
     --aw-font-heading: 'Inter Variable';
 
-    /* Colores principales */
+    /* ── Colores principales · Ámbar BPA ──────────────────────────────── */
     --aw-color-primary:   rgb(184 134 11);  /* Ámbar logo   #B8860B */
     --aw-color-secondary: rgb(139 101 8);   /* Ámbar hover  #8B6508 */
     --aw-color-accent:    rgb(184 134 11);  /* Ámbar logo   #B8860B — igual */
 
-    /* Texto */
+    /* ── Texto ────────────────────────────────────────────────────────── */
     --aw-color-text-heading: rgb(248 250 252);      /* Gris perlado #F8FAFC */
     --aw-color-text-default: rgb(248 250 252);
     --aw-color-text-muted:   rgb(248 250 252 / 60%);
 
-    /* Fondos */
-    --aw-color-bg-page:      rgb(13 31 21);  /* Verde noche #0D1F15 */
+    /* ── Fondos ───────────────────────────────────────────────────────── */
+    --aw-color-bg-page:      rgb(13 31 21);   /* Verde noche #0D1F15 */
     --aw-color-bg-page-dark: rgb(13 31 21);
 
-    /* Fondo de sección alternada (blanco muy sutil sobre verde oscuro) */
-    --bpa-bg-alt: rgb(255 255 255 / 4%);
+    /* ── Fondo de sección alternada ───────────────────────────────────── */
+    --bpa-bg-alt: rgb(255 255 255 / 4%);      /* Blanco muy sutil sobre oscuro */
 
+    /* ── Las escalas tonales NO cambian en dark ───────────────────────── */
+    /* bpa-green-* y bpa-amber-* son iguales en ambos modos.              */
+    /* Eso permite usar bg-bpa-green-100 en claro Y bg-bpa-amber-100      */
+    /* en oscuro con total control sin que el sistema invierta los valores.*/
+
+    /* ── Selección de texto ───────────────────────────────────────────── */
     ::selection {
       background-color: rgb(184 134 11 / 30%);
       color: rgb(255 243 200);

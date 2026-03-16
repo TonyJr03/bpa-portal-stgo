@@ -1,25 +1,25 @@
 ---
 /**
- * @componente  src/components/widgets/NoticiasWidget.astro
+ * @componente  src/components/sections/Noticias.astro
  *
  * @descripcion
  *   Widget del "Tablón de Avisos Institucionales" para la página de inicio.
  *   Envuelve la isla Vue NoticiasRecientes dentro de un WidgetWrapper
- *   estándar del proyecto, manteniendo consistencia visual con el resto
- *   de secciones del portal.
+ *   estándar del proyecto.
  *
  *   Se usa client:visible para que la isla Vue no hidrate hasta que el
  *   usuario haga scroll hasta ella — ahorra JS en el First Load.
  *
  * @uso  En src/pages/index.astro:
- *   <NoticiasWidget id="avisos" />
+ *   <Noticias id="avisos" />
  *
  * @isla  NoticiasRecientes.vue  →  colección `noticias` de PocketBase
  */
 
-import WidgetWrapper   from '~/components/ui/WidgetWrapper.astro';
-import Headline        from '~/components/ui/Headline.astro';
+import WidgetWrapper     from '~/components/ui/WidgetWrapper.astro';
+import Headline          from '~/components/ui/Headline.astro';
 import NoticiasRecientes from '~/components/vue/NoticiasRecientes.vue';
+import { Icon }          from 'astro-icon/components';
 
 export interface Props {
   id?: string;
@@ -32,7 +32,6 @@ const { id, isDark = false, classes = {} } = Astro.props;
 
 <WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-6xl ${classes?.container ?? ''}`}>
 
-  <!-- Headline de sección -->
   <Headline
     title="Tablón de Avisos"
     subtitle="Manténgase informado sobre los comunicados oficiales, alertas de servicio y novedades institucionales del BPA Santiago de Cuba."
@@ -42,27 +41,19 @@ const { id, isDark = false, classes = {} } = Astro.props;
     }}
   />
 
-  <!-- Isla Vue: hidrata al entrar en el viewport -->
   <NoticiasRecientes client:visible />
 
-  <!-- Enlace al listado completo (si existe la ruta /noticias) -->
+  <!-- Enlace al listado completo -->
   <div class="text-center mt-10">
     <a
       href="/noticias"
-      class="inline-flex items-center gap-2 text-sm font-medium text-primary dark:text-blue-400 hover:underline underline-offset-4 transition-colors"
+      class="inline-flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline underline-offset-4 transition-colors"
     >
       Ver todos los avisos
-      <!-- tabler:arrow-right -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-        class="w-4 h-4">
-        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-        <path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" />
-      </svg>
+      <Icon name="tabler:arrow-right" class="w-4 h-4" />
     </a>
   </div>
 
-  <!-- Slot para fondo personalizable desde la página -->
   <Fragment slot="bg"><slot name="bg" /></Fragment>
 
 </WidgetWrapper>

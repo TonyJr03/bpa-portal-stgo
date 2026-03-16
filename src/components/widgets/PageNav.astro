@@ -38,7 +38,7 @@ const justify =
       bg={bg}
     >
       {showDivider && (
-        <div class="border-t border-slate-200 dark:border-slate-700 mb-6" aria-hidden="true" />
+        <div class="border-t border-primary dark:border-primary mb-6" aria-hidden="true" />
       )}
 
       <nav aria-label="Navegación entre páginas" class={`flex items-center ${justify}`}>
@@ -46,7 +46,7 @@ const justify =
         {prev && (
           <a
             href={prev.href}
-            class="group inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-primary dark:hover:text-white transition-colors duration-200"
+            class="group inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-secondary dark:hover:text-secondary transition-colors duration-200"
           >
             <Icon
               name="tabler:arrow-left"
@@ -60,7 +60,7 @@ const justify =
         {next && (
           <a
             href={next.href}
-            class="group inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-primary dark:hover:text-white transition-colors duration-200"
+            class="group inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-secondary dark:hover:text-secondary transition-colors duration-200"
           >
             {next.text}
             <Icon
