@@ -9,14 +9,15 @@
  *   · Estados del ciclo de vida del envío: idle → enviando → éxito | error
  *   · Petición a PocketBase — colecciones: mensajes / quejas_sugerencias
  *
- * @lo_que_NO_hace_este_componente
- *   El layout exterior (grid 2/3 + 1/3), el aside informativo, el título
- *   "Escríbanos", el WidgetWrapper y el fondo de sección son responsabilidad
- *   de ContactoBPA.astro — generado en build, sin JS en el cliente.
- *
  * @colecciones
- *   mensajes: nombre(Text) · correo(Email) · asunto(Text) · mensaje(Text) · leido(Bool)
- *   quejas_sugerencias: tipo(Text) · nombre(Text) · direccion(Text) · municipio(Text) · telefono(Text) · motivo(Text) · mensaje(Text) · leido(Bool)
+ *   mensajes: nombre · correo · asunto · mensaje · leido
+ *   quejas_sugerencias: tipo · nombre · direccion · municipio · telefono · motivo · correo · mensaje · leido
+ *
+ * @nota-tecnica selects
+ *   La flecha nativa del <select> es una decoración del SO que se pinta
+ *   fuera del flujo del padding — ningún valor de pr-* la mueve.
+ *   Solución: appearance-none elimina la flecha nativa; un wrapper
+ *   relativo + SVG absoluto la reemplaza con control total.
  *
  * @dependencias  ~/lib/pocketbase
  * @directiva     client:load  (en ContactoBPA.astro)
@@ -25,16 +26,16 @@
 import { ref, reactive, computed, watch } from 'vue';
 import { pb } from '~/lib/pocketbase';
 
-// ── Pestaña activa ───────────────────────────────────────────────────────────
+// ── Pestaña activa ────────────────────────────────────────────────────────────
 type TabId = 'feedback' | 'queja';
 const tabActiva = ref<TabId>('feedback');
 
-// ── Estado del ciclo de envío ────────────────────────────────────────────────
+// ── Estado del ciclo de envío ─────────────────────────────────────────────────
 type EstadoEnvio = 'idle' | 'enviando' | 'exito' | 'error';
 const estado    = ref<EstadoEnvio>('idle');
 const errServer = ref('');
 
-// ── Modelos de datos ─────────────────────────────────────────────────────────
+// ── Modelos de datos ──────────────────────────────────────────────────────────
 const feedback = reactive({ nombre: '', correo: '', asunto: '', mensaje: '' });
 
 const queja = reactive({
@@ -60,34 +61,31 @@ const municipiosSCU = [
   'Songo - La Maya', 'Palma Soriano', 'Mella', 'Guamá', 'Tercer Frente', 'Otro',
 ];
 
-// ── Validaciones ─────────────────────────────────────────────────────────────
+// ── Validaciones ──────────────────────────────────────────────────────────────
 const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const errFeedback = computed(() => {
   const e: Record<string, string> = {};
-  if (!feedback.nombre.trim())                     e.nombre  = 'El nombre es obligatorio.';
-  if (!feedback.correo.trim())                     e.correo  = 'El correo es obligatorio.';
-  else if (!reEmail.test(feedback.correo.trim()))  e.correo  = 'Ingrese un correo válido.';
-  if (!feedback.asunto.trim())                     e.asunto  = 'El asunto es obligatorio.';
-  if (!feedback.mensaje.trim())                    e.mensaje = 'El mensaje no puede estar vacío.';
+  if (!feedback.nombre.trim())                    e.nombre  = 'El nombre es obligatorio.';
+  if (!feedback.correo.trim())                    e.correo  = 'El correo es obligatorio.';
+  else if (!reEmail.test(feedback.correo.trim())) e.correo  = 'Ingrese un correo válido.';
+  if (!feedback.asunto.trim())                    e.asunto  = 'El asunto es obligatorio.';
+  if (!feedback.mensaje.trim())                   e.mensaje = 'El mensaje no puede estar vacío.';
   return e;
 });
 
 const errQueja = computed(() => {
   const e: Record<string, string> = {};
-  if (!queja.nombre.trim())                       e.nombre    = 'El nombre y apellidos son obligatorios.';
-  if (!queja.municipio)                           e.municipio = 'Seleccione el municipio.';
-  if (queja.tipo === 'queja' && !queja.motivo)    e.motivo    = 'Seleccione el motivo de la queja.';
-  if (!queja.mensaje.trim())                      e.mensaje   = 'Describa su queja o sugerencia.';
+  if (!queja.nombre.trim())                    e.nombre    = 'El nombre y apellidos son obligatorios.';
+  if (!queja.municipio)                        e.municipio = 'Seleccione el municipio.';
+  if (queja.tipo === 'queja' && !queja.motivo) e.motivo    = 'Seleccione el motivo de la queja.';
+  if (!queja.mensaje.trim())                   e.mensaje   = 'Describa su queja o sugerencia.';
   return e;
 });
 
-// Muestra el error de un campo solo después de que el usuario lo haya tocado
 const tocado = reactive<Record<string, boolean>>({});
 const tocar  = (c: string) => { tocado[c] = true; };
 
-// Limpia el motivo si el usuario cambia a "sugerencia" — evita enviar datos
-// de queja residuales en un registro de sugerencia.
 watch(() => queja.tipo, (nuevoTipo) => {
   if (nuevoTipo === 'sugerencia') {
     queja.motivo = '';
@@ -95,19 +93,24 @@ watch(() => queja.tipo, (nuevoTipo) => {
   }
 });
 
-// ── Clases reactivas para inputs (centraliza la lógica de error visual) ───────
+// ── Clases para inputs de texto ───────────────────────────────────────────────
 function claseInput(campo: string, errores: Record<string, string>) {
   const base = [
     'w-full rounded-lg border px-4 py-2.5 text-sm transition',
-    'bg-white dark:bg-slate-900',
-    'text-slate-800 dark:text-slate-200',
-    'placeholder:text-slate-400 dark:placeholder:text-slate-500',
+    'bg-white dark:bg-bpa-950/80',
+    'text-default dark:text-default',
+    'placeholder:text-muted dark:placeholder:text-muted',
     'focus:outline-none focus:ring-2',
   ];
-  const conError = 'border-red-400 dark:border-red-500 focus:ring-red-300/50 bg-red-50 dark:bg-red-900/20';
-  const sinError = 'border-gray-300 dark:border-slate-600 focus:ring-primary/40';
+  const conError = 'border-red-400 dark:border-red-500 focus:ring-red-400/60 bg-red-50 dark:bg-red-900/20';
+  const sinError = 'border-bpa-100 dark:border-bpa-amber-800 focus:ring-bpa-600/40 dark:focus:ring-bpa-amber-600/70';
   base.push(tocado[campo] && errores[campo] ? conError : sinError);
   return base.join(' ');
+}
+
+// ── Clases para selects ───────────────────────────────────────────────────────
+function claseSelect(campo: string, errores: Record<string, string>) {
+  return claseInput(campo, errores) + ' appearance-none pr-10';
 }
 
 // ── Envío Tab 1 · Mensaje ─────────────────────────────────────────────────────
@@ -117,7 +120,7 @@ async function enviarFeedback() {
   estado.value = 'enviando';
   try {
     await pb.collection('mensajes').create({
-      leido: false,
+      leido:   false,
       nombre:  feedback.nombre.trim(),
       correo:  feedback.correo.trim(),
       asunto:  feedback.asunto.trim(),
@@ -127,7 +130,7 @@ async function enviarFeedback() {
     Object.assign(feedback, { nombre: '', correo: '', asunto: '', mensaje: '' });
     Object.keys(tocado).forEach(k => delete tocado[k]);
   } catch (err: unknown) {
-    estado.value = 'error';
+    estado.value    = 'error';
     errServer.value = err instanceof Error ? err.message : 'No se pudo enviar. Intente más tarde.';
   }
 }
@@ -141,7 +144,7 @@ async function enviarQueja() {
   estado.value = 'enviando';
   try {
     await pb.collection('quejas_sugerencias').create({
-      leido: false,
+      leido:     false,
       tipo:      queja.tipo,
       nombre:    queja.nombre.trim(),
       direccion: queja.direccion.trim(),
@@ -155,14 +158,13 @@ async function enviarQueja() {
     Object.assign(queja, { tipo: 'queja', nombre: '', direccion: '', municipio: '', telefono: '', correo: '', motivo: '', mensaje: '' });
     Object.keys(tocado).forEach(k => delete tocado[k]);
   } catch (err: unknown) {
-    estado.value = 'error';
+    estado.value    = 'error';
     errServer.value = err instanceof Error ? err.message : 'No se pudo enviar. Intente más tarde.';
   }
 }
 
 // ── Utilidades de UI ──────────────────────────────────────────────────────────
-function reintentar() { estado.value = 'idle'; errServer.value = ''; }
-
+function reintentar()           { estado.value = 'idle'; errServer.value = ''; }
 function cambiarTab(tab: TabId) {
   tabActiva.value = tab;
   estado.value    = 'idle';
@@ -172,20 +174,13 @@ function cambiarTab(tab: TabId) {
 </script>
 
 <template>
-  <!--
-    Este componente renderiza SOLO la columna izquierda del grid.
-    El grid exterior (2/3 + 1/3) y el aside derecho los construye
-    ContactoBPA.astro en tiempo de build.
-  -->
-
   <!-- ══════════════════════════════════════════════════════════════════════
       PESTAÑAS DE SELECCIÓN
   ══════════════════════════════════════════════════════════════════════ -->
   <div
-    class="flex border-b border-gray-200 dark:border-slate-700 mb-7"
+    class="flex border-b border-bpa-100 dark:border-bpa-800 mb-7"
     role="tablist"
   >
-    <!-- Tab: Mensaje o Sugerencia -->
     <button
       role="tab"
       :aria-selected="tabActiva === 'feedback'"
@@ -194,7 +189,7 @@ function cambiarTab(tab: TabId) {
         'flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors duration-150 focus:outline-none',
         tabActiva === 'feedback'
           ? 'border-primary text-primary'
-          : 'border-transparent text-muted hover:text-default dark:hover:text-slate-200',
+          : 'border-transparent text-muted hover:text-default dark:hover:text-default',
       ]"
     >
       <!-- tabler:message -->
@@ -206,7 +201,6 @@ function cambiarTab(tab: TabId) {
       Mensaje
     </button>
 
-    <!-- Tab: Queja o Reclamación -->
     <button
       role="tab"
       :aria-selected="tabActiva === 'queja'"
@@ -215,7 +209,7 @@ function cambiarTab(tab: TabId) {
         'flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors duration-150 focus:outline-none',
         tabActiva === 'queja'
           ? 'border-primary text-primary'
-          : 'border-transparent text-muted hover:text-default dark:hover:text-slate-200',
+          : 'border-transparent text-muted hover:text-default dark:hover:text-default',
       ]"
     >
       <!-- tabler:file-description -->
@@ -256,10 +250,7 @@ function cambiarTab(tab: TabId) {
         a partir de la fecha de recepción.
       </template>
     </p>
-    <button
-      @click="estado = 'idle'"
-      class="mt-6 text-sm text-green-700 dark:text-green-400 underline hover:no-underline"
-    >
+    <button @click="estado = 'idle'" class="mt-6 text-sm text-green-700 dark:text-green-400 underline hover:no-underline">
       Enviar otro mensaje
     </button>
   </div>
@@ -278,9 +269,7 @@ function cambiarTab(tab: TabId) {
       <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" />
       <path d="M12 16h.01" />
     </svg>
-    <h3 class="text-lg font-bold font-heading text-red-700 dark:text-red-400 mb-1">
-      Error al enviar
-    </h3>
+    <h3 class="text-lg font-bold font-heading text-red-700 dark:text-red-400 mb-1">Error al enviar</h3>
     <p class="text-muted text-sm mb-4">{{ errServer }}</p>
     <button @click="reintentar" class="text-sm font-semibold text-red-700 dark:text-red-400 underline hover:no-underline">
       Intentar de nuevo
@@ -292,70 +281,59 @@ function cambiarTab(tab: TabId) {
   ══════════════════════════════════════════════════════════════════════ -->
   <template v-else>
 
-    <!-- ────────────────────────────────────────────────────────────────
-        TAB 1 · Mensaje
-    ──────────────────────────────────────────────────────────────── -->
+    <!-- ── TAB 1 · Mensaje ─────────────────────────────────────────────── -->
     <form v-if="tabActiva === 'feedback'" @submit.prevent="enviarFeedback" novalidate class="space-y-5">
 
-      <!-- Nombre -->
       <div>
-        <label for="fb-nombre" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <label for="fb-nombre" class="block text-sm font-medium text-default dark:text-default mb-1">
           Nombre y apellidos <span class="text-red-500">*</span>
         </label>
         <input id="fb-nombre" v-model="feedback.nombre" @blur="tocar('nombre')"
           type="text" autocomplete="name" placeholder="Ej: Juan García Pérez"
-          :class="claseInput('nombre', errFeedback)"
-        />
+          :class="claseInput('nombre', errFeedback)" />
         <p v-if="tocado['nombre'] && errFeedback['nombre']" class="mt-1 text-xs text-red-500 dark:text-red-400">
           {{ errFeedback['nombre'] }}
         </p>
       </div>
 
-      <!-- Correo -->
       <div>
-        <label for="fb-correo" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <label for="fb-correo" class="block text-sm font-medium text-default dark:text-default mb-1">
           Correo electrónico <span class="text-red-500">*</span>
         </label>
         <input id="fb-correo" v-model="feedback.correo" @blur="tocar('correo')"
           type="email" autocomplete="email" placeholder="ejemplo@correo.cu"
-          :class="claseInput('correo', errFeedback)"
-        />
+          :class="claseInput('correo', errFeedback)" />
         <p v-if="tocado['correo'] && errFeedback['correo']" class="mt-1 text-xs text-red-500 dark:text-red-400">
           {{ errFeedback['correo'] }}
         </p>
       </div>
 
-      <!-- Asunto -->
       <div>
-        <label for="fb-asunto" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <label for="fb-asunto" class="block text-sm font-medium text-default dark:text-default mb-1">
           Asunto <span class="text-red-500">*</span>
         </label>
         <input id="fb-asunto" v-model="feedback.asunto" @blur="tocar('asunto')"
           type="text" placeholder="Resumen breve de su consulta"
-          :class="claseInput('asunto', errFeedback)"
-        />
+          :class="claseInput('asunto', errFeedback)" />
         <p v-if="tocado['asunto'] && errFeedback['asunto']" class="mt-1 text-xs text-red-500 dark:text-red-400">
           {{ errFeedback['asunto'] }}
         </p>
       </div>
 
-      <!-- Mensaje -->
       <div>
-        <label for="fb-mensaje" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <label for="fb-mensaje" class="block text-sm font-medium text-default dark:text-default mb-1">
           Mensaje <span class="text-red-500">*</span>
         </label>
         <textarea id="fb-mensaje" v-model="feedback.mensaje" @blur="tocar('mensaje')"
           rows="5" placeholder="Escriba aquí su consulta o pregunta con el mayor detalle posible…"
-          :class="claseInput('mensaje', errFeedback) + ' resize-none'"
-        />
+          :class="claseInput('mensaje', errFeedback) + ' resize-none'" />
         <p v-if="tocado['mensaje'] && errFeedback['mensaje']" class="mt-1 text-xs text-red-500 dark:text-red-400">
           {{ errFeedback['mensaje'] }}
         </p>
       </div>
 
       <button type="submit" :disabled="estado === 'enviando'"
-        class="btn-primary inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-      >
+        class="btn-primary inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
         <svg v-if="estado === 'enviando'" class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
@@ -370,114 +348,130 @@ function cambiarTab(tab: TabId) {
       </button>
     </form>
 
-    <!-- ────────────────────────────────────────────────────────────────
-        TAB 2 · Queja o Sugerencia
-    ──────────────────────────────────────────────────────────────── -->
+    <!-- ── TAB 2 · Queja o Sugerencia ──────────────────────────────────── -->
     <form v-else-if="tabActiva === 'queja'" @submit.prevent="enviarQueja" novalidate class="space-y-5">
 
-      <!-- Selector de tipo: Queja / Sugerencia -->
+      <!-- Selector de tipo -->
       <div class="flex gap-6">
-        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-default dark:text-default">
           <input type="radio" v-model="queja.tipo" value="queja"
-            class="w-4 h-4 text-primary border-gray-300 dark:border-slate-600 focus:ring-primary/40"
-          />
+            class="w-4 h-4 accent-primary" />
           Queja
         </label>
-        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-default dark:text-default">
           <input type="radio" v-model="queja.tipo" value="sugerencia"
-            class="w-4 h-4 text-primary border-gray-300 dark:border-slate-600 focus:ring-primary/40"
-          />
+            class="w-4 h-4 accent-primary" />
           Sugerencia
         </label>
       </div>
 
-      <!-- Nombre y apellidos -->
       <div>
-        <label for="qj-nombre" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <label for="qj-nombre" class="block text-sm font-medium text-default dark:text-default mb-1">
           Nombre y apellidos <span class="text-red-500">*</span>
         </label>
         <input id="qj-nombre" v-model="queja.nombre" @blur="tocar('nombre')"
           type="text" autocomplete="name" placeholder="Ej: María López Domínguez"
-          :class="claseInput('nombre', errQueja)"
-        />
+          :class="claseInput('nombre', errQueja)" />
         <p v-if="tocado['nombre'] && errQueja['nombre']" class="mt-1 text-xs text-red-500 dark:text-red-400">
           {{ errQueja['nombre'] }}
         </p>
       </div>
 
-      <!-- Dirección + Municipio -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label for="qj-direccion" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Dirección</label>
-          <input id="qj-direccion" v-model="queja.direccion" type="text" placeholder="Calle, número, reparto…"
-            class="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-          />
-        </div>
-        <div>
-          <label for="qj-municipio" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Municipio <span class="text-red-500">*</span>
-          </label>
+      <div>
+        <label for="qj-direccion" class="block text-sm font-medium text-default dark:text-default mb-1">
+          Dirección
+        </label>
+        <input id="qj-direccion" v-model="queja.direccion"
+          type="text" placeholder="Calle, número, reparto…"
+          :class="claseInput('direccion', errQueja)" />
+      </div>
+
+      <!-- Municipio — wrapper relativo + flecha SVG propia -->
+      <div>
+        <label for="qj-municipio" class="block text-sm font-medium text-default dark:text-default mb-1">
+          Municipio <span class="text-red-500">*</span>
+        </label>
+        <div class="relative">
           <select id="qj-municipio" v-model="queja.municipio" @blur="tocar('municipio')"
-            :class="claseInput('municipio', errQueja) + ' appearance-none'"
-          >
-            <option value="" disabled>Seleccione…</option>
+            :class="claseSelect('municipio', errQueja)">
+            <option value="" disabled>Seleccione su municipio…</option>
             <option v-for="m in municipiosSCU" :key="m" :value="m">{{ m }}</option>
           </select>
-          <p v-if="tocado['municipio'] && errQueja['municipio']" class="mt-1 text-xs text-red-500 dark:text-red-400">
-            {{ errQueja['municipio'] }}
-          </p>
+          <!-- Flecha decorativa — pointer-events-none para no bloquear el clic -->
+          <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+              class="w-4 h-4">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M6 9l6 6l6 -6" />
+            </svg>
+          </span>
         </div>
+        <p v-if="tocado['municipio'] && errQueja['municipio']" class="mt-1 text-xs text-red-500 dark:text-red-400">
+          {{ errQueja['municipio'] }}
+        </p>
       </div>
 
-      <!-- Teléfono -->
       <div>
-        <label for="qj-telefono" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Teléfono de contacto</label>
-        <input id="qj-telefono" v-model="queja.telefono" type="tel" autocomplete="tel" placeholder="Ej: (022) 65-XXXX"
-          class="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-        />
-      </div>
-
-      <!-- Correo electrónico -->
-      <div>
-        <label for="qj-correo" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Correo electrónico</label>
-        <input id="qj-correo" v-model="queja.correo" type="email" autocomplete="email" placeholder="ejemplo@correo.cu"
-          class="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-        />
-      </div>
-
-      <!-- Motivo categorizado — solo visible para quejas -->
-      <div v-if="queja.tipo === 'queja'">
-        <label for="qj-motivo" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Motivo <span class="text-red-500">*</span>
+        <label for="qj-telefono" class="block text-sm font-medium text-default dark:text-default mb-1">
+          Teléfono de contacto
         </label>
-        <select id="qj-motivo" v-model="queja.motivo" @blur="tocar('motivo')"
-          :class="claseInput('motivo', errQueja) + ' appearance-none'"
-        >
-          <option value="" disabled>Seleccione el motivo…</option>
-          <option v-for="m in motivosQueja" :key="m" :value="m">{{ m }}</option>
-        </select>
+        <input id="qj-telefono" v-model="queja.telefono"
+          type="tel" placeholder="Ej: 52312345"
+          :class="claseInput('telefono', errQueja)" />
+      </div>
+
+      <div>
+        <label for="qj-correo" class="block text-sm font-medium text-default dark:text-default mb-1">
+          Correo electrónico
+        </label>
+        <input id="qj-correo" v-model="queja.correo" @blur="tocar('correo')"
+          type="email" autocomplete="email" placeholder="ejemplo@correo.cu"
+          :class="claseInput('correo', errQueja)" />
+        <p v-if="tocado['correo'] && errQueja['correo']" class="mt-1 text-xs text-red-500 dark:text-red-400">
+          {{ errQueja['correo'] }}
+        </p>
+      </div>
+
+      <!-- Motivo (solo para quejas) — mismo patrón wrapper + flecha -->
+      <div v-if="queja.tipo === 'queja'">
+        <label for="qj-motivo" class="block text-sm font-medium text-default dark:text-default mb-1">
+          Motivo de la queja <span class="text-red-500">*</span>
+        </label>
+        <div class="relative">
+          <select id="qj-motivo" v-model="queja.motivo" @blur="tocar('motivo')"
+            :class="claseSelect('motivo', errQueja)">
+            <option value="" disabled>Seleccione el motivo…</option>
+            <option v-for="m in motivosQueja" :key="m" :value="m">{{ m }}</option>
+          </select>
+          <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+              class="w-4 h-4">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M6 9l6 6l6 -6" />
+            </svg>
+          </span>
+        </div>
         <p v-if="tocado['motivo'] && errQueja['motivo']" class="mt-1 text-xs text-red-500 dark:text-red-400">
           {{ errQueja['motivo'] }}
         </p>
       </div>
 
-      <!-- Descripción detallada -->
       <div>
-        <label for="qj-mensaje" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <label for="qj-mensaje" class="block text-sm font-medium text-default dark:text-default mb-1">
           Descripción detallada <span class="text-red-500">*</span>
         </label>
         <textarea id="qj-mensaje" v-model="queja.mensaje" @blur="tocar('mensaje')"
           rows="6" placeholder="Describa con exactitud y claridad su queja o sugerencia…"
-          :class="claseInput('mensaje', errQueja) + ' resize-none'"
-        />
+          :class="claseInput('mensaje', errQueja) + ' resize-none'" />
         <p v-if="tocado['mensaje'] && errQueja['mensaje']" class="mt-1 text-xs text-red-500 dark:text-red-400">
           {{ errQueja['mensaje'] }}
         </p>
       </div>
 
       <button type="submit" :disabled="estado === 'enviando'"
-        class="btn-primary inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-      >
+        class="btn-primary inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
         <svg v-if="estado === 'enviando'" class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
@@ -489,7 +483,10 @@ function cambiarTab(tab: TabId) {
           <path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" />
           <path d="M9 14l2 2l4 -4" />
         </svg>
-        {{ estado === 'enviando' ? 'Registrando…' : 'Enviar queja o sugerencia' }}
+        {{ estado === 'enviando'
+            ? 'Registrando…'
+            : queja.tipo === 'queja' ? 'Enviar queja' : 'Enviar sugerencia'
+        }}
       </button>
     </form>
 

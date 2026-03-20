@@ -17,6 +17,18 @@
  *   descripcion Text    → Descripción breve
  *   publicado   Bool    → true si debe mostrarse
  *
+ * @paleta de tipos:
+ *   pago_jubilados → Ámbar  (el más frecuente e institucional)
+ *   feriado        → Azul   (referencia al calendario oficial)
+ *   aviso          → Rojo   (mayor urgencia visual)
+ *
+ * @nota-tecnica fechas
+ *   PocketBase devuelve las fechas con componente horario en UTC.
+ *   Si se parsean directamente con `new Date(str)`, el desfase de zona
+ *   horaria (Cuba UTC-5) desplaza el día resultante. Por eso toda la
+ *   lógica de fechas pasa por `parsearFechaLocal`, que extrae solo la
+ *   parte YYYY-MM-DD y construye un Date en hora local sin desfase.
+ *
  * @dependencias  ~/lib/pocketbase
  */
 
@@ -27,7 +39,7 @@ import { pb } from '~/lib/pocketbase';
 interface Evento {
   id:          string;
   titulo:      string;
-  fecha:       string;  // ISO string
+  fecha:       string;  // ISO string de PocketBase
   tipo:        'pago_jubilados' | 'feriado' | 'aviso';
   descripcion: string;
   publicado:   boolean;
@@ -42,8 +54,8 @@ const errorDB  = ref(false);
 const CONFIG_TIPO = {
   pago_jubilados: {
     label:  'Pago a Jubilados',
-    color:  'text-blue-600 dark:text-blue-400',
-    badge:  'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+    color:  'text-amber-600 dark:text-amber-400',
+    badge:  'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
     // tabler:pig-money
     icono: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -56,8 +68,8 @@ const CONFIG_TIPO = {
   },
   feriado: {
     label:  'Día Feriado',
-    color:  'text-red-600 dark:text-red-400',
-    badge:  'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+    color:  'text-blue-600 dark:text-blue-400',
+    badge:  'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
     // tabler:calendar-event
     icono: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -70,8 +82,8 @@ const CONFIG_TIPO = {
   },
   aviso: {
     label:  'Aviso Institucional',
-    color:  'text-amber-600 dark:text-amber-400',
-    badge:  'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+    color:  'text-red-600 dark:text-red-400',
+    badge:  'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
     // tabler:speakerphone
     icono: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -84,10 +96,48 @@ const CONFIG_TIPO = {
   },
 } as const;
 
-// ── Computed: próximo evento que no haya pasado ───────────────────────────────
-const hoy = new Date();
-hoy.setHours(0, 0, 0, 0);
+// ── Utilidades de fecha ───────────────────────────────────────────────────────
 
+/**
+ * Convierte un string ISO de PocketBase en un Date LOCAL sin desfase.
+ *
+ * PocketBase devuelve "2026-03-18 12:00:00.000Z" (UTC). Si llamamos
+ * directamente a `new Date(str)`, en Cuba (UTC-5) eso resulta en
+ * el 18 a las 7am hora local — pero el componente horario desplaza
+ * los cálculos de días. Tomamos solo YYYY-MM-DD y construimos un
+ * Date a medianoche hora local para comparaciones limpias.
+ */
+function parsearFechaLocal(isoStr: string): Date {
+  // Extrae "2026-03-18" tanto de "2026-03-18 12:00:00.000Z" como de "2026-03-18T00:00:00Z"
+  const soloFecha = isoStr.substring(0, 10);
+  const [y, m, d] = soloFecha.split('-').map(Number);
+  return new Date(y, m - 1, d); // medianoche hora local
+}
+
+/**
+ * Formatea la fecha para mostrar en el widget.
+ * Usa month: 'long' para evitar la ambigüedad de "mar" (martes vs marzo).
+ * Resultado ejemplo: "18 de marzo"
+ */
+function formatearFecha(isoStr: string): string {
+  try {
+    return new Intl.DateTimeFormat('es-CU', {
+      day:   'numeric',
+      month: 'long',
+    }).format(parsearFechaLocal(isoStr));
+  } catch {
+    return isoStr.substring(0, 10);
+  }
+}
+
+// ── Fecha de hoy a medianoche (local) ─────────────────────────────────────────
+function hoyLocal(): Date {
+  const h = new Date();
+  h.setHours(0, 0, 0, 0);
+  return h;
+}
+
+// ── Computed: próximo evento que no haya pasado ───────────────────────────────
 /** Prioridad numérica por tipo: menor número = mayor prioridad */
 const PRIORIDAD: Record<string, number> = {
   pago_jubilados: 0,
@@ -95,38 +145,25 @@ const PRIORIDAD: Record<string, number> = {
 };
 
 const proximoEvento = computed<Evento | null>(() => {
+  const hoy = hoyLocal();
   const futuros = eventos.value
-    // Solo eventos publicados, desde hoy, excluyendo feriados
-    .filter(e => e.publicado && new Date(e.fecha) >= hoy && e.tipo !== 'feriado')
+    // Solo publicados, desde hoy, excluyendo feriados
+    .filter(e => e.publicado && parsearFechaLocal(e.fecha) >= hoy && e.tipo !== 'feriado')
     .sort((a, b) => {
-      const diffFecha = new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
+      const diffFecha =
+        parsearFechaLocal(a.fecha).getTime() - parsearFechaLocal(b.fecha).getTime();
       if (diffFecha !== 0) return diffFecha;
-      // Misma fecha → gana el de mayor prioridad (menor número)
       return (PRIORIDAD[a.tipo] ?? 99) - (PRIORIDAD[b.tipo] ?? 99);
     });
   return futuros[0] ?? null;
 });
 
-/** Formatea fecha a texto natural: "Hoy", "Mañana", o "dd de mes" */
-const formatearFecha = (isoStr: string): string => {
-  try {
-    const fecha = new Date(isoStr);
-    fecha.setHours(0, 0, 0, 0);
-    const diff = Math.round((fecha.getTime() - hoy.getTime()) / 86400000);
-    if (diff === 0) return 'Hoy';
-    if (diff === 1) return 'Mañana';
-    return new Intl.DateTimeFormat('es-CU', {
-      day: 'numeric', month: 'long',
-    }).format(fecha);
-  } catch { return isoStr; }
-};
-
-/** Días restantes hasta el evento */
 const diasRestantes = computed<number | null>(() => {
   if (!proximoEvento.value) return null;
-  const fecha = new Date(proximoEvento.value.fecha);
-  fecha.setHours(0, 0, 0, 0);
-  return Math.round((fecha.getTime() - hoy.getTime()) / 86400000);
+  const hoy = hoyLocal();
+  const eventoMs = parsearFechaLocal(proximoEvento.value.fecha).getTime();
+  // Diferencia exacta entre dos medianoche locales → sin desfase horario
+  return Math.round((eventoMs - hoy.getTime()) / (1000 * 60 * 60 * 24));
 });
 
 const configEvento = (tipo: Evento['tipo']) =>
@@ -137,11 +174,10 @@ const cargarEventos = async () => {
   cargando.value = true;
   errorDB.value  = false;
   try {
-    // Pedimos eventos desde hoy en adelante, máximo 20 para filtrar en cliente
     const resultado = await pb.collection('eventos').getFullList<Evento>({
-      filter:    'publicado = true',
-      sort:      'fecha',
-      fields:    'id,titulo,fecha,tipo,descripcion,publicado',
+      filter: 'publicado = true',
+      sort:   'fecha',
+      fields: 'id,titulo,fecha,tipo,descripcion,publicado',
     });
     eventos.value = resultado;
   } catch {
@@ -156,17 +192,20 @@ onMounted(cargarEventos);
 
 <template>
   <!-- ── Cargando ────────────────────────────────────────────────────────── -->
-  <div v-if="cargando" class="flex flex-col items-center gap-3 animate-pulse py-2">
-    <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700"></div>
-    <div class="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div>
-    <div class="h-4 w-40 bg-slate-200 dark:bg-slate-700 rounded"></div>
-    <div class="h-3 w-28 bg-slate-200 dark:bg-slate-700 rounded"></div>
+  <div v-if="cargando" class="flex flex-col items-center gap-3 py-4 animate-pulse">
+    <div class="w-8 h-8 rounded-full bg-bpa-100 dark:bg-bpa-800/40"></div>
+    <div class="h-3 w-24 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
+    <div class="h-6 w-20 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
+    <div class="h-3 w-32 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
   </div>
 
   <!-- ── Error ──────────────────────────────────────────────────────────── -->
   <div v-else-if="errorDB" class="text-center py-2">
     <p class="text-xs text-red-500 dark:text-red-400 mb-1">Sin conexión</p>
-    <button @click="cargarEventos" class="text-xs text-primary dark:text-blue-400 hover:underline">
+    <button
+      @click="cargarEventos"
+      class="text-xs text-primary dark:text-primary hover:underline"
+    >
       Reintentar
     </button>
   </div>
@@ -176,18 +215,18 @@ onMounted(cargarEventos);
     <!-- tabler:calendar-check -->
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-      class="w-8 h-8 mx-auto mb-2 text-slate-400">
+      class="w-8 h-8 mx-auto mb-2 text-muted">
       <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
       <path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6" />
       <path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" />
       <path d="M15 19l2 2l4 -4" />
     </svg>
-    <p class="text-xs text-slate-500 dark:text-slate-400">Sin eventos próximos</p>
+    <p class="text-xs text-muted">Sin eventos próximos</p>
   </div>
 
   <!-- ── Próximo evento ─────────────────────────────────────────────────── -->
   <div v-else class="text-center">
-    <!-- Icono + Badge tipo en la misma línea -->
+    <!-- Ícono + Badge tipo -->
     <div class="flex items-center justify-center gap-2 mb-3">
       <span
         :class="['flex items-center justify-center w-8 h-8 shrink-0', configEvento(proximoEvento.tipo).color]"
@@ -203,7 +242,7 @@ onMounted(cargarEventos);
       </span>
     </div>
 
-    <!-- Fecha destacada -->
+    <!-- Fecha destacada — month: 'long' evita ambigüedad "mar" = martes/marzo -->
     <p
       :class="[
         'text-2xl font-extrabold mb-1',
@@ -214,19 +253,22 @@ onMounted(cargarEventos);
     </p>
 
     <!-- Cuenta regresiva -->
-    <p v-if="diasRestantes !== null && diasRestantes > 1" class="text-xs text-slate-400 dark:text-slate-500 mb-2">
-      en {{ diasRestantes }} días
+    <p v-if="diasRestantes !== null && diasRestantes > 0" class="text-xs text-muted mb-2">
+      {{ diasRestantes === 1 ? 'mañana' : `en ${diasRestantes} días` }}
+    </p>
+    <p v-else-if="diasRestantes === 0" class="text-xs font-semibold text-muted mb-2">
+      hoy
     </p>
 
     <!-- Título del evento -->
-    <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 leading-snug line-clamp-2">
+    <p class="text-sm font-semibold text-default dark:text-default leading-snug line-clamp-2">
       {{ proximoEvento.titulo }}
     </p>
 
     <!-- Descripción si existe -->
     <p
       v-if="proximoEvento.descripcion"
-      class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2"
+      class="text-xs text-muted mt-1 line-clamp-2"
     >
       {{ proximoEvento.descripcion }}
     </p>

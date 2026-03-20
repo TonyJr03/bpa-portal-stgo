@@ -3,20 +3,26 @@
  * @componente  src/components/vue/CalculadoraFinanciera.vue
  * @directiva   client:load
  *
- * @coleccion   tasas_calculadora
+ * @responsabilidad
+ *   Calculadora financiera con tres pestañas:
+ *   A) Ahorro a la vista — interés compuesto: M = P × (1 + r)ⁿ
+ *   B) Depósito a plazo fijo — interés simple base 360
+ *   C) Crédito — sistema francés (cuota fija)
+ *
+ * @coleccion  tasas_calculadora
  *   nombre      Text     "Ahorro a la vista" | "6 meses" | "12 meses" …
  *   tipo        Select   'vista' | 'plazo_fijo'
  *   plazo_meses Number   0 para vista; 6/12/18/24/30/36 para plazo fijo
- *   tasa        Number   porcentaje anual (ej: 1.5, 2.5…)
- *   moneda      Relation → tasas_cambio  (expand devuelve: moneda, nombre_moneda)
+ *   tasa        Number   porcentaje anual
+ *   moneda      Relation → tasas_cambio  (expand: moneda, nombre_moneda)
  *   activa      Bool
  *
- * @formulas
- *   Vista      → Interés compuesto:  M = P × (1 + r)ⁿ  (n = años decimales)
- *   Plazo fijo → Interés simple año comercial (base 360):
- *                I = (Capital × tasa%) / 360 × (plazo_meses × 30)
- *   Crédito    → Sistema francés (cuota fija):
- *                cuota = P × [r(1+r)ⁿ] / [(1+r)ⁿ−1]   r = tasa_anual/100/12
+ * @nota-ux
+ *   Los paneles de resultado de los tres tabs son siempre visibles,
+ *   mostrando ceros cuando los campos aún no tienen valores válidos.
+ *   La tabla de amortización del crédito sí aparece solo al calcular.
+ *
+ * @dependencias  ~/lib/pocketbase
  */
 
 import { ref, reactive, computed, watch, onMounted } from 'vue';
@@ -27,7 +33,7 @@ type TabId = 'vista' | 'plazo' | 'credito';
 
 interface MonedaRel {
   id:            string;
-  moneda:        string;   // código: CUP, USD, EUR…
+  moneda:        string;
   nombre_moneda: string;
 }
 
@@ -88,18 +94,11 @@ function parsear(v: string | number): number {
   return isNaN(n) || n < 0 ? 0 : n;
 }
 
-function ajustar(
-  obj: Record<string, string | number>,
-  key: string,
-  delta: number,
-  min: number,
-) {
-  const nuevo = Math.round((parsear(obj[key]) + delta) * 10000) / 10000;
-  obj[key]    = Math.max(min, nuevo);
+function ajustar(obj: Record<string, string | number>, key: string, delta: number, min: number) {
+  obj[key] = Math.max(min, Math.round((parsear(obj[key]) + delta) * 10000) / 10000);
 }
 
 // ── Derivados de monedas ──────────────────────────────────────────────────────
-/** Monedas únicas disponibles para el ahorro a la vista. */
 const vistaMonedasDisponibles = computed((): MonedaRel[] => {
   const seen = new Set<string>();
   return todasLasTasas.value
@@ -108,7 +107,6 @@ const vistaMonedasDisponibles = computed((): MonedaRel[] => {
     .map(t => t.expand.moneda);
 });
 
-/** Monedas únicas disponibles para depósitos a plazo fijo. */
 const plazoMonedasDisponibles = computed((): MonedaRel[] => {
   const seen = new Set<string>();
   return todasLasTasas.value
@@ -117,27 +115,18 @@ const plazoMonedasDisponibles = computed((): MonedaRel[] => {
     .map(t => t.expand.moneda);
 });
 
-/** Registro de tasa para la moneda seleccionada en vista. */
 const vistaTasaActual = computed((): TasaRecord | undefined =>
-  todasLasTasas.value.find(
-    t => t.tipo === 'vista' && t.expand.moneda.moneda === vistaMoneda.value
-  )
+  todasLasTasas.value.find(t => t.tipo === 'vista' && t.expand.moneda.moneda === vistaMoneda.value)
 );
 
-/** Opciones de plazo fijo filtradas por moneda seleccionada, ordenadas por plazo. */
 const plazoTasasFiltradas = computed((): TasaRecord[] =>
   todasLasTasas.value
     .filter(t => t.tipo === 'plazo_fijo' && t.expand.moneda.moneda === plazoMoneda.value)
     .sort((a, b) => a.plazo_meses - b.plazo_meses)
 );
 
-// Resetear selección de plazo cuando cambia la moneda
 watch(plazoMoneda, () => { plazoForm.idx = 0; });
 
-/**
- * Clase del grid de tarjetas de plazo fijo según cuántas opciones haya.
- * 1 → 1 col · 2 → 2 cols · 3+ → 3 cols
- */
 const clasesGridPlazo = computed(() => {
   const n = plazoTasasFiltradas.value.length;
   if (n <= 1) return 'grid-cols-1';
@@ -145,49 +134,41 @@ const clasesGridPlazo = computed(() => {
   return 'grid-cols-3';
 });
 
-// ── Calendario: calcular años desde rango de fechas ──────────────────────────
-/**
- * Se llama solo cuando el usuario pulsa "Aceptar" en el panel.
- * Calcula los años decimales (días / 365), los escribe en el input
- * y cierra el panel.
- */
+// ── Calendario: calcular años desde rango ─────────────────────────────────────
 function aplicarRango() {
   if (!fechaInicio.value || !fechaFin.value) return;
   const msI = new Date(fechaInicio.value).getTime();
   const msF = new Date(fechaFin.value).getTime();
   if (msF <= msI) return;
-  const dias = (msF - msI) / (1000 * 60 * 60 * 24);
-  vistaForm.plazoAnios    = Math.round((dias / 365) * 100) / 100;
+  vistaForm.plazoAnios    = Math.round(((msF - msI) / (1000 * 60 * 60 * 24) / 365) * 100) / 100;
   mostrarCalendario.value = false;
-  fechaInicio.value       = '';
-  fechaFin.value          = '';
+  fechaInicio.value = fechaFin.value = '';
 }
 
 // ── Resultados calculados ─────────────────────────────────────────────────────
-/** Tab A — Interés compuesto: M = P × (1 + r)ⁿ */
+
+/** Tab A — interés compuesto. Devuelve null si los inputs no son válidos. */
 const resultadoVista = computed(() => {
   if (!vistaTasaActual.value) return null;
   const P = parsear(vistaForm.monto);
   const n = parsear(vistaForm.plazoAnios);
   if (P <= 0 || n <= 0) return null;
-  const r      = vistaTasaActual.value.tasa / 100;
-  const monto  = P * Math.pow(1 + r, n);
-  const interes = monto - P;
-  return { interes, monto };
+  const r     = vistaTasaActual.value.tasa / 100;
+  const monto = P * Math.pow(1 + r, n);
+  return { interes: monto - P, monto };
 });
 
-/** Tab B — Interés simple base 360: I = (Capital × tasa%) / 360 × (meses × 30) */
+/** Tab B — interés simple base 360. */
 const resultadoPlazo = computed(() => {
   const tasa = plazoTasasFiltradas.value[plazoForm.idx];
   if (!tasa) return null;
   const P = parsear(plazoForm.monto);
   if (P <= 0) return null;
-  const dias    = tasa.plazo_meses * 30;
-  const interes = (P * (tasa.tasa / 100)) / 360 * dias;
+  const interes = (P * (tasa.tasa / 100)) / 360 * (tasa.plazo_meses * 30);
   return { interes, total: P + interes, tasa };
 });
 
-/** Tab C — Sistema francés */
+/** Tab C — sistema francés. */
 const resultadoCredito = computed(() => {
   const P         = parsear(creditoForm.monto);
   const n         = Math.round(parsear(creditoForm.plazoMeses));
@@ -211,7 +192,7 @@ const resultadoCredito = computed(() => {
   return { cuota, totalPagar: cuota * n, totalIntereses: cuota * n - P, tabla, n };
 });
 
-/** Filas visibles con ellipsis si la tabla es larga */
+/** Filas con ellipsis si la tabla es larga */
 const filasVisibles = computed((): (FilaAmortizacion | 'ellipsis')[] => {
   if (!resultadoCredito.value) return [];
   const t = resultadoCredito.value.tabla;
@@ -221,25 +202,19 @@ const filasVisibles = computed((): (FilaAmortizacion | 'ellipsis')[] => {
 
 // ── Carga desde PocketBase ────────────────────────────────────────────────────
 async function cargarTasas() {
-  cargando.value  = true;
-  errorDB.value   = false;
+  cargando.value = true;
+  errorDB.value  = false;
   try {
-    const registros = await pb
-      .collection('tasas_calculadora')
-      .getFullList<TasaRecord>({
-        filter: 'activa = true',
-        expand: 'moneda',
-        sort:   'plazo_meses',
-      });
+    const registros = await pb.collection('tasas_calculadora').getFullList<TasaRecord>({
+      filter: 'activa = true',
+      expand: 'moneda',
+      sort:   'plazo_meses',
+    });
     todasLasTasas.value = registros;
-
-    // Auto-seleccionar primera moneda de cada pestaña
     const primerVista = registros.find(t => t.tipo === 'vista');
     if (primerVista) vistaMoneda.value = primerVista.expand.moneda.moneda;
-
     const primerPlazo = registros.find(t => t.tipo === 'plazo_fijo');
     if (primerPlazo) plazoMoneda.value = primerPlazo.expand.moneda.moneda;
-
   } catch {
     errorDB.value = true;
   } finally {
@@ -254,12 +229,11 @@ onMounted(cargarTasas);
   <div class="w-full">
 
     <!-- ── ESTADO: Cargando ──────────────────────────────────────────────── -->
-    <div v-if="cargando"
-      class="flex flex-col items-center justify-center gap-4 py-20 text-slate-500">
+    <div v-if="cargando" class="flex flex-col items-center justify-center gap-4 py-20 text-muted">
       <!-- tabler:loader-2 -->
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-        class="w-10 h-10 animate-spin text-blue-600">
+        class="w-10 h-10 animate-spin text-primary">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
         <path d="M12 3a9 9 0 1 0 9 9" />
       </svg>
@@ -293,14 +267,14 @@ onMounted(cargarTasas);
       </button>
     </div>
 
-    <!-- ── CONTENIDO PRINCIPAL (datos cargados) ──────────────────────────── -->
+    <!-- ── CONTENIDO PRINCIPAL ───────────────────────────────────────────── -->
     <template v-else>
 
-      <!-- Pestañas de navegación -->
-      <div class="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 mb-6">
+      <!-- Pestañas -->
+      <div class="flex rounded-xl overflow-hidden border border-bpa-200 dark:border-bpa-amber-800 mb-6">
         <button @click="tabActiva = 'vista'"
-          class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 text-sm font-medium transition-colors border-r border-slate-200 dark:border-slate-700"
-          :class="tabActiva === 'vista' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'">
+          class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 text-sm font-medium transition-colors border-r border-bpa-200 dark:border-bpa-amber-800"
+          :class="tabActiva === 'vista' ? 'bg-primary text-white' : 'bg-white dark:bg-bpa-950/60 text-muted hover:bg-bpa-50 dark:hover:bg-bpa-800/30'">
           <!-- tabler:coins -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -313,8 +287,8 @@ onMounted(cargarTasas);
         </button>
 
         <button @click="tabActiva = 'plazo'"
-          class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 text-sm font-medium transition-colors border-r border-slate-200 dark:border-slate-700"
-          :class="tabActiva === 'plazo' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'">
+          class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 text-sm font-medium transition-colors border-r border-bpa-200 dark:border-bpa-amber-800"
+          :class="tabActiva === 'plazo' ? 'bg-primary text-white' : 'bg-white dark:bg-bpa-950/60 text-muted hover:bg-bpa-50 dark:hover:bg-bpa-800/30'">
           <!-- tabler:building-bank -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -327,7 +301,7 @@ onMounted(cargarTasas);
 
         <button @click="tabActiva = 'credito'; tablaCompleta = false"
           class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 text-sm font-medium transition-colors"
-          :class="tabActiva === 'credito' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'">
+          :class="tabActiva === 'credito' ? 'bg-primary text-white' : 'bg-white dark:bg-bpa-950/60 text-muted hover:bg-bpa-50 dark:hover:bg-bpa-800/30'">
           <!-- tabler:credit-card -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -338,9 +312,9 @@ onMounted(cargarTasas);
         </button>
       </div>
 
-      <!-- ════════════════════════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════════════════════════════
           TAB A · AHORRO A LA VISTA
-      ════════════════════════════════════════════════════════════════════════ -->
+      ══════════════════════════════════════════════════════════════════════ -->
       <Transition enter-active-class="transition-all duration-200 ease-out"
         enter-from-class="opacity-0 translate-y-2" enter-to-class="opacity-100 translate-y-0"
         mode="out-in">
@@ -348,14 +322,14 @@ onMounted(cargarTasas);
 
           <!-- Selector de moneda -->
           <div class="flex items-center gap-3 flex-wrap">
-            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex-shrink-0">Moneda</p>
+            <p class="text-xs font-semibold text-muted uppercase tracking-wide flex-shrink-0">Moneda</p>
             <div class="flex flex-wrap gap-2">
               <button v-for="mon in vistaMonedasDisponibles" :key="mon.moneda"
                 @click="vistaMoneda = mon.moneda"
                 class="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
                 :class="vistaMoneda === mon.moneda
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500'">
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-white dark:bg-bpa-950/60 text-muted border-bpa-200 dark:border-bpa-amber-800 hover:border-primary hover:text-primary'">
                 {{ mon.moneda }}
               </button>
             </div>
@@ -363,73 +337,69 @@ onMounted(cargarTasas);
 
           <!-- Nota de tasa vigente -->
           <div v-if="vistaTasaActual"
-            class="flex items-start gap-2.5 rounded-lg bg-bpa-alt dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 px-4 py-3">
-            <!-- tabler:info-circle -->
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0 text-blue-500 mt-0.5">
+            class="flex items-start gap-2.5 rounded-lg bg-bpa-50 dark:bg-bpa-950/40 border border-bpa-200 dark:border-bpa-amber-800 px-4 py-3">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0 text-primary mt-0.5">
               <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
               <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" />
             </svg>
-            <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+            <p class="text-xs text-default dark:text-default leading-relaxed">
               Tasa vigente para <strong>{{ vistaTasaActual.expand.moneda.nombre_moneda }}</strong>:
               <strong>{{ vistaTasaActual.tasa }}% anual</strong>.
               Cálculo por interés compuesto — los intereses se capitalizan anualmente.
             </p>
           </div>
 
-          <!-- Formulario -->
+          <!-- Inputs: Capital + Plazo -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             <!-- Capital -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
                 Capital inicial ({{ vistaMoneda || '…' }})
               </label>
-              <div class="campo-numero flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition">
+              <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
                 <input v-model="vistaForm.monto" type="number" min="0" step="0.01" placeholder="0.00"
-                  class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none" />
-                <div class="flex flex-col self-stretch border-l border-slate-200 dark:border-slate-600">
+                  class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
+                <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
                   <button type="button" @click="ajustar(vistaForm, 'monto', 0.01, 0)"
-                    class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-b border-slate-200 dark:border-slate-600 transition-colors">
-                    <!-- tabler:chevron-up -->
+                    class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg>
                   </button>
                   <button type="button" @click="ajustar(vistaForm, 'monto', -0.01, 0)"
-                    class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
-                    <!-- tabler:chevron-down -->
+                    class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
                   </button>
                 </div>
               </div>
             </div>
 
-            <!-- Plazo en años + botón calendario -->
+            <!-- Plazo + botón calendario -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
                 Plazo (años)
               </label>
               <div class="flex gap-2">
-                <!-- Input con chevrons -->
-                <div class="campo-numero flex-1 flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition">
+                <div class="campo-numero flex-1 flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
                   <input v-model="vistaForm.plazoAnios" type="number" min="0" step="0.5" placeholder="0"
-                    class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none" />
-                  <div class="flex flex-col self-stretch border-l border-slate-200 dark:border-slate-600">
+                    class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
+                  <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
                     <button type="button" @click="ajustar(vistaForm, 'plazoAnios', 0.5, 0)"
-                      class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-b border-slate-200 dark:border-slate-600 transition-colors">
+                      class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg>
                     </button>
                     <button type="button" @click="ajustar(vistaForm, 'plazoAnios', -0.5, 0)"
-                      class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                      class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
                     </button>
                   </div>
                 </div>
-                <!-- Botón abrir calendario -->
+                <!-- Botón calendario -->
                 <button type="button" @click="mostrarCalendario = !mostrarCalendario"
                   title="Seleccionar rango de fechas"
                   class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg border transition-colors"
                   :class="mostrarCalendario
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600'">
+                    ? 'bg-primary border-primary text-white'
+                    : 'border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-muted hover:border-primary hover:text-primary'">
                   <!-- tabler:calendar -->
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -440,33 +410,32 @@ onMounted(cargarTasas);
                 </button>
               </div>
 
-              <!-- Panel de rango de fechas -->
+              <!-- Panel rango de fechas -->
               <Transition enter-active-class="transition-all duration-150 ease-out"
                 enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0"
                 leave-active-class="transition-all duration-100 ease-in"
                 leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-1">
                 <div v-if="mostrarCalendario"
-                  class="mt-2 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-bpa-alt dark:bg-blue-950/40 space-y-3">
-                  <p class="text-xs text-blue-700 dark:text-blue-400 font-semibold">Seleccione el rango</p>
+                  class="mt-2 p-4 rounded-xl border border-bpa-200 dark:border-bpa-amber-800 bg-bpa-50 dark:bg-bpa-950/40 space-y-3">
+                  <p class="text-xs text-primary dark:text-primary font-semibold">Seleccione el rango</p>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">Fecha de inicio</label>
+                      <label class="block text-[11px] font-medium text-muted mb-1">Fecha de inicio</label>
                       <input type="date" v-model="fechaInicio"
-                        class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                        class="w-full rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-default dark:text-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition" />
                     </div>
                     <div>
-                      <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">Fecha de vencimiento</label>
+                      <label class="block text-[11px] font-medium text-muted mb-1">Fecha de vencimiento</label>
                       <input type="date" v-model="fechaFin" :min="fechaInicio"
-                        class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                        class="w-full rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-default dark:text-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition" />
                     </div>
                   </div>
                   <div class="flex justify-center">
-                    <button type="button" @click="aplicarRango"
-                      :disabled="!fechaInicio || !fechaFin"
+                    <button type="button" @click="aplicarRango" :disabled="!fechaInicio || !fechaFin"
                       class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                       :class="fechaInicio && fechaFin
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'">
+                        ? 'bg-primary hover:bg-secondary text-white'
+                        : 'bg-bpa-100 dark:bg-bpa-800/40 text-muted cursor-not-allowed'">
                       Aceptar
                     </button>
                   </div>
@@ -475,36 +444,37 @@ onMounted(cargarTasas);
             </div>
           </div>
 
-          <!-- Resultado -->
-          <div v-if="resultadoVista" class="rounded-xl border border-blue-200 dark:border-blue-800 overflow-hidden">
-            <div class="bg-blue-600 px-5 py-3 flex items-center gap-2 text-white">
+          <!-- Resultado — siempre visible, ceros si sin datos válidos -->
+          <div class="rounded-xl border border-bpa-200 dark:border-bpa-amber-800 overflow-hidden">
+            <div class="bg-primary px-5 py-3 flex items-center gap-2 text-white">
               <!-- tabler:calculator -->
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -14" /><path d="M8 8a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1l0 -1" /><path d="M8 14l0 .01" /><path d="M12 14l0 .01" /><path d="M16 14l0 .01" /><path d="M8 17l0 .01" /><path d="M12 17l0 .01" /><path d="M16 17l0 .01" /></svg>
               <span class="font-semibold text-sm">Resultado del cálculo</span>
             </div>
-            <div class="bg-white dark:bg-slate-800 p-5 grid grid-cols-2 gap-4">
-              <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Intereses ganados</p>
-                <p class="text-xl font-bold text-green-600 dark:text-green-400">{{ fmt(resultadoVista.interes) }}</p>
-                <p class="text-xs text-slate-400 mt-0.5">{{ vistaMoneda }}</p>
+            <div class="bg-white dark:bg-bpa-950/60 p-5 grid grid-cols-2 gap-4">
+              <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
+                <p class="text-xs text-muted mb-1">Intereses ganados</p>
+                <p class="text-xl font-bold text-bpa-400 dark:text-bpa-amber-400">
+                  {{ fmt(resultadoVista?.interes ?? 0) }}
+                </p>
+                <p class="text-xs text-muted mt-0.5">{{ vistaMoneda || '—' }}</p>
               </div>
-              <div class="text-center p-3 rounded-lg bg-bpa-alt dark:bg-blue-900/40">
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Monto al vencimiento</p>
-                <p class="text-xl font-bold text-blue-700 dark:text-blue-300">{{ fmt(resultadoVista.monto) }}</p>
-                <p class="text-xs text-slate-400 mt-0.5">{{ vistaMoneda }}</p>
+              <div class="text-center p-3 rounded-lg bg-bpa-100 dark:bg-bpa-amber-950/40">
+                <p class="text-xs text-muted mb-1">Monto al vencimiento</p>
+                <p class="text-xl font-bold text-primary dark:text-primary">
+                  {{ fmt(resultadoVista?.monto ?? 0) }}
+                </p>
+                <p class="text-xs text-muted mt-0.5">{{ vistaMoneda || '—' }}</p>
               </div>
             </div>
           </div>
-          <p v-else class="text-center text-sm text-slate-400 dark:text-slate-500 italic py-4">
-            Seleccione la moneda, ingrese el capital y el plazo para ver el resultado.
-          </p>
 
         </div>
       </Transition>
 
-      <!-- ════════════════════════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════════════════════════════
           TAB B · DEPÓSITO A PLAZO FIJO
-      ════════════════════════════════════════════════════════════════════════ -->
+      ══════════════════════════════════════════════════════════════════════ -->
       <Transition enter-active-class="transition-all duration-200 ease-out"
         enter-from-class="opacity-0 translate-y-2" enter-to-class="opacity-100 translate-y-0"
         mode="out-in">
@@ -512,41 +482,36 @@ onMounted(cargarTasas);
 
           <!-- Selector de moneda -->
           <div class="flex items-center gap-3 flex-wrap">
-            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex-shrink-0">Moneda</p>
+            <p class="text-xs font-semibold text-muted uppercase tracking-wide flex-shrink-0">Moneda</p>
             <div class="flex flex-wrap gap-2">
               <button v-for="mon in plazoMonedasDisponibles" :key="mon.moneda"
                 @click="plazoMoneda = mon.moneda"
                 class="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
                 :class="plazoMoneda === mon.moneda
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500'">
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-white dark:bg-bpa-950/60 text-muted border-bpa-200 dark:border-bpa-amber-800 hover:border-primary hover:text-primary'">
                 {{ mon.moneda }}
               </button>
             </div>
           </div>
 
-          <!-- Grilla de tasas — columnas adaptables según cantidad de opciones -->
-          <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
-            <div class="bg-slate-800 dark:bg-slate-900 px-4 py-2.5 flex items-center gap-2 text-white">
+          <!-- Grilla de tasas disponibles -->
+          <div class="overflow-hidden rounded-xl border border-bpa-200 dark:border-bpa-amber-800">
+            <div class="bg-bpa-800 dark:bg-bpa-amber-950 px-4 py-2.5 flex items-center gap-2 text-white">
               <!-- tabler:percentage -->
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 17a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M6 7a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M6 18l12 -12" /></svg>
               <span class="text-sm font-semibold">Tasas BPA vigentes — {{ plazoMoneda }}</span>
             </div>
-            <!--
-              Usamos border en cada celda en lugar de divide-* para que los bordes
-              se dibujen siempre, incluso cuando hay menos de una fila completa.
-              La clase de columnas viene del computed clasesGridPlazo.
-            -->
-            <div class="grid bg-white dark:bg-slate-800" :class="clasesGridPlazo">
+            <div class="grid bg-white dark:bg-bpa-950/60" :class="clasesGridPlazo">
               <div v-for="(t, idx) in plazoTasasFiltradas" :key="t.id"
                 @click="plazoForm.idx = idx"
-                class="cursor-pointer text-center py-4 px-3 transition-colors border border-slate-200 dark:border-slate-700 -mt-px -ml-px"
+                class="cursor-pointer text-center py-4 px-3 transition-colors border border-bpa-200 dark:border-bpa-amber-800 -mt-px -ml-px"
                 :class="plazoForm.idx === idx
-                  ? 'bg-blue-600 text-white border-blue-600 z-10 relative'
-                  : 'hover:bg-slate-50 dark:hover:bg-slate-700'">
+                  ? 'bg-primary text-white border-primary z-10 relative'
+                  : 'hover:bg-bpa-50 dark:hover:bg-bpa-800/20'">
                 <p class="text-lg font-bold">{{ t.tasa }}%</p>
                 <p class="text-md font-light"
-                  :class="plazoForm.idx === idx ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'">
+                  :class="plazoForm.idx === idx ? 'text-white/80' : 'text-muted'">
                   {{ t.nombre }}
                 </p>
               </div>
@@ -555,191 +520,193 @@ onMounted(cargarTasas);
 
           <!-- Capital -->
           <div>
-            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+            <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
               Capital a depositar ({{ plazoMoneda || '…' }})
             </label>
-            <div class="campo-numero flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition">
+            <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
               <input v-model="plazoForm.monto" type="number" min="0" step="0.01" placeholder="0.00"
-                class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none" />
-              <div class="flex flex-col self-stretch border-l border-slate-200 dark:border-slate-600">
+                class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
+              <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
                 <button type="button" @click="ajustar(plazoForm, 'monto', 0.01, 0)"
-                  class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-b border-slate-200 dark:border-slate-600 transition-colors">
+                  class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg>
                 </button>
                 <button type="button" @click="ajustar(plazoForm, 'monto', -0.01, 0)"
-                  class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                  class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Resultado -->
-          <div v-if="resultadoPlazo" class="rounded-xl border border-blue-200 dark:border-blue-800 overflow-hidden">
-            <div class="bg-blue-600 px-5 py-3 flex items-center gap-2 text-white">
+          <!-- Resultado — siempre visible -->
+          <div class="rounded-xl border border-bpa-200 dark:border-bpa-amber-800 overflow-hidden">
+            <div class="bg-primary px-5 py-3 flex items-center gap-2 text-white">
               <!-- tabler:calculator -->
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -14" /><path d="M8 8a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1l0 -1" /><path d="M8 14l0 .01" /><path d="M12 14l0 .01" /><path d="M16 14l0 .01" /><path d="M8 17l0 .01" /><path d="M12 17l0 .01" /><path d="M16 17l0 .01" /></svg>
               <span class="font-semibold text-sm">
-                {{ resultadoPlazo.tasa.nombre }} — {{ resultadoPlazo.tasa.tasa }}% anual ({{ plazoMoneda }})
+                {{ resultadoPlazo
+                    ? `${resultadoPlazo.tasa.nombre} — ${resultadoPlazo.tasa.tasa}% anual (${plazoMoneda})`
+                    : 'Resultado del cálculo' }}
               </span>
             </div>
-            <div class="bg-white dark:bg-slate-800 p-5 grid grid-cols-2 gap-4">
-              <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Intereses al vencimiento</p>
-                <p class="text-xl font-bold text-green-600 dark:text-green-400">{{ fmt(resultadoPlazo.interes) }}</p>
-                <p class="text-xs text-slate-400 mt-0.5">{{ plazoMoneda }}</p>
+            <div class="bg-white dark:bg-bpa-950/60 p-5 grid grid-cols-2 gap-4">
+              <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
+                <p class="text-xs text-muted mb-1">Intereses al vencimiento</p>
+                <p class="text-xl font-bold text-bpa-400 dark:text-bpa-amber-400">
+                  {{ fmt(resultadoPlazo?.interes ?? 0) }}
+                </p>
+                <p class="text-xs text-muted mt-0.5">{{ plazoMoneda || '—' }}</p>
               </div>
-              <div class="text-center p-3 rounded-lg bg-bpa-alt dark:bg-blue-900/40">
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Capital + Intereses</p>
-                <p class="text-xl font-bold text-blue-700 dark:text-blue-300">{{ fmt(resultadoPlazo.total) }}</p>
-                <p class="text-xs text-slate-400 mt-0.5">{{ plazoMoneda }}</p>
+              <div class="text-center p-3 rounded-lg bg-bpa-100 dark:bg-bpa-amber-950/40">
+                <p class="text-xs text-muted mb-1">Capital + Intereses</p>
+                <p class="text-xl font-bold text-primary dark:text-primary">
+                  {{ fmt(resultadoPlazo?.total ?? 0) }}
+                </p>
+                <p class="text-xs text-muted mt-0.5">{{ plazoMoneda || '—' }}</p>
               </div>
             </div>
           </div>
-          <p v-else class="text-center text-sm text-slate-400 dark:text-slate-500 italic py-4">
-            Seleccione la moneda, el plazo y el capital para ver el resultado.
-          </p>
 
         </div>
       </Transition>
 
-      <!-- ════════════════════════════════════════════════════════════════════
-          TAB C · CRÉDITO  (sin PocketBase — cuota fija, sistema francés)
-      ════════════════════════════════════════════════════════════════════════ -->
+      <!-- ══════════════════════════════════════════════════════════════════
+          TAB C · CRÉDITO
+      ══════════════════════════════════════════════════════════════════════ -->
       <Transition enter-active-class="transition-all duration-200 ease-out"
         enter-from-class="opacity-0 translate-y-2" enter-to-class="opacity-100 translate-y-0"
         mode="out-in">
         <div v-if="tabActiva === 'credito'" key="credito" class="space-y-5">
 
-          <div class="flex items-start gap-2.5 rounded-lg bg-bpa-alt dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 px-4 py-3">
-            <!-- tabler:info-circle -->
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0 text-blue-500 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
-            <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+          <!-- Nota informativa -->
+          <div class="flex items-start gap-2.5 rounded-lg bg-bpa-50 dark:bg-bpa-950/40 border border-bpa-200 dark:border-bpa-amber-800 px-4 py-3">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0 text-primary mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
+            <p class="text-xs text-default dark:text-default leading-relaxed">
               Cálculo por sistema de cuota fija (método francés). Ingrese la tasa anual que le indique su gestor de crédito en la sucursal.
             </p>
           </div>
 
-          <!-- 3 inputs con chevrons -->
+          <!-- 3 inputs -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Monto -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Monto del crédito (CUP)</label>
-              <div class="campo-numero flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition">
-                <input v-model="creditoForm.monto" type="number" min="0" step="0.01" placeholder="0.00" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none" />
-                <div class="flex flex-col self-stretch border-l border-slate-200 dark:border-slate-600">
-                  <button type="button" @click="ajustar(creditoForm, 'monto', 0.01, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-b border-slate-200 dark:border-slate-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg></button>
-                  <button type="button" @click="ajustar(creditoForm, 'monto', -0.01, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg></button>
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">Monto del crédito (CUP)</label>
+              <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
+                <input v-model="creditoForm.monto" type="number" min="0" step="0.01" placeholder="0.00" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
+                <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
+                  <button type="button" @click="ajustar(creditoForm, 'monto', 0.01, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg></button>
+                  <button type="button" @click="ajustar(creditoForm, 'monto', -0.01, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg></button>
                 </div>
               </div>
             </div>
+            <!-- Tasa anual -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Tasa anual (%)</label>
-              <div class="campo-numero flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition">
-                <input v-model="creditoForm.tasaAnual" type="number" min="0" step="0.1" placeholder="0.0" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none" />
-                <div class="flex flex-col self-stretch border-l border-slate-200 dark:border-slate-600">
-                  <button type="button" @click="ajustar(creditoForm, 'tasaAnual', 0.1, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-b border-slate-200 dark:border-slate-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg></button>
-                  <button type="button" @click="ajustar(creditoForm, 'tasaAnual', -0.1, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg></button>
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">Tasa anual (%)</label>
+              <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
+                <input v-model="creditoForm.tasaAnual" type="number" min="0" step="0.1" placeholder="0.0" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
+                <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
+                  <button type="button" @click="ajustar(creditoForm, 'tasaAnual', 0.1, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg></button>
+                  <button type="button" @click="ajustar(creditoForm, 'tasaAnual', -0.1, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg></button>
                 </div>
               </div>
             </div>
+            <!-- Plazo meses -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Plazo (meses)</label>
-              <div class="campo-numero flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition">
-                <input v-model="creditoForm.plazoMeses" type="number" min="1" step="1" placeholder="0" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none" />
-                <div class="flex flex-col self-stretch border-l border-slate-200 dark:border-slate-600">
-                  <button type="button" @click="ajustar(creditoForm, 'plazoMeses', 1, 1)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-b border-slate-200 dark:border-slate-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg></button>
-                  <button type="button" @click="ajustar(creditoForm, 'plazoMeses', -1, 1)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg></button>
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">Plazo (meses)</label>
+              <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
+                <input v-model="creditoForm.plazoMeses" type="number" min="1" step="1" placeholder="0" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
+                <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
+                  <button type="button" @click="ajustar(creditoForm, 'plazoMeses', 1, 1)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg></button>
+                  <button type="button" @click="ajustar(creditoForm, 'plazoMeses', -1, 1)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg></button>
                 </div>
               </div>
             </div>
           </div>
 
-          <template v-if="resultadoCredito">
-            <!-- Resumen -->
-            <div class="rounded-xl border border-blue-200 dark:border-blue-800 overflow-hidden">
-              <div class="bg-blue-600 px-5 py-3 flex items-center gap-2 text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -14" /><path d="M8 8a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1l0 -1" /><path d="M8 14l0 .01" /><path d="M12 14l0 .01" /><path d="M16 14l0 .01" /><path d="M8 17l0 .01" /><path d="M12 17l0 .01" /><path d="M16 17l0 .01" /></svg>
-                <span class="font-semibold text-sm">Resultado del crédito</span>
+          <!-- Resumen del crédito — siempre visible, ceros si sin datos válidos -->
+          <div class="rounded-xl border border-bpa-200 dark:border-bpa-amber-800 overflow-hidden">
+            <div class="bg-primary px-5 py-3 flex items-center gap-2 text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -14" /><path d="M8 8a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1l0 -1" /><path d="M8 14l0 .01" /><path d="M12 14l0 .01" /><path d="M16 14l0 .01" /><path d="M8 17l0 .01" /><path d="M12 17l0 .01" /><path d="M16 17l0 .01" /></svg>
+              <span class="font-semibold text-sm">Resultado del crédito</span>
+            </div>
+            <div class="bg-white dark:bg-bpa-950/60 p-5">
+              <!-- Cuota mensual destacada -->
+              <div class="text-center mb-5 p-4 rounded-xl bg-bpa-50 dark:bg-bpa-950/40 border border-bpa-200 dark:border-bpa-amber-800">
+                <p class="text-xs text-muted mb-1 uppercase tracking-wide font-semibold">Cuota mensual fija</p>
+                <p class="text-3xl font-bold text-primary dark:text-primary">
+                  {{ fmt(resultadoCredito?.cuota ?? 0) }}
+                  <span class="text-base font-medium text-muted ml-1">CUP</span>
+                </p>
               </div>
-              <div class="bg-white dark:bg-slate-800 p-5">
-                <div class="text-center mb-5 p-4 rounded-xl bg-bpa-alt dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800">
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide font-semibold">Cuota mensual fija</p>
-                  <p class="text-3xl font-bold text-blue-700 dark:text-blue-300">
-                    {{ fmt(resultadoCredito.cuota) }}
-                    <span class="text-base font-medium text-blue-400 dark:text-blue-500 ml-1">CUP</span>
-                  </p>
+              <!-- 3 stats -->
+              <div class="grid grid-cols-3 gap-3">
+                <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
+                  <p class="text-[11px] text-muted mb-1">Capital</p>
+                  <p class="text-sm font-bold text-default dark:text-default">{{ fmt(parsear(creditoForm.monto)) }}</p>
                 </div>
-                <div class="grid grid-cols-3 gap-3">
-                  <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-1">Capital</p>
-                    <p class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ fmt(parsear(creditoForm.monto)) }}</p>
-                  </div>
-                  <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-1">Total intereses</p>
-                    <p class="text-sm font-bold text-amber-600 dark:text-amber-400">{{ fmt(resultadoCredito.totalIntereses) }}</p>
-                  </div>
-                  <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-1">Total a pagar</p>
-                    <p class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ fmt(resultadoCredito.totalPagar) }}</p>
-                  </div>
+                <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
+                  <p class="text-[11px] text-muted mb-1">Total intereses</p>
+                  <p class="text-sm font-bold text-default dark:text-default">{{ fmt(resultadoCredito?.totalIntereses ?? 0) }}</p>
+                </div>
+                <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
+                  <p class="text-[11px] text-muted mb-1">Total a pagar</p>
+                  <p class="text-sm font-bold text-default dark:text-default">{{ fmt(resultadoCredito?.totalPagar ?? 0) }}</p>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Tabla de amortización -->
-            <div class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-              <div class="bg-slate-800 dark:bg-slate-900 px-4 py-2.5 flex items-center gap-2 text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14" /><path d="M3 10h18" /><path d="M10 3v18" /></svg>
-                <span class="text-sm font-semibold">Plan de amortización</span>
-                <span class="ml-auto text-xs text-slate-400">{{ resultadoCredito.n }} cuotas</span>
-              </div>
-              <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                  <thead>
-                    <tr class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                      <th class="text-center px-3 py-2.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Mes</th>
-                      <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Cuota</th>
-                      <th class="text-right px-3 py-2.5 text-xs font-semibold text-amber-600 dark:text-amber-400">Interés</th>
-                      <th class="text-right px-3 py-2.5 text-xs font-semibold text-green-600 dark:text-green-400">Capital</th>
-                      <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Saldo</th>
+          <!-- Tabla de amortización — solo cuando hay cálculo válido -->
+          <div v-if="resultadoCredito" class="rounded-xl border border-bpa-200 dark:border-bpa-amber-800 overflow-hidden">
+            <div class="bg-bpa-800 dark:bg-bpa-amber-950 border-b border-bpa-200 dark:border-bpa-amber-800 px-4 py-2.5 flex items-center gap-2 text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14" /><path d="M3 10h18" /><path d="M10 3v18" /></svg>
+              <span class="text-sm font-semibold">Plan de amortización</span>
+              <span class="ml-auto text-xs text-bpa-200 dark:text-bpa-amber-600">{{ resultadoCredito.n }} cuotas</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-bpa-50 dark:bg-bpa-950/80 border-b border-bpa-200 dark:border-bpa-amber-800">
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-muted">Mes</th>
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-default">Cuota</th>
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-bpa-400 dark:text-bpa-amber-400">Interés</th>
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-bpa-400 dark:text-bpa-amber-400">Capital</th>
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-default">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-bpa-200 dark:divide-bpa-amber-800/50">
+                  <template v-for="(fila, idx) in filasVisibles" :key="idx">
+                    <tr v-if="fila !== 'ellipsis'"
+                      class="hover:bg-bpa-50/50 dark:hover:bg-bpa-800/10 transition-colors"
+                      :class="fila.mes === resultadoCredito.n ? 'bg-bpa-50/50 dark:bg-bpa-950/20' : ''">
+                      <td class="text-center px-3 py-2 text-muted font-mono text-xs">{{ fila.mes }}</td>
+                      <td class="text-center px-3 py-2 text-default dark:text-default font-medium">{{ fmt(fila.cuota) }}</td>
+                      <td class="text-center px-3 py-2 text-bpa-400 dark:text-bpa-amber-400 font-medium">{{ fmt(fila.interes) }}</td>
+                      <td class="text-center px-3 py-2 text-bpa-400 dark:text-bpa-amber-400 font-medium">{{ fmt(fila.capital) }}</td>
+                      <td class="text-center px-3 py-2 text-default dark:text-default font-medium">{{ fmt(fila.saldo) }}</td>
                     </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
-                    <template v-for="(fila, idx) in filasVisibles" :key="idx">
-                      <tr v-if="fila !== 'ellipsis'"
-                        class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                        :class="fila.mes === resultadoCredito.n ? 'bg-bpa-alt/50 dark:bg-blue-950/20' : ''">
-                        <td class="text-center px-3 py-2 text-slate-600 dark:text-slate-400 font-mono text-xs">{{ fila.mes }}</td>
-                        <td class="text-right px-3 py-2 text-slate-700 dark:text-slate-300 font-medium">{{ fmt(fila.cuota) }}</td>
-                        <td class="text-right px-3 py-2 text-amber-600 dark:text-amber-400">{{ fmt(fila.interes) }}</td>
-                        <td class="text-right px-3 py-2 text-green-600 dark:text-green-400">{{ fmt(fila.capital) }}</td>
-                        <td class="text-right px-3 py-2 text-slate-700 dark:text-slate-300">{{ fmt(fila.saldo) }}</td>
-                      </tr>
-                      <tr v-else class="bg-slate-50 dark:bg-slate-800/30">
-                        <td colspan="5" class="text-center py-2 text-xs text-slate-400 tracking-widest">· · ·</td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-              <div v-if="resultadoCredito.n > 8"
-                class="border-t border-slate-100 dark:border-slate-700 px-4 py-2.5 bg-white dark:bg-slate-800/50 flex justify-center">
-                <button @click="tablaCompleta = !tablaCompleta"
-                  class="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">
-                  {{ tablaCompleta ? '▲ Ver resumen' : `▼ Ver las ${resultadoCredito.n} cuotas` }}
-                </button>
-              </div>
+                    <tr v-else class="bg-bpa-50 dark:bg-bpa-950/40">
+                      <td colspan="5" class="text-center py-2 text-xs text-muted tracking-widest">· · ·</td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
             </div>
-          </template>
-
-          <p v-else class="text-center text-sm text-slate-400 dark:text-slate-500 italic py-4">
-            Complete los tres campos para calcular la cuota y el plan de pagos.
-          </p>
+            <div v-if="resultadoCredito.n > 8"
+              class="border-t border-bpa-200 dark:border-bpa-amber-800 px-4 py-2.5 bg-white dark:bg-bpa-950/60 flex justify-center">
+              <button @click="tablaCompleta = !tablaCompleta"
+                class="text-xs font-medium text-primary dark:text-primary hover:text-secondary dark:hover:text-secondary transition-colors">
+                {{ tablaCompleta ? '▲ Ver resumen' : `▼ Ver las ${resultadoCredito.n} cuotas` }}
+              </button>
+            </div>
+          </div>
 
         </div>
       </Transition>
 
       <!-- Aviso legal -->
-      <p class="mt-6 text-xs text-slate-400 dark:text-slate-500 text-center leading-relaxed">
+      <p class="mt-6 text-xs text-muted text-center leading-relaxed">
         Resultados orientativos. Las condiciones reales del producto pueden variar.
         Consulte con su gestor en la sucursal BPA más cercana.
       </p>
@@ -749,7 +716,7 @@ onMounted(cargarTasas);
 </template>
 
 <style scoped>
-/* Oculta los spinners nativos del navegador en inputs type=number */
+/* Oculta los spinners nativos en inputs type=number */
 .campo-numero input[type='number']::-webkit-outer-spin-button,
 .campo-numero input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;

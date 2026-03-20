@@ -17,11 +17,9 @@
  *   orden         Number  → orden de aparición en la tabla
  *   updated       Date    → campo automático de PocketBase (última modificación)
  *
- * @estados
- *   cargando → spinner mientras llega la respuesta de PocketBase
- *   error    → PocketBase no responde (aviso con opción de reintentar)
- *   vacío    → PocketBase responde OK pero no hay tasas activas
- *   datos    → tabla + conversor
+ * @paleta de columnas financieras (coherente con TasasMiniWidget.vue):
+ *   Compra → emerald  (el banco le compra la divisa al cliente)
+ *   Venta  → rose     (el banco le vende la divisa al cliente)
  *
  * @dependencias  ~/lib/pocketbase
  */
@@ -31,46 +29,41 @@ import { pb } from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 interface TasaCambio {
-  id: string;
-  moneda: string;
+  id:           string;
+  moneda:       string;
   nombre_moneda: string;
-  compra: number;
-  venta: number;
-  activa: boolean;
-  orden: number;
-  updated: string;
+  compra:       number;
+  venta:        number;
+  activa:       boolean;
+  orden:        number;
+  updated:      string;
 }
 
 // ── Estado principal ──────────────────────────────────────────────────────────
-const tasas     = ref<TasaCambio[]>([]);
-const cargando  = ref(true);
-const errorDB   = ref(false);
+const tasas    = ref<TasaCambio[]>([]);
+const cargando = ref(true);
+const errorDB  = ref(false);
 
 // ── Conversor rápido ──────────────────────────────────────────────────────────
 const conversor = reactive({
-  monto:            '' as string | number,
+  monto:              '' as string | number,
   monedaSeleccionada: '',
-  /** 'a_cup'    → divisa extranjera  → CUP
-   *  'desde_cup' → CUP              → divisa extranjera */
-  direccion:        'a_cup' as 'a_cup' | 'desde_cup',
+  /** 'a_cup'    → divisa extranjera → CUP
+   *  'desde_cup' → CUP             → divisa extranjera */
+  direccion: 'a_cup' as 'a_cup' | 'desde_cup',
 });
 
 // ── Computed ──────────────────────────────────────────────────────────────────
-/** Tasas filtradas a las activas (ya llegan ordenadas por PocketBase) */
-const tasasActivas = computed(() =>
-  tasas.value.filter((t) => t.activa)
-);
+const tasasActivas = computed(() => tasas.value.filter((t) => t.activa));
 
-/** Fecha/hora de la tasa actualizada más recientemente */
 const ultimaActualizacion = computed(() => {
   if (!tasas.value.length) return null;
-  const masFreciente = tasas.value.reduce((prev, curr) =>
+  const mas = tasas.value.reduce((prev, curr) =>
     new Date(curr.updated) > new Date(prev.updated) ? curr : prev
   );
-  return new Date(masFreciente.updated);
+  return new Date(mas.updated);
 });
 
-/** Texto formateado de la última actualización */
 const textoActualizacion = computed(() => {
   if (!ultimaActualizacion.value) return '';
   return ultimaActualizacion.value.toLocaleString('es-CU', {
@@ -82,44 +75,31 @@ const textoActualizacion = computed(() => {
   });
 });
 
-/** Tasa seleccionada en el conversor */
 const tasaSeleccionada = computed(() =>
   tasasActivas.value.find((t) => t.moneda === conversor.monedaSeleccionada) ?? null
 );
 
-/** Resultado del conversor — null si faltan datos */
 const resultadoConversor = computed<string | null>(() => {
   const monto = parseFloat(String(conversor.monto));
   if (!monto || isNaN(monto) || monto <= 0) return null;
   if (!tasaSeleccionada.value) return null;
-
   if (conversor.direccion === 'a_cup') {
-    // Usa tasa de compra cuando el cliente vende su divisa al banco
-    const total = monto * tasaSeleccionada.value.compra;
-    return `${formatCup(total)} CUP`;
+    return `${formatCup(monto * tasaSeleccionada.value.compra)} CUP`;
   } else {
-    // Usa tasa de venta cuando el cliente compra divisa al banco
     const tasaVenta = tasaSeleccionada.value.venta;
     if (tasaVenta <= 0) return null;
-    const total = monto / tasaVenta;
-    return `${total.toFixed(2)} ${conversor.monedaSeleccionada}`;
+    return `${(monto / tasaVenta).toFixed(2)} ${conversor.monedaSeleccionada}`;
   }
 });
 
-/** Etiqueta dinámica del campo "Tiene" */
 const etiquetaTiene = computed(() => {
   if (!conversor.monedaSeleccionada) return 'Divisa';
-  return conversor.direccion === 'a_cup'
-    ? conversor.monedaSeleccionada
-    : 'CUP';
+  return conversor.direccion === 'a_cup' ? conversor.monedaSeleccionada : 'CUP';
 });
 
-/** Etiqueta dinámica del campo "Recibe" */
 const etiquetaRecibe = computed(() => {
   if (!conversor.monedaSeleccionada) return 'Divisa';
-  return conversor.direccion === 'a_cup'
-    ? 'CUP'
-    : conversor.monedaSeleccionada;
+  return conversor.direccion === 'a_cup' ? 'CUP' : conversor.monedaSeleccionada;
 });
 
 // ── Utilidades ────────────────────────────────────────────────────────────────
@@ -131,8 +111,7 @@ function formatCup(valor: number): string {
 }
 
 function intercambiarDireccion() {
-  conversor.direccion =
-    conversor.direccion === 'a_cup' ? 'desde_cup' : 'a_cup';
+  conversor.direccion = conversor.direccion === 'a_cup' ? 'desde_cup' : 'a_cup';
 }
 
 // ── Carga de datos ────────────────────────────────────────────────────────────
@@ -140,11 +119,8 @@ async function cargarTasas() {
   cargando.value = true;
   errorDB.value  = false;
   try {
-    const registros = await pb
-      .collection('tasas_cambio')
-      .getFullList<TasaCambio>({ sort: 'orden' });
+    const registros = await pb.collection('tasas_cambio').getFullList<TasaCambio>({ sort: 'orden' });
     tasas.value = registros;
-    // Pre-seleccionar la primera moneda activa en el conversor
     const primera = registros.find((t) => t.activa);
     if (primera) conversor.monedaSeleccionada = primera.moneda;
   } catch {
@@ -158,18 +134,14 @@ onMounted(cargarTasas);
 </script>
 
 <template>
-  <!--
-    Contenedor principal de la isla. No necesita padding exterior porque
-    la página shell (tasas-de-cambio.astro) ya provee el WidgetWrapper.
-  -->
   <div class="w-full">
 
     <!-- ── ESTADO: Cargando ──────────────────────────────────────────────── -->
-    <div v-if="cargando" class="flex flex-col items-center justify-center gap-4 py-20 text-slate-500">
-      <!-- tabler:loader-2 (animated) -->
+    <div v-if="cargando" class="flex flex-col items-center justify-center gap-4 py-20 text-muted">
+      <!-- tabler:loader-2 -->
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-        class="w-10 h-10 animate-spin text-blue-600">
+        class="w-10 h-10 animate-spin text-primary">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
         <path d="M12 3a9 9 0 1 0 9 9" />
       </svg>
@@ -192,10 +164,8 @@ onMounted(cargarTasas);
       <p class="text-sm text-red-600 dark:text-red-500 mb-4">
         El servicio de tasas de cambio no está disponible en este momento.
       </p>
-      <button
-        @click="cargarTasas"
-        class="inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 transition-colors"
-      >
+      <button @click="cargarTasas"
+        class="inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 transition-colors">
         <!-- tabler:refresh -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -210,32 +180,32 @@ onMounted(cargarTasas);
 
     <!-- ── ESTADO: Sin tasas activas ────────────────────────────────────── -->
     <div v-else-if="!tasasActivas.length"
-      class="rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700 p-10 text-center">
+      class="rounded-xl border border-bpa-100 dark:border-bpa-amber-800 bg-bpa-50 dark:bg-bpa-950/60 p-8 text-center">
       <!-- tabler:database-off -->
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-        class="w-10 h-10 mx-auto mb-3 text-slate-400">
+        class="w-10 h-10 mx-auto mb-3 text-primary opacity-60">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-        <path d="M12.983 8.978c3.955 -.182 7.017 -1.446 7.017 -2.978c0 -1.657 -3.582 -3 -8 -3c-1.661 0 -3.204 .19 -4.483 .515m-2.783 1.228c-.471 .382 -.734 .808 -.734 1.257c0 1.22 1.944 2.271 4.734 2.74" />
-        <path d="M4 6v6c0 1.657 3.582 3 8 3c.986 0 1.93 -.067 2.802 -.19m3.187 -.82c1.251 -.53 2.011 -1.228 2.011 -1.99v-6" />
-        <path d="M4 12v6c0 1.657 3.582 3 8 3c3.217 0 5.991 -.712 7.261 -1.74m.739 -3.26v-4" />
-        <path d="M3 3l18 18" />
+        <path d="M12.983 8.978C16.938 8.796 20 7.532 20 6c0-1.657-3.582-3-8-3c-1.661 0-3.204.19-4.483.515M4.734 4.743C4.263 5.125 4 5.551 4 6c0 1.22 1.944 2.271 4.734 2.74" />
+        <path d="M4 6v6c0 1.657 3.582 3 8 3c.986 0 1.93-.067 2.802-.19m3.187-.82C19.24 13.46 20 12.762 20 12V6" />
+        <path d="M4 12v6c0 1.657 3.582 3 8 3c3.217 0 5.991-.712 7.261-1.74M20 16v-4M3 3l18 18" />
       </svg>
-      <p class="font-semibold text-slate-600 dark:text-slate-300 mb-1">No hay tasas publicadas</p>
-      <p class="text-sm text-slate-500 dark:text-slate-400">
-        Agregue registros en la colección <code class="font-mono text-xs bg-slate-200 dark:bg-slate-700 px-1 rounded">tasas_cambio</code>
-        de PocketBase con el campo <code class="font-mono text-xs bg-slate-200 dark:bg-slate-700 px-1 rounded">activa = true</code>.
+      <p class="font-semibold text-default dark:text-default mb-1">No hay tasas publicadas</p>
+      <p class="text-sm text-muted">
+        Active registros en la colección
+        <code class="font-mono text-xs bg-bpa-100 dark:bg-bpa-amber-800/40 px-1 rounded">tasas_cambio</code>
+        de PocketBase para que aparezcan aquí.
       </p>
     </div>
 
     <!-- ── ESTADO: Datos disponibles ────────────────────────────────────── -->
     <div v-else class="space-y-8">
 
-      <!-- Tabla de tasas ─────────────────────────────────────────────────── -->
-      <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+      <!-- ── Tabla de tasas ──────────────────────────────────────────────── -->
+      <div class="overflow-hidden rounded-xl border border-bpa-200 dark:border-bpa-amber-800 shadow-sm">
 
-        <!-- Cabecera de la tabla -->
-        <div class="bg-blue-700 dark:bg-blue-900 px-6 py-4 flex items-center justify-between">
+        <!-- Cabecera institucional -->
+        <div class="bg-primary px-6 py-4 flex items-center justify-between">
           <div class="flex items-center gap-2 text-white">
             <!-- tabler:exchange -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -247,7 +217,7 @@ onMounted(cargarTasas);
             </svg>
             <span class="font-semibold text-sm">Tasas Oficiales BPA — Santiago de Cuba</span>
           </div>
-          <span class="text-blue-200 dark:text-blue-300 text-xs font-medium hidden sm:block">
+          <span class="text-white/70 text-xs font-medium hidden sm:block">
             En pesos cubanos (CUP)
           </span>
         </div>
@@ -256,49 +226,51 @@ onMounted(cargarTasas);
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                <th class="text-left px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 w-20">
+              <tr class="bg-bpa-50 dark:bg-bpa-950/80 border-b border-bpa-200 dark:border-bpa-amber-800">
+                <th class="text-left px-6 py-3 font-semibold text-default dark:text-default w-20">
                   Moneda
                 </th>
-                <th class="text-left px-6 py-3 font-semibold text-slate-600 dark:text-slate-300">
+                <th class="text-left px-6 py-3 font-semibold text-default dark:text-default hidden sm:block">
                   Nombre
                 </th>
-                <th class="text-right px-6 py-3 font-semibold text-green-700 dark:text-green-400">
+                <!-- Compra: emerald — coherente con TasasMiniWidget -->
+                <th class="text-right px-6 py-3 font-semibold text-default dark:text-default">
                   Compra (CUP)
                 </th>
-                <th class="text-right px-6 py-3 font-semibold text-blue-700 dark:text-blue-400">
+                <!-- Venta: rose — coherente con TasasMiniWidget -->
+                <th class="text-right px-6 py-3 font-semibold text-default dark:text-default">
                   Venta (CUP)
                 </th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tbody class="divide-y divide-bpa-100 dark:divide-bpa-800/50">
               <tr
                 v-for="tasa in tasasActivas"
                 :key="tasa.id"
-                class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                class="hover:bg-bpa-50/50 dark:hover:bg-bpa-800/10 transition-colors"
               >
-                <!-- Badge del código de moneda -->
+                <!-- Badge código de moneda — verde BPA -->
                 <td class="px-6 py-4">
-                  <span class="inline-flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 font-bold text-xs px-2.5 py-1 min-w-[3rem]">
+                  <span class="inline-flex items-center justify-center rounded-md bg-bpa-100 dark:bg-bpa-800/40 text-bpa-800 dark:text-bpa-200 font-bold text-xs px-2.5 py-1 min-w-[3rem]">
                     {{ tasa.moneda }}
                   </span>
                 </td>
 
-                <!-- Nombre completo de la moneda -->
-                <td class="px-6 py-4 text-slate-700 dark:text-slate-300">
+                <!-- Nombre completo -->
+                <td class="px-6 py-4 text-default dark:text-default hidden sm:block">
                   {{ tasa.nombre_moneda }}
                 </td>
 
-                <!-- Tasa de compra -->
+                <!-- Tasa de compra: emerald -->
                 <td class="px-6 py-4 text-right">
-                  <span class="font-semibold text-green-700 dark:text-green-400">
+                  <span class="font-semibold text-emerald-700 dark:text-emerald-400">
                     {{ formatCup(tasa.compra) }}
                   </span>
                 </td>
 
-                <!-- Tasa de venta -->
+                <!-- Tasa de venta: rose (coherente con miniwidget) -->
                 <td class="px-6 py-4 text-right">
-                  <span class="font-semibold text-blue-700 dark:text-blue-400">
+                  <span class="font-semibold text-rose-700 dark:text-rose-400">
                     {{ formatCup(tasa.venta) }}
                   </span>
                 </td>
@@ -307,48 +279,46 @@ onMounted(cargarTasas);
           </table>
         </div>
 
-        <!-- Pie con última actualización -->
-        <div class="bg-slate-50 dark:bg-slate-800/70 border-t border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs">
-          <!-- tabler:clock -->
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="w-3.5 h-3.5 flex-shrink-0">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-            <path d="M12 7v5l3 3" />
-          </svg>
-          <span>
-            Última actualización:
-            <span class="font-medium text-slate-600 dark:text-slate-300">
-              {{ textoActualizacion }}
-            </span>
-          </span>
+        <!-- Pie de tabla: última actualización -->
+        <div class="px-6 py-3 bg-bpa-50 dark:bg-bpa-950/60 border-t border-bpa-200 dark:border-bpa-amber-800 flex items-center justify-between gap-4 flex-wrap">
+          <p v-if="textoActualizacion" class="text-xs text-muted">
+            Última actualización: {{ textoActualizacion }}
+          </p>
+          <button @click="cargarTasas"
+            class="inline-flex items-center gap-1.5 text-xs font-medium text-primary dark:text-primary hover:underline underline-offset-2 transition-colors">
+            <!-- tabler:refresh -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="w-3.5 h-3.5">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+              <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+            </svg>
+            Actualizar
+          </button>
         </div>
       </div>
 
-      <!-- Nota informativa sobre compra/venta -->
-      <div class="flex gap-3 rounded-lg border border-blue-100 dark:border-blue-900/50 bg-bpa-alt dark:bg-blue-950/30 px-5 py-4">
+      <!-- ── Nota informativa ────────────────────────────────────────────── -->
+      <div class="rounded-xl border border-bpa-200 dark:border-bpa-amber-800 bg-bpa-50 dark:bg-bpa-amber-950/30 px-5 py-4 text-sm text-default dark:text-default">
         <!-- tabler:info-circle -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-          class="w-5 h-5 flex-shrink-0 text-blue-500 mt-0.5">
+          class="w-4 h-4 inline-block mr-1.5 -mt-0.5 text-primary flex-shrink-0">
           <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
           <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-          <path d="M12 9h.01" />
-          <path d="M11 12h1v4h1" />
+          <path d="M12 9h.01" /><path d="M11 12h1v4h1" />
         </svg>
-        <p class="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-          <strong>Compra:</strong> tasa a la que el banco adquiere la divisa del cliente.
-          <strong class="ml-3">Venta:</strong> tasa a la que el banco entrega la divisa al cliente.
-          Las tasas pueden variar sin previo aviso según las disposiciones del BCC.
-        </p>
+        <strong>Compra:</strong> tasa a la que el banco adquiere la divisa del cliente.
+        <strong class="ml-3">Venta:</strong> tasa a la que el banco entrega la divisa al cliente.
+        Las tasas pueden variar sin previo aviso según las disposiciones del BCC.
       </div>
 
-      <!-- Conversor rápido ────────────────────────────────────────────────── -->
-      <div class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+      <!-- ── Conversor rápido ────────────────────────────────────────────── -->
+      <div class="rounded-xl border border-bpa-200 dark:border-bpa-amber-800 overflow-hidden shadow-sm">
 
         <!-- Cabecera del conversor -->
-        <div class="bg-slate-800 dark:bg-slate-900 px-6 py-4 flex items-center gap-2 text-white">
+        <div class="bg-bpa-800 dark:bg-bpa-950 px-6 py-4 flex items-center gap-2 text-white border-b border-bpa-amber-800">
           <!-- tabler:arrows-exchange -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -360,51 +330,54 @@ onMounted(cargarTasas);
           <span class="font-semibold text-sm">Conversor Rápido</span>
         </div>
 
-        <div class="p-6 bg-white dark:bg-slate-800/50">
+        <div class="p-6 bg-white dark:bg-bpa-950/60">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
 
-            <!-- Monto a convertir -->
+            <!-- Monto -->
             <div class="sm:col-span-2">
-              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
                 Cantidad
               </label>
               <input
                 v-model="conversor.monto"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                type="number" min="0" step="0.01" placeholder="0.00"
+                class="w-full rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-default dark:text-default placeholder:text-muted px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition"
               />
             </div>
 
             <!-- Selección de moneda -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
                 Moneda
               </label>
-              <select
-                v-model="conversor.monedaSeleccionada"
-                class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              >
-                <option
-                  v-for="tasa in tasasActivas"
-                  :key="tasa.moneda"
-                  :value="tasa.moneda"
+              <div class="relative">
+                <select
+                  v-model="conversor.monedaSeleccionada"
+                  class="w-full appearance-none rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-default dark:text-default px-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition"
                 >
-                  {{ tasa.moneda }} — {{ tasa.nombre_moneda }}
-                </option>
-              </select>
+                  <option v-for="tasa in tasasActivas" :key="tasa.moneda" :value="tasa.moneda">
+                    {{ tasa.moneda }} — {{ tasa.nombre_moneda }}
+                  </option>
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                    class="w-4 h-4">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M6 9l6 6l6 -6" />
+                  </svg>
+                </span>
+              </div>
             </div>
 
             <!-- Botón intercambiar dirección -->
             <div>
-              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
                 Dirección
               </label>
               <button
                 @click="intercambiarDireccion"
-                class="w-full flex items-center justify-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 text-sm font-medium transition-colors"
+                class="w-full flex items-center justify-center gap-2 rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-bpa-50 dark:bg-bpa-amber-950/60 hover:bg-bpa-100 dark:hover:bg-bpa-amber-800/30 text-default dark:text-default px-4 py-2.5 text-sm font-medium transition-colors"
               >
                 <!-- tabler:switch-horizontal -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -418,7 +391,7 @@ onMounted(cargarTasas);
                 </svg>
                 <span>
                   {{ etiquetaTiene }}
-                  <span class="text-slate-400 dark:text-slate-500 mx-1">→</span>
+                  <span class="text-muted mx-1">→</span>
                   {{ etiquetaRecibe }}
                 </span>
               </button>
@@ -429,15 +402,15 @@ onMounted(cargarTasas);
           <div class="mt-5">
             <div
               v-if="resultadoConversor"
-              class="rounded-xl bg-blue-700 text-white px-6 py-5 text-center"
+              class="rounded-xl bg-primary text-white px-6 py-5 text-center"
             >
-              <p class="text-xs font-semibold uppercase tracking-widest text-blue-200 mb-1">
+              <p class="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">
                 Resultado aproximado
               </p>
               <p class="text-3xl font-bold tracking-tight">
                 {{ resultadoConversor }}
               </p>
-              <p class="text-xs text-blue-300 mt-2">
+              <p class="text-xs text-white/70 mt-2">
                 Calculado con la tasa de
                 {{ conversor.direccion === 'a_cup' ? 'compra' : 'venta' }}
                 del {{ tasaSeleccionada?.moneda }}
@@ -448,14 +421,14 @@ onMounted(cargarTasas);
             </div>
             <div
               v-else
-              class="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 px-6 py-5 text-center text-slate-400 dark:text-slate-500 text-sm"
+              class="rounded-xl border-2 border-dashed border-bpa-200 dark:border-bpa-amber-800 px-6 py-5 text-center text-muted text-sm"
             >
               Ingrese una cantidad y seleccione una moneda para ver el resultado
             </div>
           </div>
 
-          <!-- Aviso legal del conversor -->
-          <p class="mt-3 text-xs text-slate-400 dark:text-slate-500 text-center">
+          <!-- Nota legal -->
+          <p class="mt-3 text-xs text-muted text-center">
             Resultado orientativo. El monto final puede variar según condiciones
             de la operación en la sucursal.
           </p>
