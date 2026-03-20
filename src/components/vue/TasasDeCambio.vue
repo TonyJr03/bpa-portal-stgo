@@ -103,6 +103,15 @@ const etiquetaRecibe = computed(() => {
 });
 
 // ── Utilidades ────────────────────────────────────────────────────────────────
+function parsear(v: string | number): number {
+  const n = parseFloat(String(v));
+  return isNaN(n) || n < 0 ? 0 : n;
+}
+
+function ajustar(obj: Record<string, string | number>, key: string, delta: number, min: number) {
+  obj[key] = Math.max(min, Math.round((parsear(obj[key]) + delta) * 100) / 100);
+}
+
 function formatCup(valor: number): string {
   return valor.toLocaleString('es-CU', {
     minimumFractionDigits: 2,
@@ -338,11 +347,23 @@ onMounted(cargarTasas);
               <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
                 Cantidad
               </label>
-              <input
-                v-model="conversor.monto"
-                type="number" min="0" step="0.01" placeholder="0.00"
-                class="w-full rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-default dark:text-default placeholder:text-muted px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition"
-              />
+              <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
+                <input
+                  v-model="conversor.monto"
+                  type="number" min="0" step="0.01" placeholder="0.00"
+                  class="flex-1 min-w-0 bg-transparent px-4 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none"
+                />
+                <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
+                  <button type="button" @click="ajustar(conversor, 'monto', 0.1, 0)"
+                    class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default dark:hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg>
+                  </button>
+                  <button type="button" @click="ajustar(conversor, 'monto', -0.1, 0)"
+                    class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default dark:hover:text-default transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Selección de moneda -->
@@ -438,3 +459,15 @@ onMounted(cargarTasas);
     </div>
   </div>
 </template>
+
+<style scoped>
+.campo-numero input[type='number']::-webkit-outer-spin-button,
+.campo-numero input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.campo-numero input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+</style>

@@ -67,9 +67,11 @@ const vistaForm = reactive({
   plazoAnios: '' as string | number,
 });
 const vistaMoneda       = ref('');
-const mostrarCalendario = ref(false);
-const fechaInicio       = ref('');
-const fechaFin          = ref('');
+const mostrarCalendario  = ref(false);
+const fechaInicio        = ref('');
+const fechaFin           = ref('');
+const inputFechaInicio   = ref<HTMLInputElement | null>(null);
+const inputFechaFin      = ref<HTMLInputElement | null>(null);
 
 const plazoForm = reactive({
   monto: '' as string | number,
@@ -85,6 +87,13 @@ const creditoForm = reactive({
 const tablaCompleta = ref(false);
 
 // ── Utilidades ────────────────────────────────────────────────────────────────
+/** Convierte YYYY-MM-DD → DD/MM/YYYY para el display visual */
+function fmtFecha(iso: string): string {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 function fmt(v: number): string {
   return v.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -358,14 +367,14 @@ onMounted(cargarTasas);
                 Capital inicial ({{ vistaMoneda || '…' }})
               </label>
               <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
-                <input v-model="vistaForm.monto" type="number" min="0" step="0.01" placeholder="0.00"
+                <input v-model="vistaForm.monto" type="number" min="0" step="0.1" placeholder="0.00"
                   class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
                 <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
-                  <button type="button" @click="ajustar(vistaForm, 'monto', 0.01, 0)"
+                  <button type="button" @click="ajustar(vistaForm, 'monto', 0.1, 0)"
                     class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg>
                   </button>
-                  <button type="button" @click="ajustar(vistaForm, 'monto', -0.01, 0)"
+                  <button type="button" @click="ajustar(vistaForm, 'monto', -0.1, 0)"
                     class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
                   </button>
@@ -421,13 +430,45 @@ onMounted(cargarTasas);
                   <div class="grid grid-cols-2 gap-3">
                     <div>
                       <label class="block text-[11px] font-medium text-muted mb-1">Fecha de inicio</label>
-                      <input type="date" v-model="fechaInicio"
-                        class="w-full rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-default dark:text-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition" />
+                      <!-- div clickeable llama a showPicker() — el input está fuera del flujo visual -->
+                      <div @click="inputFechaInicio?.showPicker()"
+                        class="flex items-center justify-between rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 px-3 py-2 cursor-pointer select-none">
+                        <span class="text-sm" :class="fechaInicio ? 'text-default dark:text-default' : 'text-muted'">
+                          {{ fechaInicio ? fmtFecha(fechaInicio) : 'dd/mm/aaaa' }}
+                        </span>
+                        <!-- tabler:calendar -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="w-4 h-4 text-muted flex-shrink-0">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                          <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+                          <path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" />
+                          <path d="M11 15h1" /><path d="M12 15v3" />
+                        </svg>
+                      </div>
+                      <!-- Input fuera del flujo visual — recibe el valor pero no se ve -->
+                      <input type="date" v-model="fechaInicio" ref="inputFechaInicio"
+                        class="sr-only" />
                     </div>
                     <div>
                       <label class="block text-[11px] font-medium text-muted mb-1">Fecha de vencimiento</label>
-                      <input type="date" v-model="fechaFin" :min="fechaInicio"
-                        class="w-full rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-default dark:text-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition" />
+                      <div @click="inputFechaFin?.showPicker()"
+                        class="flex items-center justify-between rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 px-3 py-2 cursor-pointer select-none">
+                        <span class="text-sm" :class="fechaFin ? 'text-default dark:text-default' : 'text-muted'">
+                          {{ fechaFin ? fmtFecha(fechaFin) : 'dd/mm/aaaa' }}
+                        </span>
+                        <!-- tabler:calendar -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="w-4 h-4 text-muted flex-shrink-0">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                          <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+                          <path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" />
+                          <path d="M11 15h1" /><path d="M12 15v3" />
+                        </svg>
+                      </div>
+                      <input type="date" v-model="fechaFin" :min="fechaInicio" ref="inputFechaFin"
+                        class="sr-only" />
                     </div>
                   </div>
                   <div class="flex justify-center">
@@ -524,14 +565,14 @@ onMounted(cargarTasas);
               Capital a depositar ({{ plazoMoneda || '…' }})
             </label>
             <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
-              <input v-model="plazoForm.monto" type="number" min="0" step="0.01" placeholder="0.00"
+              <input v-model="plazoForm.monto" type="number" min="0" step="0.1" placeholder="0.00"
                 class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
               <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
-                <button type="button" @click="ajustar(plazoForm, 'monto', 0.01, 0)"
+                <button type="button" @click="ajustar(plazoForm, 'monto', 0.1, 0)"
                   class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg>
                 </button>
-                <button type="button" @click="ajustar(plazoForm, 'monto', -0.01, 0)"
+                <button type="button" @click="ajustar(plazoForm, 'monto', -0.1, 0)"
                   class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
                 </button>
@@ -593,10 +634,10 @@ onMounted(cargarTasas);
             <div>
               <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">Monto del crédito (CUP)</label>
               <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
-                <input v-model="creditoForm.monto" type="number" min="0" step="0.01" placeholder="0.00" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
+                <input v-model="creditoForm.monto" type="number" min="0" step="0.1" placeholder="0.00" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
                 <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
-                  <button type="button" @click="ajustar(creditoForm, 'monto', 0.01, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg></button>
-                  <button type="button" @click="ajustar(creditoForm, 'monto', -0.01, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg></button>
+                  <button type="button" @click="ajustar(creditoForm, 'monto', 0.1, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default border-b border-bpa-200 dark:border-bpa-amber-800 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 15l6 -6l6 6" /></svg></button>
+                  <button type="button" @click="ajustar(creditoForm, 'monto', -0.1, 0)" class="flex-1 flex items-center justify-center px-2.5 hover:bg-bpa-50 dark:hover:bg-bpa-800/40 text-muted hover:text-default transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg></button>
                 </div>
               </div>
             </div>
@@ -716,6 +757,9 @@ onMounted(cargarTasas);
 </template>
 
 <style scoped>
+/* El date picker nativo es completamente invisible (opacity-0 absolute).
+   El display visual es un div propio — no se necesita CSS adicional. */
+
 /* Oculta los spinners nativos en inputs type=number */
 .campo-numero input[type='number']::-webkit-outer-spin-button,
 .campo-numero input[type='number']::-webkit-inner-spin-button {
