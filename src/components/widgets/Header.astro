@@ -96,7 +96,7 @@ const contactHref = getPermalink('/contacto');
                       <a
                         href={href}
                         class:list={[
-                          'hover:text-link dark:hover:text-white pl-4 pr-1 py-3 flex items-center whitespace-nowrap',
+                          'hover:text-primary dark:hover:text-primary pl-4 pr-1 py-3 flex items-center whitespace-nowrap',
                           { 'aw-link-active': href === currentPath },
                         ]}
                       >
@@ -105,7 +105,7 @@ const contactHref = getPermalink('/contacto');
                       <button
                         type="button"
                         aria-label={`Desplegar submenú de ${text}`}
-                        class="hover:text-link dark:hover:text-white pl-0 pr-3 py-3 flex items-center cursor-pointer"
+                        class="hover:text-primary dark:hover:text-primary pl-0 pr-3 py-3 flex items-center cursor-pointer"
                       >
                         <Icon name="tabler:chevron-down" class="w-3.5 h-3.5" />
                       </button>
@@ -114,7 +114,7 @@ const contactHref = getPermalink('/contacto');
                     //Ítem solo con submenú (sin página propia):
                     <button
                       type="button"
-                      class="hover:text-link dark:hover:text-white px-4 py-3 flex items-center whitespace-nowrap"
+                      class="hover:text-primary dark:hover:text-primary px-4 py-3 flex items-center whitespace-nowrap"
                     >
                       {text}{' '}
                       <Icon name="tabler:chevron-down" class="w-3.5 h-3.5 ml-0.5 rtl:ml-0 rtl:mr-0.5 hidden lg:inline" />
@@ -125,7 +125,7 @@ const contactHref = getPermalink('/contacto');
                       <li>
                         <a
                           class:list={[
-                            'first:rounded-t last:rounded-b lg:hover:bg-gray-100 hover:text-link dark:hover:text-white dark:hover:bg-gray-700 py-2 px-5 block whitespace-no-wrap',
+                            'first:rounded-t last:rounded-b lg:hover:bg-bpa-100 hover:text-default dark:hover:text-default dark:hover:bg-bpa-amber-800/40 py-2 px-5 block whitespace-no-wrap',
                             { 'aw-link-active': href2 === currentPath },
                           ]}
                           href={href2}
@@ -140,7 +140,7 @@ const contactHref = getPermalink('/contacto');
                 //Ítem simple sin submenú: enlace directo 
                 <a
                   class:list={[
-                    'hover:text-link dark:hover:text-white px-4 py-3 flex items-center whitespace-nowrap',
+                    'hover:text-primary dark:hover:text-primary px-4 py-3 flex items-center whitespace-nowrap',
                     { 'aw-link-active': href === currentPath },
                   ]}
                   href={href}
@@ -170,7 +170,7 @@ const contactHref = getPermalink('/contacto');
             aria-label="Contáctenos"
             title="Contáctenos"
             class:list={[
-              'text-muted dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 inline-flex items-center transition-colors duration-150',
+              'text-default dark:text-default hover:bg-bpa-100 dark:hover:bg-bpa-amber-800/40 focus:outline-none focus:ring-4 focus:ring-bpa-200 dark:focus:ring-bpa-amber-800 rounded-lg text-sm p-2.5 inline-flex items-center transition-colors duration-150',
               { 'text-link dark:text-white': contactHref === currentPath },
             ]}
           >
