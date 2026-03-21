@@ -28,5 +28,7 @@ bpa-backend/pocketbase.exe
 bpa-backend/pb_data/
 
 public/descargas/
+public/tiles/
+public/leaflet-images/
 
 iniciar-dev.bat
