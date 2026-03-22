@@ -81,41 +81,59 @@ const CONFIG_TIPO: Record<TipoPunto, {
   badgeText:   string;
   color:       string;   // color del marcador en el mapa
   borderColor: string;
+  cardBg:      string;   // fondo suave de la tarjeta (abierta y cerrada)
+  cardHover:   string;   // fondo hover del botón cabecera
+  cardActive:  string;   // fondo fijo cuando la tarjeta está abierta
 }> = {
   S: {
     label:       'Sucursal',
     badgeBg:     'bg-emerald-100 dark:bg-emerald-900/40',
     badgeText:   'text-emerald-700 dark:text-emerald-300',
     color:       '#065f46',
-    borderColor: 'border-emerald-200 dark:border-emerald-800',
+    borderColor: 'border-emerald-300 dark:border-emerald-700',
+    cardBg:      'bg-emerald-50/70 dark:bg-emerald-900/10',
+    cardHover:   'hover:bg-emerald-100/80 dark:hover:bg-emerald-900/25',
+    cardActive:  'bg-emerald-100/80 dark:bg-emerald-900/25',
   },
   AN: {
     label:       'Área de Negocio',
     badgeBg:     'bg-violet-100 dark:bg-violet-900/40',
     badgeText:   'text-violet-700 dark:text-violet-300',
     color:       '#5b21b6',
-    borderColor: 'border-violet-200 dark:border-violet-800',
+    borderColor: 'border-violet-300 dark:border-violet-700',
+    cardBg:      'bg-violet-50/70 dark:bg-violet-900/10',
+    cardHover:   'hover:bg-violet-100/80 dark:hover:bg-violet-900/25',
+    cardActive:  'bg-violet-100/80 dark:bg-violet-900/25',
   },
   CA: {
     label:       'Caja de Ahorro',
     badgeBg:     'bg-blue-100 dark:bg-blue-900/40',
     badgeText:   'text-blue-700 dark:text-blue-300',
     color:       '#1d4ed8',
-    borderColor: 'border-blue-200 dark:border-blue-800',
+    borderColor: 'border-blue-300 dark:border-blue-700',
+    cardBg:      'bg-blue-50/70 dark:bg-blue-900/10',
+    cardHover:   'hover:bg-blue-100/80 dark:hover:bg-blue-900/25',
+    cardActive:  'bg-blue-100/80 dark:bg-blue-900/25',
   },
   CAE: {
     label:       'Caja Ahorro Extendida',
     badgeBg:     'bg-sky-100 dark:bg-sky-900/40',
     badgeText:   'text-sky-700 dark:text-sky-300',
     color:       '#0284c7',
-    borderColor: 'border-sky-200 dark:border-sky-800',
+    borderColor: 'border-sky-300 dark:border-sky-700',
+    cardBg:      'bg-sky-50/70 dark:bg-sky-900/10',
+    cardHover:   'hover:bg-sky-100/80 dark:hover:bg-sky-900/25',
+    cardActive:  'bg-sky-100/80 dark:bg-sky-900/25',
   },
   AT: {
     label:       'Cajero Automático',
     badgeBg:     'bg-amber-100 dark:bg-amber-900/40',
     badgeText:   'text-amber-700 dark:text-amber-300',
     color:       '#b45309',
-    borderColor: 'border-amber-200 dark:border-amber-800',
+    borderColor: 'border-amber-300 dark:border-amber-700',
+    cardBg:      'bg-amber-50/70 dark:bg-amber-900/10',
+    cardHover:   'hover:bg-amber-100/80 dark:hover:bg-amber-900/25',
+    cardActive:  'bg-amber-100/80 dark:bg-amber-900/25',
   },
 };
 
@@ -379,9 +397,11 @@ async function actualizarMarcadores() {
 }
 
 // ── Panel → Mapa: volar al punto al hacer clic en la cabecera de la tarjeta ───
+// Solo vuela cuando se ABRE la tarjeta; al cerrarla no mueve el mapa.
 function volarAPunto(punto: PuntoAtencion) {
+  const seEstaAbriendo = expandidoId.value !== punto.id;
   toggleExpansion(punto.id);
-  if (!mapa || !punto.latitud || !punto.longitud) return;
+  if (!seEstaAbriendo || !mapa || !punto.latitud || !punto.longitud) return;
   mapa.flyTo([punto.latitud, punto.longitud], ZOOM_PUNTO, { duration: 0.8 });
   // Destacar brevemente el marcador seleccionado
   const marcador = marcadoresRef.get(punto.id);
@@ -531,62 +551,68 @@ onUnmounted(() => {
         <!-- overflow-hidden eliminado: recortaba el focus:ring (box-shadow) de los inputs -->
         <div class="flex flex-col gap-4 lg:h-full min-h-[400px]">
 
-          <!-- Selector de municipio (reemplaza el clic en el SVG del v1) -->
-          <div class="relative">
-            <select
-              v-model="municipioActivo"
-              @change="alCambiarMunicipio"
-              class="w-full appearance-none rounded-lg border border-bpa-200
-                     dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80
-                     text-default dark:text-default px-4 pr-10 py-2.5 text-sm
-                     focus:outline-none focus:ring-2 focus:ring-primary transition">
-              <option value="">Todos los municipios</option>
-              <option v-for="slug in municipiosDisponibles" :key="slug" :value="slug">
-                {{ NOMBRE_MUNICIPIO[slug] ?? slug }}
-              </option>
-            </select>
-            <!-- Flecha decorativa -->
-            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                class="w-4 h-4">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                <path d="M6 9l6 6l6 -6" />
-              </svg>
-            </span>
-          </div>
+          <!-- Selector de municipio + Búsqueda
+               En escritorio: misma fila mitad/mitad. En móvil: apilados. -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
 
-          <!-- Búsqueda -->
-          <div class="relative">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-              <path d="M21 21l-6 -6" />
-            </svg>
-            <!-- :value + @input en lugar de v-model para que el teclado virtual
-                 de Android actualice en cada tecla y no espere al fin de composición -->
-            <input
-              :value="busqueda"
-              @input="busqueda = ($event.target as HTMLInputElement).value"
-              type="text"
-              placeholder="Buscar por nombre o dirección…"
-              class="w-full pl-9 pr-9 py-2 text-sm rounded-lg border border-bpa-200
-                    dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80
-                    text-default dark:text-default placeholder:text-muted
-                    focus:outline-none focus:ring-2 focus:ring-primary transition" />
-            <button v-if="busqueda" @click="busqueda = ''"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted
-                    hover:text-default dark:hover:text-default transition-colors">
+            <!-- Selector de municipio -->
+            <div class="relative">
+              <select
+                v-model="municipioActivo"
+                @change="alCambiarMunicipio"
+                class="w-full appearance-none rounded-lg border border-bpa-200
+                       dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80
+                       text-default dark:text-default px-4 pr-9 py-2.5 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-primary transition">
+                <option value="">Todos los municipios</option>
+                <option v-for="slug in municipiosDisponibles" :key="slug" :value="slug">
+                  {{ NOMBRE_MUNICIPIO[slug] ?? slug }}
+                </option>
+              </select>
+              <!-- Flecha decorativa -->
+              <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="w-4 h-4">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M6 9l6 6l6 -6" />
+                </svg>
+              </span>
+            </div>
+
+            <!-- Búsqueda -->
+            <div class="relative">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                class="w-3.5 h-3.5">
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                <path d="M18 6l-12 12" /><path d="M6 6l12 12" />
+                <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                <path d="M21 21l-6 -6" />
               </svg>
-            </button>
-          </div>
+              <!-- :value + @input en lugar de v-model para que el teclado virtual
+                   de Android actualice en cada tecla y no espere al fin de composición -->
+              <input
+                :value="busqueda"
+                @input="busqueda = ($event.target as HTMLInputElement).value"
+                type="text"
+                placeholder="Buscar…"
+                class="w-full pl-9 pr-9 py-2.5 text-sm rounded-lg border border-bpa-200
+                      dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80
+                      text-default dark:text-default placeholder:text-muted
+                      focus:outline-none focus:ring-2 focus:ring-primary transition" />
+              <button v-if="busqueda" @click="busqueda = ''"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted
+                      hover:text-default dark:hover:text-default transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="w-3.5 h-3.5">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M18 6l-12 12" /><path d="M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+          </div><!-- fin grid inputs -->
 
           <!-- Filtros por tipo -->
           <div class="flex flex-wrap gap-1.5">
@@ -665,13 +691,17 @@ onUnmounted(() => {
                   class="rounded-xl border overflow-hidden transition-all"
                   :class="[
                     CONFIG_TIPO[punto.tipo].borderColor,
+                    CONFIG_TIPO[punto.tipo].cardBg,
                     expandidoId === punto.id ? 'shadow-md' : 'hover:shadow-sm',
                   ]">
 
                   <!-- Cabecera tarjeta — clic vuela al punto en el mapa -->
                   <button @click="volarAPunto(punto)"
                     class="w-full flex items-center justify-between gap-2 px-3.5 py-3
-                          text-left hover:bg-bpa-50 dark:hover:bg-bpa-800/20 transition-colors">
+                          text-left transition-colors"
+                    :class="expandidoId === punto.id
+                      ? CONFIG_TIPO[punto.tipo].cardActive
+                      : CONFIG_TIPO[punto.tipo].cardHover">
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 min-w-0">
                         <p class="text-sm font-semibold text-default dark:text-default leading-snug truncate">
@@ -721,7 +751,8 @@ onUnmounted(() => {
                     leave-from-class="opacity-100 max-h-96"
                     leave-to-class="opacity-0 max-h-0">
                     <div v-if="expandidoId === punto.id"
-                      class="px-3.5 pb-3.5 pt-0 border-t border-bpa-100 dark:border-bpa-800 space-y-2.5 overflow-hidden">
+                      class="px-3.5 pb-3.5 pt-0 space-y-2.5 overflow-hidden border-t"
+                      :class="CONFIG_TIPO[punto.tipo].borderColor">
 
                       <!-- Dirección -->
                       <div class="flex items-start gap-2 pt-2.5">
