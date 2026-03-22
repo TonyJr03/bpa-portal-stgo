@@ -9,10 +9,10 @@ import https from 'node:https';
 // ── Configuración ─────────────────────────────────────────────────────────────
 const CONFIG = {
   minZoom:   10,
-  maxZoom:   15,
+  maxZoom:   16,
   // Bounding box de la provincia de Santiago de Cuba
   // [oeste, sur, este, norte]
-  bbox: { west: -76.90, south: 19.85, east: -75.50, north: 20.45 },
+  bbox: { west: -77.25, south: 19.70, east: -75.20, north: 20.65 },
   outputDir: './public/tiles',
   delayMs:   600,  // ms entre peticiones (respetar límite de OSM)
   source:    'https://tile.openstreetmap.org',

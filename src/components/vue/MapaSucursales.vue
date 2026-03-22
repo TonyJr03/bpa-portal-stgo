@@ -154,7 +154,7 @@ const CENTRO_MUNICIPIO: Record<string, [number, number]> = {
 const CENTRO_PROVINCIA: [number, number] = [20.10, -76.00];
 const ZOOM_INICIAL    = 10;
 const ZOOM_MUNICIPIO  = 13;
-const ZOOM_PUNTO      = 17;
+const ZOOM_PUNTO      = 16;  // máximo zoom disponible en los tiles descargados
 
 const ORDEN_TIPOS: TipoPunto[] = ['S', 'AN', 'CA', 'CAE', 'AT'];
 
@@ -323,16 +323,27 @@ async function inicializarMapa() {
   // Se asigna a la variable de módulo L para que crearIcono() pueda usarla de forma síncrona.
   L = (await import('leaflet')).default;
 
+  // Límites geográficos de los tiles descargados (bbox de la provincia)
+  // maxBoundsViscosity:1 impide completamente desplazarse fuera de esta área
+  const limiteProvincia = L.latLngBounds(
+    L.latLng(19.70, -77.25),  // SW
+    L.latLng(20.65, -75.20),  // NE
+  );
+
   mapa = L.map(mapContainer.value, {
-    center:      CENTRO_PROVINCIA,
-    zoom:        ZOOM_INICIAL,
-    zoomControl: true,
+    center:             CENTRO_PROVINCIA,
+    zoom:               ZOOM_INICIAL,
+    zoomControl:        true,
+    minZoom:            10,
+    maxZoom:            16,
+    maxBounds:          limiteProvincia,
+    maxBoundsViscosity: 1.0,  // 1.0 = límite completamente rígido (no permite arrastrar fuera)
   });
 
   // Capa de tiles offline — servidos desde public/tiles/ → /tiles/{z}/{x}/{y}.png
   L.tileLayer('/tiles/{z}/{x}/{y}.png', {
     minZoom:     10,
-    maxZoom:     15,
+    maxZoom:     16,  // actualizar a 16 tras descargar ese nivel con descargar-tiles.mjs
     attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
     // Tile vacío transparente si el archivo no existe (evita errores 404 en consola)
     errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
@@ -500,18 +511,25 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Layout bicolumna: Mapa Leaflet | Panel -->
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+      <!-- Layout bicolumna: Mapa Leaflet | Panel
+           En desktop la altura total es la ventana menos header (4.5rem) +
+           padding WidgetWrapper (5rem) + leyenda (~2rem) + breathing room = 13rem. -->
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 lg:h-[calc(100vh-13rem)]">
 
         <!-- ── Columna izquierda: Mapa Leaflet ───────────────────────────── -->
+        <!-- La clase mapa-wrapper aplica isolation:isolate, que confina los
+             z-index internos de Leaflet (400+) dentro de este contenedor.
+             Esto impide que el mapa tape el menú hamburguesa en móvil y que
+             los panes de Leaflet bloqueen el foco/hover de los inputs del panel. -->
         <div class="rounded-2xl border border-bpa-200 dark:border-bpa-amber-800
-                    overflow-hidden min-h-[420px] lg:min-h-[600px]">
-          <!-- El div que Leaflet monta — debe tener altura explícita -->
-          <div ref="mapContainer" class="w-full h-[420px] lg:h-[600px]"></div>
+                    overflow-hidden min-h-[420px] lg:h-full mapa-wrapper">
+          <!-- h-full funciona porque el padre del grid tiene altura definida en lg -->
+          <div ref="mapContainer" class="w-full h-[420px] lg:h-full"></div>
         </div>
 
         <!-- ── Columna derecha: Panel de oficinas ────────────────────────── -->
-        <div class="flex flex-col gap-4 lg:max-h-[600px] lg:overflow-hidden min-h-[400px]">
+        <!-- overflow-hidden eliminado: recortaba el focus:ring (box-shadow) de los inputs -->
+        <div class="flex flex-col gap-4 lg:h-full min-h-[400px]">
 
           <!-- Selector de municipio (reemplaza el clic en el SVG del v1) -->
           <div class="relative">
@@ -547,7 +565,12 @@ onUnmounted(() => {
               <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
               <path d="M21 21l-6 -6" />
             </svg>
-            <input v-model="busqueda" type="text"
+            <!-- :value + @input en lugar de v-model para que el teclado virtual
+                 de Android actualice en cada tecla y no espere al fin de composición -->
+            <input
+              :value="busqueda"
+              @input="busqueda = ($event.target as HTMLInputElement).value"
+              type="text"
               placeholder="Buscar por nombre o dirección…"
               class="w-full pl-9 pr-9 py-2 text-sm rounded-lg border border-bpa-200
                     dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80
@@ -830,6 +853,18 @@ onUnmounted(() => {
  */
 .leaflet-default-icon-path {
   background-image: url(/leaflet-images/marker-icon.png);
+}
+
+/*
+ * isolation:isolate en el contenedor del mapa crea un contexto de apilamiento
+ * propio. Los z-index internos de Leaflet (panes: 400, controles: 1000+) quedan
+ * confinados aquí y no compiten con el z-index del header (z-40) ni tapan los
+ * inputs del panel lateral. Necesario también para que el menú hamburguesa
+ * en móvil aparezca siempre por encima del mapa.
+ */
+.mapa-wrapper {
+  isolation: isolate;
+  position: relative;
 }
 
 /* Fondo del mapa cuando no hay tiles (ej: zoom fuera del rango descargado) */
