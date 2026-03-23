@@ -4,8 +4,11 @@
  * @ruta       /tramites/[tramite]   (ej: /tramites/tarjeta-debito)
  * @descripcion Página de detalle de un trámite individual. Muestra el contenido
  *              completo del proceso (pasos, requisitos, beneficios) renderizado
- *              desde HTML almacenado en PocketBase, más un bloque de descarga de
- *              documentos asociados al trámite (planillas, guías, formularios).
+ *              desde Markdown almacenado en PocketBase, más un bloque de descarga
+ *              de documentos asociados al trámite (planillas, guías, formularios).
+ *
+ * El campo `contenido` almacena texto en formato Markdown (Plain Text en PocketBase).
+ * Se convierte a HTML con `marked.parse()` en build time — sin JS en el cliente.
  *
  * @colecciones
  *   - tramites    →  getFullList, filtro: publicado = true  (genera las rutas)
@@ -17,15 +20,16 @@
 
 // ── Imports ────────────────────────────────────────────────────────────────────
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
-import Layout                  from '~/layouts/PageLayout.astro';
-import HeroText                from '~/components/widgets/HeroText.astro';
-import CallToAction            from '~/components/widgets/CallToAction.astro';
-import PageNav                 from '~/components/widgets/PageNav.astro';
-import ProseContent           from '~/components/sections/ProseContent.astro';
-import DocumentosDescargables  from '~/components/widgets/DocumentosDescargables.astro';
-import EmptyCollection         from '~/components/ui/EmptyCollection.astro';
+import { marked }               from 'marked';
+import Layout                   from '~/layouts/PageLayout.astro';
+import HeroText                 from '~/components/widgets/HeroText.astro';
+import CallToAction             from '~/components/widgets/CallToAction.astro';
+import PageNav                  from '~/components/widgets/PageNav.astro';
+import ProseContent             from '~/components/sections/ProseContent.astro';
+import DocumentosDescargables   from '~/components/widgets/DocumentosDescargables.astro';
+import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
-import { pb, fetchParaBuild } from '~/lib/pocketbase';
+import { pb, fetchParaBuild }   from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 interface Tramite {
@@ -92,6 +96,12 @@ export const getStaticPaths = (async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { tramite, documentos, dbErrorDocs } = Astro.props;
 
+// ── Conversión Markdown → HTML ────────────────────────────────────────────────
+// marked.parse() es síncrono y se ejecuta en build time — cero coste en runtime.
+const contenidoHtml = tramite.contenido?.trim()
+  ? marked.parse(tramite.contenido) as string
+  : '';
+
 // ── Construcción de URLs de descarga ──────────────────────────────────────────
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   id:      doc.id,
@@ -120,11 +130,11 @@ const metadata = {
   />
 
   <!-- BLOQUE 2 · ProseContent / EmptyCollection ───────────────────────────────
-      Si el campo `contenido` tiene datos → renderiza el HTML con Typography.
-      Si está vacío → EmptyCollection avisa que falta información detallada.
+      Si el campo `contenido` tiene datos → convierte Markdown a HTML y renderiza
+      con Tailwind Typography. Si está vacío → EmptyCollection avisa al usuario.
   ─────────────────────────────────────────────────────────────────────────── -->
-  {tramite.contenido?.trim()
-    ? <ProseContent contenido={tramite.contenido} />
+  {contenidoHtml
+    ? <ProseContent contenido={contenidoHtml} />
     : <EmptyCollection
         coleccion="tramites"
         mensaje="Aún no hay información detallada acerca de este trámite."

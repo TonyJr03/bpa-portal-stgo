@@ -6,8 +6,12 @@
  *
  * @descripcion
  * Página de detalle de un producto o servicio individual. Muestra el contenido
- * completo renderizado desde HTML almacenado en PocketBase, más un bloque de
- * descarga de documentos asociados.
+ * completo renderizado desde Markdown almacenado en PocketBase, más un bloque
+ * de descarga de documentos asociados.
+ *
+ * El campo `contenido` de la colección `productos` almacena texto en formato
+ * Markdown (Plain Text en PocketBase). Se convierte a HTML con `marked.parse()`
+ * en build time antes de pasarlo a ProseContent — sin JS en el cliente.
  *
  * getStaticPaths itera sobre las 5 categorías estáticas (src/data/categorias.ts),
  * carga los productos de cada una filtrando por el slug de la categoría, y por
@@ -15,7 +19,7 @@
  *
  * @colecciones
  *   productos  → nombre, slug, categoria (Select = slug), descripcion,
- *                contenido (Plain Text / HTML), icono, orden, publicado
+ *                contenido (Plain Text / Markdown), icono, orden, publicado
  *   documentos → nombre, archivo, referencia, tipo, orden,
  *                collectionId, collectionName
  *                Filtro: referencia = "{producto.slug}" && tipo = "producto"
@@ -25,17 +29,18 @@
 
 // ── Imports ────────────────────────────────────────────────────────────────────
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
-import Layout                  from '~/layouts/PageLayout.astro';
-import HeroText                from '~/components/widgets/HeroText.astro';
-import ProseContent           from '~/components/sections/ProseContent.astro';
-import DocumentosDescargables  from '~/components/widgets/DocumentosDescargables.astro';
-import CallToAction            from '~/components/widgets/CallToAction.astro';
-import PageNav                 from '~/components/widgets/PageNav.astro';
-import EmptyCollection         from '~/components/ui/EmptyCollection.astro';
+import { marked }               from 'marked';
+import Layout                   from '~/layouts/PageLayout.astro';
+import HeroText                 from '~/components/widgets/HeroText.astro';
+import ProseContent             from '~/components/sections/ProseContent.astro';
+import DocumentosDescargables   from '~/components/widgets/DocumentosDescargables.astro';
+import CallToAction             from '~/components/widgets/CallToAction.astro';
+import PageNav                  from '~/components/widgets/PageNav.astro';
+import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
-import { CATEGORIAS }          from '~/data/categorias';
-import type { Categoria }      from '~/data/categorias';
-import { pb, fetchParaBuild }  from '~/lib/pocketbase';
+import { CATEGORIAS }           from '~/data/categorias';
+import type { Categoria }       from '~/data/categorias';
+import { pb, fetchParaBuild }   from '~/lib/pocketbase';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 interface Producto {
@@ -110,6 +115,12 @@ export const getStaticPaths = (async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { producto, categoria, documentos, dbErrorDocs } = Astro.props;
 
+// ── Conversión Markdown → HTML ────────────────────────────────────────────────
+// marked.parse() es síncrono y se ejecuta en build time — cero coste en runtime.
+const contenidoHtml = producto.contenido?.trim()
+  ? marked.parse(producto.contenido) as string
+  : '';
+
 // ── Construcción de URLs de descarga ──────────────────────────────────────────
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   id:      doc.id,
@@ -138,11 +149,11 @@ const metadata = {
   />
 
   <!-- BLOQUE 2 · ProseContent / EmptyCollection ───────────────────────────────
-      Si el campo `contenido` tiene datos → renderiza el HTML con Typography.
-      Si está vacío → EmptyCollection avisa que falta información detallada.
+      Si el campo `contenido` tiene datos → convierte Markdown a HTML y renderiza
+      con Tailwind Typography. Si está vacío → EmptyCollection avisa al usuario.
   ─────────────────────────────────────────────────────────────────────────── -->
-  {producto.contenido?.trim()
-    ? <ProseContent contenido={producto.contenido} />
+  {contenidoHtml
+    ? <ProseContent contenido={contenidoHtml} />
     : <EmptyCollection
         coleccion="productos"
         mensaje="Aún no hay información detallada acerca de este servicio."
