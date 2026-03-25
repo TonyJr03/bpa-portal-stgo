@@ -1,18 +1,6 @@
 ---
 /**
  * @componente  src/components/widgets/Footer.astro
- *
- * @descripcion
- *   Footer institucional del portal BPA Santiago de Cuba.
- *
- *   Fondo: bg-primary — Verde BPA (#006A3A) en modo claro,
- *          Ámbar BPA (#B8860B) en modo oscuro.
- *   Todo el texto interno usa variantes blancas/semitransparentes
- *   para garantizar contraste sobre ambos fondos de color.
- *
- *   En modo claro el footer verde contrasta claramente con el
- *   fondo menta (#F4FBF7) de la página, cumpliendo el requisito
- *   de no tener el footer del mismo color que el fondo.
  */
 
 import { Icon } from 'astro-icon/components';
@@ -51,7 +39,7 @@ const { socialLinks = [], secondaryLinks = [], links = [], footNote = '', theme 
   <div
     class="relative max-w-7xl mx-auto px-4 sm:px-6
           intersect-once intersect-quarter intercept-no-queue
-          motion-safe:md:opacity-0 motion-safe:md:intersect:animate-fade"
+          motion-safe:opacity-0 motion-safe:intersect:animate-fade"
   >
 
     <!-- Grid principal: marca + columnas de enlaces -->
