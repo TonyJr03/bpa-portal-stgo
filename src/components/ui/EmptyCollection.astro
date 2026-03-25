@@ -1,4 +1,19 @@
 ---
+/**
+ * @componente  src/components/ui/EmptyCollection.astro
+ *
+ * @descripcion
+ * Estado visual cuando PocketBase responde OK pero la colección está vacía.
+ * El texto visible está orientado al cliente — sin referencias a PocketBase
+ * ni a nombres de colecciones.
+ * La nota técnica para el administrador queda en un bloque oculto.
+ *
+ * @props
+ *   coleccion  string  — nombre de la colección (solo para el bloque oculto)
+ *   mensaje?   string  — mensaje visible al cliente. Default: texto genérico
+ *   icono?     string  — icono Tabler. Default: tabler:info-circle
+ */
+
 import { Icon } from 'astro-icon/components';
 
 export interface Props {
@@ -9,8 +24,8 @@ export interface Props {
 
 const {
   coleccion,
-  mensaje = 'No hay registros disponibles en este momento.',
-  icono = 'tabler:database-off',
+  mensaje = 'Esta sección no tiene contenido disponible todavía.',
+  icono = 'tabler:info-circle',
 } = Astro.props;
 ---
 
@@ -19,7 +34,7 @@ const {
             motion-safe:opacity-0 motion-safe:intersect:animate-fade">
   <Icon
     name={icono}
-    class="w-14 h-14 mx-auto mb-5 text-primary opacity-70"
+    class="w-14 h-14 mx-auto mb-5 text-primary opacity-60"
     aria-hidden="true"
   />
 
@@ -27,11 +42,10 @@ const {
     {mensaje}
   </p>
 
-  <p class="text-sm text-muted mt-3">
-    La colección
-    <code class="font-mono text-xs bg-bpa-50 dark:bg-bpa-amber-950/50 px-1.5 py-0.5 rounded">
-      {coleccion}
-    </code>
-    está vacía. Añada registros desde el panel de administración de PocketBase.
-  </p>
+  <!-- Bloque oculto: referencia técnica solo para el administrador -->
+  <div hidden aria-hidden="true" data-debug-coleccion={coleccion}>
+    <!-- Colección vacía: "{coleccion}". Añada registros desde el panel
+        de administración de PocketBase con el campo publicado = true. -->
+  </div>
+
 </div>

@@ -502,7 +502,7 @@ onUnmounted(() => {
         <path d="M12 8v4" /><path d="M12 16h.01" />
       </svg>
       <p class="font-semibold text-sm">No se pudo cargar la información de oficinas.</p>
-      <p class="text-xs text-red-500">Verifique la conexión con el servidor.</p>
+      <p class="text-xs text-red-500">Se perdió la conexión con el servidor.</p>
       <button @click="cargarDatos"
         class="inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700
               text-white text-sm font-medium px-4 py-2 transition-colors">

@@ -261,7 +261,7 @@ onMounted(cargarTasas);
         <path d="M12 8v4" /><path d="M12 16h.01" />
       </svg>
       <p class="font-semibold text-sm">No se pudieron cargar las tasas de interés.</p>
-      <p class="text-xs text-red-500">Verifique la conexión con el servidor.</p>
+      <p class="text-xs text-red-500">Se perdió la conexión con el servidor.</p>
       <button @click="cargarTasas"
         class="inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 transition-colors">
         <!-- tabler:refresh -->

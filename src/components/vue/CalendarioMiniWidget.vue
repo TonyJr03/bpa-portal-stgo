@@ -201,7 +201,7 @@ onMounted(cargarEventos);
 
   <!-- ── Error ──────────────────────────────────────────────────────────── -->
   <div v-else-if="errorDB" class="text-center py-2">
-    <p class="text-xs text-red-500 dark:text-red-400 mb-1">Sin conexión</p>
+    <p class="text-xs text-red-500 dark:text-red-400 mb-1">No disponible. Sin conexión con el servidor.</p>
     <button
       @click="cargarEventos"
       class="text-xs text-primary dark:text-primary hover:underline"

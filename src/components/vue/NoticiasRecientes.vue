@@ -151,7 +151,7 @@ onMounted(cargarNoticias);
     </div>
   </div>
 
-  <!-- ── ESTADO: Error de conexión ─────────────────────────────────────────── -->
+  <!-- ── ESTADO: Error de conexión ──────────────────── -->
   <div
     v-else-if="errorDB"
     class="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-10 text-center"
@@ -167,13 +167,10 @@ onMounted(cargarNoticias);
       <path d="M3 3l18 18" />
     </svg>
     <p class="font-semibold text-red-700 dark:text-red-400 mb-1">
-      No se pudo conectar con el servidor
+      Los avisos no están disponibles en este momento
     </p>
     <p class="text-sm text-red-600 dark:text-red-500 mb-4">
-      Verifique que PocketBase esté activo en
-      <code class="font-mono text-xs bg-red-100 dark:bg-red-900/50 px-1 rounded">
-        http://127.0.0.1:8090
-      </code>
+      No se pudo obtener la información. Inténtelo de nuevo en unos momentos.
     </p>
     <button
       @click="cargarNoticias"
@@ -203,12 +200,7 @@ onMounted(cargarNoticias);
       <path d="M16 6h3a1 1 0 0 1 1 1v9m-.606 3.435A2 2 0 0 1 16 18v-2m0-4V5a1 1 0 0 0-1-1H8m-3.735.321A1 1 0 0 0 4 5v12a3 3 0 0 0 3 3h11M8 12h4m-4 4h4M3 3l18 18"/>
     </svg>
     <p class="font-semibold text-default dark:text-default mb-1">
-      No hay avisos publicados
-    </p>
-    <p class="text-sm text-muted">
-      Agregue noticias en PocketBase con
-      <code class="font-mono text-xs bg-bpa-100 dark:bg-bpa-amber-800/40 px-1 rounded">publicado = true</code>
-      para que aparezcan aquí.
+      No hay avisos publicados por el momento
     </p>
   </div>
 

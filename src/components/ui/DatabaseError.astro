@@ -1,4 +1,17 @@
 ---
+/**
+ * @componente  src/components/ui/DatabaseError.astro
+ *
+ * @descripcion
+ * Aviso cuando PocketBase no responde durante el build o en runtime.
+ * El texto visible está orientado al cliente del banco — sin tecnicismos.
+ * Los detalles técnicos quedan en un bloque oculto para el administrador.
+ *
+ * @props
+ *   coleccion  string  — nombre de la colección (solo para el bloque oculto)
+ *   mensaje?   string  — subtítulo visible. Default: texto institucional genérico
+ */
+
 import { Icon } from 'astro-icon/components';
 
 export interface Props {
@@ -8,7 +21,7 @@ export interface Props {
 
 const {
   coleccion,
-  mensaje = 'No se pudo conectar con la base de datos.',
+  mensaje = 'La información de esta sección no está disponible temporalmente. Por favor, inténtelo más tarde.',
 } = Astro.props;
 ---
 
@@ -16,24 +29,32 @@ const {
             intersect-once intersect-quarter intercept-no-queue
             motion-safe:opacity-0 motion-safe:intersect:animate-fade">
   <Icon
-    name="tabler:wifi-off"
-    class="w-14 h-14 mx-auto mb-5 text-red-400 opacity-60"
+    name="tabler:info-circle"
+    class="w-14 h-14 mx-auto mb-5 text-primary opacity-60"
     aria-hidden="true"
   />
 
   <p class="text-xl font-semibold text-default dark:text-white">
+    Sección temporalmente no disponible
+  </p>
+  <p class="text-base text-muted mt-3 max-w-md mx-auto leading-relaxed">
     {mensaje}
   </p>
 
-  <p class="text-sm text-muted mt-3 max-w-md mx-auto">
-    No se pudo leer la colección
-    <code class="font-mono text-xs bg-bpa-50 dark:bg-bpa-amber-950/50 px-1.5 py-0.5 rounded">
-      {coleccion}
-    </code>
-    de PocketBase. Verifique que el servidor esté corriendo en
-    <code class="font-mono text-xs bg-bpa-50 dark:bg-bpa-amber-950/50 px-1.5 py-0.5 rounded">
-      http://127.0.0.1:8090
-    </code>
-    y vuelva a ejecutar el build.
-  </p>
+  <a
+    href="/contacto"
+    class="inline-flex items-center gap-2 mt-6 text-sm font-medium text-primary dark:text-primary hover:underline"
+  >
+    <Icon name="tabler:headset" class="w-4 h-4" />
+    Contáctenos si el problema persiste
+  </a>
+
+  <!-- Detalle técnico: visible solo inspeccionando el código fuente de la página.
+      Útil para el administrador al depurar sin exponer información al cliente. -->
+  <div hidden aria-hidden="true" data-debug-coleccion={coleccion} data-debug-servidor="http://127.0.0.1:8090">
+    <!-- Error de conexión a PocketBase: colección "{coleccion}".
+        Verifique que el servidor esté corriendo en http://127.0.0.1:8090
+        y vuelva a ejecutar el build. -->
+  </div>
+
 </div>
