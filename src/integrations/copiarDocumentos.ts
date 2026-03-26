@@ -18,19 +18,28 @@
  *
  * @flujo
  *   1. Hook astro:build:start se dispara antes de que Astro procese cualquier página
- *   2. Se consulta la colección `documentos` en PocketBase via SDK
- *   3. Por cada registro, se copia el archivo desde:
+ *   2. Se vacía public/descargas/ para garantizar consistencia con PocketBase
+ *      (documentos eliminados de PB no quedan como archivos huérfanos en el sitio)
+ *   3. Se consulta la colección `documentos` en PocketBase via SDK
+ *   4. Por cada registro, se copia el archivo desde:
  *      {PB_STORAGE_PATH}/{DOCUMENTOS_COLLECTION_ID}/{recordId}/{filename}
  *      hacia:
  *      public/descargas/{recordId}.{ext}
- *   4. Astro incluye public/descargas/ en el build → /dist/descargas/
- *   5. El widget usa href="/descargas/{id}.{ext}" — same-origin — download funciona
+ *   5. Astro incluye public/descargas/ en el build → /dist/descargas/
+ *   6. El widget usa href="/descargas/{id}.{ext}" — same-origin — download funciona
+ *
+ * @nota_arquitectura
+ *   Los archivos se sirven desde el mismo origen que el sitio (:80), no desde
+ *   PocketBase (:8090). Esto es imprescindible para que el atributo download=""
+ *   en los <a> funcione correctamente — los navegadores ignoran download en
+ *   recursos cross-origin. Por eso se mantiene esta arquitectura SSG y no se
+ *   sirve directamente desde pb.files.getURL().
  */
 
 import type { AstroIntegration } from 'astro';
-import { copyFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join }                                from 'node:path';
-import PocketBase                              from 'pocketbase';
+import { copyFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { join }                                        from 'node:path';
+import PocketBase                                      from 'pocketbase';
 
 // ── Configuración ─────────────────────────────────────────────────────────────
 
@@ -73,11 +82,18 @@ export function copiarDocumentos(): AstroIntegration {
       'astro:build:start': async ({ logger }) => {
         logger.info('Copiando documentos desde PocketBase storage...');
 
-        // Destino: public/descargas/ — Astro lo incluirá en dist/descargas/
         const destino = join(process.cwd(), 'public', 'descargas');
+
+        // ── LIMPIEZA PREVIA ────────────────────────────────────────────────────
+        if (existsSync(destino)) {
+          rmSync(destino, { recursive: true, force: true });
+          logger.info('Carpeta public/descargas/ vaciada correctamente.');
+        }
+
+        // Recreamos la carpeta limpia para recibir la copia fresca
         mkdirSync(destino, { recursive: true });
 
-        // Consultar todos los registros de la colección documentos
+        // ── CONSULTA A POCKETBASE ──────────────────────────────────────────────
         const pb = new PocketBase(PB_URL);
         pb.autoCancellation(false);
 
@@ -90,9 +106,9 @@ export function copiarDocumentos(): AstroIntegration {
           return;
         }
 
-        let copiados  = 0;
-        const omitidos  = 0;
-        let fallidos  = 0;
+        // ── COPIA DE ARCHIVOS ──────────────────────────────────────────────────
+        let copiados = 0;
+        let fallidos = 0;
 
         for (const doc of documentos) {
           const ext    = doc.archivo.split('.').pop() ?? 'bin';
@@ -121,7 +137,7 @@ export function copiarDocumentos(): AstroIntegration {
         }
 
         logger.info(
-          `Documentos: ${copiados} copiados, ${omitidos} omitidos, ${fallidos} fallidos.`
+          `Documentos: ${copiados} copiados, ${fallidos} fallidos.`
         );
       },
     },
