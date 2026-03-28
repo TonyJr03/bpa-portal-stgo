@@ -1,0 +1,55 @@
+---
+/**
+ * @seccion   src/components/sections/Comunicados.astro
+ *
+ * @descripcion
+ *   Sección "Tablón de Comunicados" de la página de inicio.
+ *   Encapsula la isla Vue TablonComunicados con su Headline y el enlace
+ *   "Ver todos los comunicados" que pre-filtra la página /actualidad.
+ *
+ * @isla  TablonComunicados.vue  →  client:visible
+ *        colección: actualidad (categoria = "comunicado")
+ */
+
+import WidgetWrapper    from '~/components/ui/WidgetWrapper.astro';
+import Headline         from '~/components/ui/Headline.astro';
+import TablonComunicados from '~/components/vue/TablonComunicados.vue';
+import { Icon }         from 'astro-icon/components';
+import type { Widget }  from '~/types';
+
+const {
+  id,
+  isDark  = false,
+  classes = {},
+} = Astro.props as Widget;
+---
+
+<WidgetWrapper
+  id={id}
+  isDark={isDark}
+  containerClass={`max-w-6xl ${classes?.container ?? ''}`}
+>
+  <Headline
+    tagline="Comunicados"
+    title="Tablón de Avisos"
+    subtitle="Comunicados institucionales, alertas de servicio y avisos del BPA Santiago de Cuba."
+    classes={{ container: 'text-center max-w-3xl mx-auto mb-10' }}
+  />
+
+  <TablonComunicados client:visible />
+
+  <!-- Enlace pre-filtrado a la sección de comunicados en /actualidad -->
+  <div class="text-center mt-10">
+    <a
+      href="/actualidad?categoria=comunicado"
+      class="inline-flex items-center gap-2 text-sm font-medium
+             text-primary dark:text-primary hover:underline underline-offset-4 transition-colors">
+      Ver todos los comunicados
+      <Icon name="tabler:arrow-right" class="w-4 h-4" />
+    </a>
+  </div>
+
+  <Fragment slot="bg">
+    <slot name="bg" />
+  </Fragment>
+</WidgetWrapper>

@@ -1,59 +1,60 @@
 ---
 /**
- * @componente  src/components/sections/Noticias.astro
+ * @seccion   src/components/sections/Noticias.astro
  *
  * @descripcion
- *   Widget del "Tablón de Avisos Institucionales" para la página de inicio.
- *   Envuelve la isla Vue NoticiasRecientes dentro de un WidgetWrapper
- *   estándar del proyecto.
+ *   Sección "Últimas Noticias" de la página de inicio.
+ *   Encapsula la isla Vue UltimasNoticias con su Headline y el enlace
+ *   "Ver todas las noticias" que pre-filtra la página /actualidad.
  *
- *   Se usa client:visible para que la isla Vue no hidrate hasta que el
- *   usuario haga scroll hasta ella — ahorra JS en el First Load.
+ *   Si no hay noticias publicadas, la isla es silenciosa (no renderiza nada)
+ *   pero el Headline y el enlace siguen visibles. En producción se asume
+ *   que siempre habrá noticias; durante desarrollo el admin puede omitir
+ *   registros de esta categoría sin romper la página.
  *
- * @uso  En src/pages/index.astro:
- *   <Noticias id="avisos" />
- *
- * @isla  NoticiasRecientes.vue  →  colección `noticias` de PocketBase
+ * @isla  UltimasNoticias.vue  →  client:visible
+ *        colección: actualidad (categoria = "noticia")
  */
 
-import WidgetWrapper     from '~/components/ui/WidgetWrapper.astro';
-import Headline          from '~/components/ui/Headline.astro';
-import NoticiasRecientes from '~/components/vue/NoticiasRecientes.vue';
-import { Icon }          from 'astro-icon/components';
+import WidgetWrapper   from '~/components/ui/WidgetWrapper.astro';
+import Headline        from '~/components/ui/Headline.astro';
+import UltimasNoticias from '~/components/vue/UltimasNoticias.vue';
+import { Icon }        from 'astro-icon/components';
+import type { Widget } from '~/types';
 
-export interface Props {
-  id?: string;
-  isDark?: boolean;
-  classes?: Record<string, string>;
-}
-
-const { id, isDark = false, classes = {} } = Astro.props;
+const {
+  id,
+  isDark  = false,
+  classes = {},
+} = Astro.props as Widget;
 ---
 
-<WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-6xl ${classes?.container ?? ''}`}>
-
+<WidgetWrapper
+  id={id}
+  isDark={isDark}
+  containerClass={`max-w-6xl ${classes?.container ?? ''}`}
+>
   <Headline
-    title="Tablón de Avisos"
-    subtitle="Manténgase informado sobre los comunicados oficiales, alertas de servicio y novedades institucionales del BPA Santiago de Cuba."
-    tagline="Avisos Institucionales"
-    classes={{
-      container: 'text-center max-w-3xl mx-auto mb-10',
-    }}
+    tagline="Noticias"
+    title="Últimas Noticias"
+    subtitle="Novedades del sector financiero y del Banco Popular de Ahorro."
+    classes={{ container: 'text-center max-w-3xl mx-auto mb-10' }}
   />
 
-  <NoticiasRecientes client:visible />
+  <UltimasNoticias client:visible />
 
-  <!-- Enlace al listado completo -->
-  <div class="text-center mt-10">
+  <!-- Enlace pre-filtrado a la sección de noticias en /actualidad -->
+  <div class="text-center mt-8">
     <a
-      href="/noticias"
-      class="inline-flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline underline-offset-4 transition-colors"
-    >
-      Ver todos los avisos
+      href="/actualidad?categoria=noticia"
+      class="inline-flex items-center gap-2 text-sm font-medium
+             text-primary dark:text-primary hover:underline underline-offset-4 transition-colors">
+      Ver todas las noticias
       <Icon name="tabler:arrow-right" class="w-4 h-4" />
     </a>
   </div>
 
-  <Fragment slot="bg"><slot name="bg" /></Fragment>
-
+  <Fragment slot="bg">
+    <slot name="bg" />
+  </Fragment>
 </WidgetWrapper>

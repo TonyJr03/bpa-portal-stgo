@@ -35,6 +35,7 @@ import Hero             from '~/components/widgets/Hero.astro';
 import Features2        from '~/components/widgets/Features2.astro';
 import Features3        from '~/components/widgets/Features3.astro';
 import CallToAction     from '~/components/widgets/CallToAction.astro';
+import Comunicados      from '~/components/sections/Comunicados.astro';
 import Noticias         from '~/components/sections/Noticias.astro';
 import AccesoRapidoHome from '~/components/sections/AccesoRapidoHome.astro';
 
@@ -115,9 +116,8 @@ const metadata = {
       Posicionado en segundo lugar para que el usuario vea inmediatamente
       cualquier aviso urgente antes de explorar el resto del portal.
       Usa client:visible para hidratar solo al entrar en el viewport.
-      Fondo azul suave para romper visualmente con el Hero.
   ══════════════════════════════════════════════════════════════════════════ -->
-  <Noticias id="avisos" />
+  <Comunicados id="avisos" />
 
   <!-- ══════════════════════════════════════════════════════════════════════
       BLOQUE 3 · ACCESO RÁPIDO — 4 Tarjetas (2 islas Vue + 2 estáticas)
@@ -145,7 +145,13 @@ const metadata = {
   />
 
   <!-- ══════════════════════════════════════════════════════════════════════
-      BLOQUE 5 · APLICACIONES BANCARIAS — Estático
+      BLOQUE 5 · Últimas Noticias — Isla Vue (runtime)
+      ─────────────────────────────────────────────────────────────────────
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <Noticias    id="noticias" />
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+      BLOQUE 6 · APLICACIONES BANCARIAS — Estático
       ─────────────────────────────────────────────────────────────────────
       Información sobre EnZona y Transfermóvil, las plataformas de banca
       móvil compatibles con las cuentas del BPA. Los enlaces apuntan a
@@ -184,7 +190,7 @@ const metadata = {
   />
 
   <!-- ══════════════════════════════════════════════════════════════════════
-      BLOQUE 6 · CALL TO ACTION — Contacto Rápido
+      BLOQUE 7 · CALL TO ACTION — Contacto Rápido
       ─────────────────────────────────────────────────────────────────────
       Cierre de la página con acceso directo al formulario de contacto.
       Un único botón para no dispersar la atención del usuario.

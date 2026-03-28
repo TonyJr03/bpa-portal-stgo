@@ -2,30 +2,11 @@
 /**
  * @pagina   src/pages/actualidad/[slug].astro
  * @ruta     /actualidad/[slug]
- * @ejemplo  /actualidad/interrupcion-cajeros-contramaestre
  *
- * @descripcion
- *   Página de detalle de un comunicado o noticia individual. Muestra el
- *   contenido completo renderizado desde Markdown almacenado en PocketBase
- *   (campo `contenido`), junto a los metadatos del artículo (categoría,
- *   nivel, fecha) y documentos adjuntos si los hubiera.
+ * Página de detalle de un registro de la colección `actualidad`.
+ * Ordena por -updated en getStaticPaths para procesar primero los más recientes.
  *
- *   Solo se generan rutas para noticias que tienen `slug` no vacío.
- *
- * ─── Estructura ────────────────────────────────────────────────────────────
- *   BLOQUE 1 · HeroText             → tagline + title
- *   BLOQUE 2 · Meta inline          → badge categoría/nivel + fecha
- *   BLOQUE 3 · ProseContent         → contenido Markdown → HTML
- *              EmptyCollection      → si el campo contenido está vacío
- *   BLOQUE 4 · DocumentosDescargables → adjuntos (si existen)
- *   BLOQUE 5 · CallToAction         → cierre institucional
- *   BLOQUE 6 · PageNav              → prev: "Volver a Actualidad"
- *
- * @colecciones
- *   noticias   → slug != "" && publicado = true
- *   documentos → referencia = "{slug}" && tipo = "noticia"
- *
- * @patron  getStaticPaths: TODO el fetching ocurre aquí.
+ * @coleccion  actualidad  (antes: noticias)
  */
 
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
@@ -40,8 +21,7 @@ import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
 import { pb, fetchParaBuild }   from '~/lib/pocketbase';
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
-interface Noticia {
+interface Registro {
   id:           string;
   titulo:       string;
   slug:         string;
@@ -56,195 +36,123 @@ interface Noticia {
 }
 
 interface Documento {
-  id:             string;
-  nombre:         string;
-  archivo:        string;
-  referencia:     string;
-  tipo:           string;
-  orden:          number;
-  collectionId:   string;
-  collectionName: string;
+  id: string; nombre: string; archivo: string;
+  referencia: string; tipo: string; orden: number;
+  collectionId: string; collectionName: string;
 }
 
-// ── Configuración visual ──────────────────────────────────────────────────────
-// El badge de categoría usa las escalas tonales fijas verde/ámbar:
-//   · Claro: bg-bpa-100 + text-bpa-800 (verde BPA)
-//   · Oscuro: bg-bpa-amber-800/40 + text-bpa-amber-200 (ámbar BPA)
-// Mismo patrón que el resto del portal y que el listado ActualidadListado.vue.
 const BADGE_CATEGORIA = 'bg-bpa-100 text-bpa-800 dark:bg-bpa-amber-800/40 dark:text-bpa-amber-200';
-
-const LABEL_CATEGORIA: Record<string, string> = {
-  comunicado: 'Comunicado',
-  noticia:    'Noticia',
-};
-
-// Nivel — solo se muestra si supera al informativo
+const LABEL_CATEGORIA: Record<string, string> = { comunicado: 'Comunicado', noticia: 'Noticia' };
 const BADGE_NIVEL: Record<string, string> = {
   alerta:  'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
   urgente: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
 };
-const LABEL_NIVEL: Record<string, string> = {
-  alerta:  'Alerta',
-  urgente: 'Urgente',
-};
+const LABEL_NIVEL: Record<string, string> = { alerta: 'Alerta', urgente: 'Urgente' };
 
-// ── getStaticPaths ─────────────────────────────────────────────────────────────
 export const getStaticPaths = (async () => {
-  const noticias = await fetchParaBuild<Noticia>(
-    () => pb.collection('noticias').getFullList<Noticia>({
+  const registros = await fetchParaBuild<Registro>(
+    () => pb.collection('actualidad').getFullList<Registro>({
       filter: 'publicado = true && slug != ""',
-      sort:   '-fecha',
+      sort:   '-updated',
     }),
-    'noticias'
+    'actualidad'
   );
 
   const paths = await Promise.all(
-    noticias.map(async (noticia) => {
+    registros.map(async (r) => {
       let documentos: Documento[] = [];
       let dbErrorDocs = false;
-
       try {
         documentos = await pb.collection('documentos').getFullList<Documento>({
-          filter: `referencia = "${noticia.slug}" && tipo = "noticia"`,
+          filter: `referencia = "${r.slug}" && tipo = "noticia"`,
           sort:   'orden',
         });
       } catch (err) {
-        console.error(`[BPA] Error cargando documentos para "${noticia.slug}":`, err);
+        console.error(`[BPA] Error cargando documentos para "${r.slug}":`, err);
         dbErrorDocs = true;
       }
-
-      return {
-        params: { slug: noticia.slug },
-        props:  { noticia, documentos, dbErrorDocs },
-      };
+      return { params: { slug: r.slug }, props: { registro: r, documentos, dbErrorDocs } };
     })
   );
 
   return paths;
 }) satisfies GetStaticPaths;
 
-// ── Props ─────────────────────────────────────────────────────────────────────
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-const { noticia, documentos, dbErrorDocs } = Astro.props;
+const { registro, documentos, dbErrorDocs } = Astro.props;
 
-// ── Conversión Markdown → HTML ────────────────────────────────────────────────
-const contenidoHtml = noticia.contenido?.trim()
-  ? marked.parse(noticia.contenido) as string
+const contenidoHtml = registro.contenido?.trim()
+  ? marked.parse(registro.contenido) as string
   : '';
 
-// ── URLs de descarga ──────────────────────────────────────────────────────────
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
-  id:      doc.id,
-  nombre:  doc.nombre,
-  archivo: doc.archivo,
-  url:     pb.files.getURL(doc, doc.archivo),
-  orden:   doc.orden,
+  id: doc.id, nombre: doc.nombre, archivo: doc.archivo,
+  url: pb.files.getURL(doc, doc.archivo), orden: doc.orden,
 }));
 
-// ── Formato de fecha ──────────────────────────────────────────────────────────
 const fechaFormateada = new Intl.DateTimeFormat('es-CU', {
   day: '2-digit', month: 'long', year: 'numeric',
-}).format(new Date(noticia.fecha));
+}).format(new Date(registro.fecha));
 
-// ── Tagline para HeroText ─────────────────────────────────────────────────────
-const tagline = LABEL_CATEGORIA[noticia.categoria] ?? 'Actualidad';
-
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
+const tagline  = LABEL_CATEGORIA[registro.categoria] ?? 'Actualidad';
 const metadata = {
-  title:       `${noticia.titulo} — BPA Santiago de Cuba`,
-  description: noticia.resumen,
+  title:       `${registro.titulo} — BPA Santiago de Cuba`,
+  description: registro.resumen,
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
-      tagline = tipo de contenido ("Comunicado" o "Noticia").
-  ─────────────────────────────────────────────────────────────────────────── -->
-  <HeroText
-    tagline={tagline}
-    title={noticia.titulo}
-  />
+  <HeroText tagline={tagline} title={registro.titulo} />
 
-  <!-- BLOQUE 2 · Metadatos del artículo ───────────────────────────────────────
-      Badge de categoría con verde/ámbar del tema BPA.
-      Si el nivel es alerta o urgente, se añade un segundo badge semántico.
-  ─────────────────────────────────────────────────────────────────────────── -->
+  <!-- Badges de categoría y nivel + fecha -->
   <section class="relative not-prose">
     <div class="max-w-4xl mx-auto px-4 md:px-6 pb-6 flex flex-wrap items-center gap-3">
 
-      <!-- Badge de categoría: verde en claro, ámbar en oscuro -->
       <span class:list={['inline-flex items-center text-sm font-semibold px-3 py-1 rounded-full', BADGE_CATEGORIA]}>
-        {LABEL_CATEGORIA[noticia.categoria]}
+        {LABEL_CATEGORIA[registro.categoria]}
       </span>
 
-      <!-- Badge de nivel — solo si es alerta o urgente -->
-      {(noticia.nivel === 'alerta' || noticia.nivel === 'urgente') && (
+      {(registro.nivel === 'alerta' || registro.nivel === 'urgente') && (
         <span class:list={[
           'inline-flex items-center text-sm font-semibold px-3 py-1 rounded-full',
-          BADGE_NIVEL[noticia.nivel],
+          BADGE_NIVEL[registro.nivel],
         ]}>
-          {LABEL_NIVEL[noticia.nivel]}
+          {LABEL_NIVEL[registro.nivel]}
         </span>
       )}
 
-      <!-- Separador + fecha -->
       <span class="text-muted text-sm flex items-center gap-2">
         <span class="w-1 h-1 rounded-full bg-bpa-200 dark:bg-bpa-amber-800 inline-block"></span>
         {fechaFormateada}
       </span>
-
     </div>
   </section>
 
-  <!-- BLOQUE 3 · Contenido en prose ───────────────────────────────────────────
-      NUNCA envolver en WidgetWrapper — not-prose rompería Tailwind Typography.
-  ─────────────────────────────────────────────────────────────────────────── -->
   {contenidoHtml
     ? <ProseContent contenido={contenidoHtml} />
     : <EmptyCollection
-        coleccion="noticias"
+        coleccion="actualidad"
         mensaje="El contenido detallado de este artículo no está disponible todavía."
         icono="tabler:article-off"
       />
   }
 
-  <!-- BLOQUE 4 · Documentos adjuntos ──────────────────────────────────────────
-      Silencioso si no hay documentos. Aviso ámbar si error al cargar.
-  ─────────────────────────────────────────────────────────────────────────── -->
   <DocumentosDescargables
     documentos={documentosConUrl}
     error={dbErrorDocs}
     titulo="Documentos adjuntos"
   />
 
-  <!-- BLOQUE 5 · CallToAction ──────────────────────────────────────────────────
-      Cierre institucional con acceso a contacto y vuelta al listado.
-  ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
     title="¿Tiene alguna consulta sobre este aviso?"
-    subtitle="Nuestros canales de atención están disponibles para aclarar cualquier duda sobre los comunicados e información publicada."
+    subtitle="Nuestros canales de atención están disponibles para aclarar cualquier duda."
     actions={[
-      {
-        variant: 'primary',
-        text:    'Contáctenos',
-        href:    '/contacto',
-        icon:    'tabler:headset',
-      },
-      {
-        variant: 'secondary',
-        text:    'Ver más actualidad',
-        href:    '/actualidad',
-        icon:    'tabler:news',
-      },
+      { variant: 'primary',   text: 'Contáctenos',       href: '/contacto',   icon: 'tabler:headset' },
+      { variant: 'secondary', text: 'Ver más actualidad', href: '/actualidad', icon: 'tabler:news'    },
     ]}
   />
 
-  <!-- BLOQUE 6 · PageNav ───────────────────────────────────────────────────────
-      Página terminal — sin botón next.
-  ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: 'Volver a Actualidad', href: '/actualidad' }}
-  />
+  <PageNav prev={{ text: 'Volver a Actualidad', href: '/actualidad' }} />
 
 </Layout>
