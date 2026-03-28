@@ -1,0 +1,75 @@
+---
+/**
+ * @pagina   src/pages/actualidad/index.astro
+ * @ruta     /actualidad
+ *
+ * @descripcion
+ *   Página de índice del módulo "Actualidad" del portal institucional del BPA
+ *   Santiago de Cuba. Presenta el listado completo y filtrable de comunicados
+ *   y noticias del sector bancario.
+ *
+ *   Usa una isla Vue con client:load para el listado reactivo en runtime
+ *   (búsqueda, filtros por categoría, paginación) — sin necesidad de rebuild
+ *   al publicar nuevos contenidos.
+ *
+ * ─── Estructura ────────────────────────────────────────────────────────────
+ *   BLOQUE 1 · HeroText           → title + subtitle
+ *   BLOQUE 2 · ListadoActualidad  → isla Vue (búsqueda + filtros + cards + paginación)
+ *   BLOQUE 3 · CallToAction       → derivación a /contacto
+ *   BLOQUE 4 · PageNav            → prev: "Volver a Inicio"
+ *
+ * @colecciones
+ *   noticias → consultada en runtime por ActualidadListado.vue
+ */
+
+import Layout            from '~/layouts/PageLayout.astro';
+import HeroText          from '~/components/widgets/HeroText.astro';
+import ListadoActualidad from '~/components/sections/ListadoActualidad.astro';
+import CallToAction      from '~/components/widgets/CallToAction.astro';
+import PageNav           from '~/components/widgets/PageNav.astro';
+
+const metadata = {
+  title:       'Actualidad — BPA Santiago de Cuba',
+  description: 'Comunicados institucionales y noticias del sector bancario. Manténgase informado sobre los servicios y novedades del Banco Popular de Ahorro en Santiago de Cuba.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Sin tagline: módulo de primer nivel, sin sección padre.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <HeroText
+    title="Actualidad"
+    subtitle="Comunicados del banco y noticias del sector financiero. Use los filtros para encontrar lo que busca o escriba directamente en el buscador."
+  />
+
+  <!-- BLOQUE 2 · ListadoActualidad ─────────────────────────────────────────────
+      Sin fondo alternado — la sección hereda el fondo base de la página.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <ListadoActualidad id="listado" />
+
+  <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
+      Si el usuario busca algo que no encuentra publicado.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <CallToAction
+    title="¿Tiene alguna consulta sobre estos avisos?"
+    subtitle="Si necesita aclarar algún comunicado o información publicada, nuestro equipo de atención al cliente está disponible para orientarle."
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Contáctenos',
+        href:    '/contacto',
+        icon:    'tabler:headset',
+      },
+    ]}
+  />
+
+  <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
+      Solo botón izquierdo — regresa al inicio del portal.
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <PageNav
+    prev={{ text: 'Volver a Inicio', href: '/' }}
+  />
+
+</Layout>

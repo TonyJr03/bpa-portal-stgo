@@ -1,0 +1,39 @@
+---
+/**
+ * @seccion   src/components/sections/ListadoActualidad.astro
+ *
+ * @descripcion
+ *   Sección que encapsula el widget Vue del listado de Actualidad.
+ *   Sigue el patrón del proyecto: la página no importa islas Vue directamente,
+ *   siempre a través de una sección o widget Astro intermediario.
+ *
+ * @isla  ActualidadListado.vue  →  colección: noticias
+ *        client:load porque es el contenido principal de la página y debe
+ *        estar listo inmediatamente al cargar.
+ */
+
+import WidgetWrapper     from '~/components/ui/WidgetWrapper.astro';
+import ActualidadListado from '~/components/vue/ActualidadListado.vue';
+import type { Widget }   from '~/types';
+
+// Widget ya define id, isDark, classes y bg — no se añaden props propias.
+const {
+  id,
+  isDark  = false,
+  classes = {},
+  bg      = await Astro.slots.render('bg'),
+} = Astro.props as Widget;
+---
+
+<WidgetWrapper
+  id={id}
+  isDark={isDark}
+  containerClass={`max-w-7xl mx-auto ${classes?.container ?? ''}`}
+  bg={bg}
+>
+  <ActualidadListado client:load />
+
+  <Fragment slot="bg">
+    <slot name="bg" />
+  </Fragment>
+</WidgetWrapper>
