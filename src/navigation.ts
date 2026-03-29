@@ -103,6 +103,7 @@ export const footerData = {
         { text: 'Visión',      href: getPermalink('/sobre-nosotros/vision') },
         { text: 'Historia',    href: getPermalink('/sobre-nosotros/historia') },
         { text: 'Nuestra Red', href: getPermalink('/sobre-nosotros/nuestra-red') },
+        { text: 'Actualidad',  href: getPermalink('/actualidad') },
       ],
     },
 
@@ -113,17 +114,6 @@ export const footerData = {
         { text: 'Tasa de Cambio',         href: getPermalink('/herramientas/tasas-de-cambio') },
         { text: 'Mapa Interactivo',       href: getPermalink('/herramientas/mapa') },
         { text: 'Calendario',             href: getPermalink('/herramientas/calendario') },
-      ],
-    },
-
-    {
-      title: 'En la Red',
-      links: [
-        { text: 'BPA Nacional',   href: 'http://www.bpa.cu' },
-        { text: 'EnZona',         href: 'http://www.enzona.net' },
-        { text: 'Transfermóvil',  href: 'http://www.transfermovil.cu' },
-        { text: 'Cubadebate',     href: 'http://www.cubadebate.cu' },
-        { text: 'Granma',         href: 'http://www.granma.cu' },
       ],
     },
   ],
