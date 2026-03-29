@@ -9,12 +9,12 @@
  *   B) Depósito a plazo fijo — interés simple base 360
  *   C) Crédito — sistema francés (cuota fija)
  *
- * @coleccion  tasas_calculadora
+ * @coleccion  tasas_intereses
  *   nombre      Text     "Ahorro a la vista" | "6 meses" | "12 meses" …
  *   tipo        Select   'vista' | 'plazo_fijo'
  *   plazo_meses Number   0 para vista; 6/12/18/24/30/36 para plazo fijo
  *   tasa        Number   porcentaje anual
- *   moneda      Relation → tasas_cambio  (expand: moneda, nombre_moneda)
+ *   moneda      Relation → monedas  (expand: moneda, nombre_moneda)
  *   activa      Bool
  *
  * @nota-ux
@@ -214,7 +214,7 @@ async function cargarTasas() {
   cargando.value = true;
   errorDB.value  = false;
   try {
-    const registros = await pb.collection('tasas_calculadora').getFullList<TasaRecord>({
+    const registros = await pb.collection('tasas_intereses').getFullList<TasaRecord>({
       filter: 'activa = true',
       expand: 'moneda',
       sort:   'plazo_meses',

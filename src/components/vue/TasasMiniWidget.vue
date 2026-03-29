@@ -10,7 +10,7 @@
  *   Es intencionalmente minimal — el detalle completo está en
  *   /herramientas/tasas-de-cambio.
  *
- * @coleccion  tasas_cambio
+ * @coleccion  monedas
  *   moneda        Text    → código ISO. Ej: 'USD', 'EUR'
  *   compra        Number  → tasa de compra en CUP
  *   venta         Number  → tasa de venta en CUP
@@ -64,7 +64,7 @@ const cargarTasas = async () => {
   cargando.value = true;
   errorDB.value  = false;
   try {
-    const resultado = await pb.collection('tasas_cambio').getFullList<TasaCambio>({
+    const resultado = await pb.collection('monedas').getFullList<TasaCambio>({
       filter: 'activa = true',
       sort:   'orden',
       fields: 'id,moneda,compra,venta,activa,updated',

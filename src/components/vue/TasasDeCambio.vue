@@ -5,10 +5,10 @@
  *
  * @responsabilidad
  *   Isla Vue que muestra las tasas de cambio oficiales del BPA en tiempo real.
- *   Consulta la colección `tasas_cambio` de PocketBase al montarse, sin rebuild.
+ *   Consulta la colección `monedas` de PocketBase al montarse, sin rebuild.
  *   Incluye tabla comparativa Compra/Venta y conversor rápido de divisa a CUP.
  *
- * @coleccion  tasas_cambio
+ * @coleccion  monedas
  *   moneda        Text    → código ISO de la divisa. Ej: USD, EUR, MLC
  *   nombre_moneda Text    → nombre completo. Ej: "Dólar Estadounidense"
  *   compra        Number  → tasa de compra en CUP
@@ -128,7 +128,7 @@ async function cargarTasas() {
   cargando.value = true;
   errorDB.value  = false;
   try {
-    const registros = await pb.collection('tasas_cambio').getFullList<TasaCambio>({ sort: 'orden' });
+    const registros = await pb.collection('monedas').getFullList<TasaCambio>({ sort: 'orden' });
     tasas.value = registros;
     const primera = registros.find((t) => t.activa);
     if (primera) conversor.monedaSeleccionada = primera.moneda;
@@ -202,7 +202,7 @@ onMounted(cargarTasas);
       <p class="font-semibold text-default dark:text-default mb-1">No hay tasas publicadas</p>
       <p class="text-sm text-muted">
         Active registros en la colección
-        <code class="font-mono text-xs bg-bpa-100 dark:bg-bpa-amber-800/40 px-1 rounded">tasas_cambio</code>
+        <code class="font-mono text-xs bg-bpa-100 dark:bg-bpa-amber-800/40 px-1 rounded">monedas</code>
         de PocketBase para que aparezcan aquí.
       </p>
     </div>
