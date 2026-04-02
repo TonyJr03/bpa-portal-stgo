@@ -1,136 +1,125 @@
-import { getPermalink } from './utils/permalinks';
+/**
+ * @archivo  src/navigation.ts
+ *
+ * @descripcion
+ *   Datos de navegación del portal BPA.
+ *   Exporta getHeaderData(lang) y getFooterData(lang) — funciones que
+ *   devuelven los datos de navegación con textos traducidos y URLs
+ *   correctas para el idioma recibido.
+ *
+ * @uso en PageLayout.astro
+ *   import { getHeaderData, getFooterData } from '~/navigation';
+ *   const lang       = getLangFromUrl(Astro.url);
+ *   const headerData = getHeaderData(lang);
+ *   const footerData = getFooterData(lang);
+ */
 
-export const headerData = {
-  links: [
-    {
-      text: 'Productos y Servicios',
-      href: getPermalink('/productos'), 
-      links: [
-        {
-          text: 'Banca Personal',
-          href: getPermalink('/productos/banca-personal'),
-        },
-        {
-          text: 'Banca Corporativa',
-          href: getPermalink('/productos/banca-corporativa'),
-        },
-        {
-          text: 'Banca Electrónica',
-          href: getPermalink('/productos/banca-electronica'),
-        },
-        {
-          text: 'Banca Internacional',
-          href: getPermalink('/productos/banca-internacional'),
-        },
-        {
-          text: 'Otros Servicios',
-          href: getPermalink('/productos/otros-servicios'),
-        },
-      ],
-    },
+import type { Lang }        from '~/i18n/utils';
+import { useTranslations }  from '~/i18n/utils';
+import { getPermalink }     from '~/utils/permalinks';
 
-    {
-      text: 'Trámites',
-      href: getPermalink('/tramites'),
-    },
+// ── Header ────────────────────────────────────────────────────────────────────
 
-    {
-      text: 'Sobre Nosotros',
-      href: getPermalink('/sobre-nosotros'),
-      links: [
-        {
-          text: 'Misión',
-          href: getPermalink('/sobre-nosotros/mision'),
-        },
-        {
-          text: 'Visión',
-          href: getPermalink('/sobre-nosotros/vision'),
-        },
-        {
-          text: 'Historia',
-          href: getPermalink('/sobre-nosotros/historia'),
-        },
-        {
-          text: 'Nuestra Red',
-          href: getPermalink('/sobre-nosotros/nuestra-red'),
-        },
-      ],
-    },
+export function getHeaderData(lang: Lang) {
+  const t = useTranslations(lang);
+  const p = (slug: string) => getPermalink(slug, lang);
 
-    {
-      text: 'Herramientas',
-      href: getPermalink('/herramientas'),
-      links: [
-        {
-          text: 'Calculadora Financiera',
-          href: getPermalink('/herramientas/calculadora'),
-        },
-        {
-          text: 'Tasa de Cambio',
-          href: getPermalink('/herramientas/tasas-de-cambio'),
-        },
-        {
-          text: 'Mapa Interactivo',
-          href: getPermalink('/herramientas/mapa'),
-        },
-        {
-          text: 'Calendario',
-          href: getPermalink('/herramientas/calendario'),
-        },
-      ],
-    },
-  ],
+  return {
+    links: [
+      {
+        text: t('nav.products'),
+        href: p('productos'),
+        links: [
+          { text: t('nav.products.personal'),      href: p('productos/banca-personal')      },
+          { text: t('nav.products.corporate'),     href: p('productos/banca-corporativa')   },
+          { text: t('nav.products.electronic'),    href: p('productos/banca-electronica')   },
+          { text: t('nav.products.international'), href: p('productos/banca-internacional') },
+          { text: t('nav.products.other'),         href: p('productos/otros-servicios')     },
+        ],
+      },
+      {
+        text: t('nav.procedures'),
+        href: p('tramites'),
+      },
+      {
+        text: t('nav.about'),
+        href: p('sobre-nosotros'),
+        links: [
+          { text: t('nav.about.mission'), href: p('sobre-nosotros/mision')      },
+          { text: t('nav.about.vision'),  href: p('sobre-nosotros/vision')      },
+          { text: t('nav.about.history'), href: p('sobre-nosotros/historia')    },
+          { text: t('nav.about.network'), href: p('sobre-nosotros/nuestra-red') },
+        ],
+      },
+      {
+        text: t('nav.tools'),
+        href: p('herramientas'),
+        links: [
+          { text: t('nav.tools.calculator'), href: p('herramientas/calculadora')     },
+          { text: t('nav.tools.rates'),      href: p('herramientas/tasas-de-cambio') },
+          { text: t('nav.tools.map'),        href: p('herramientas/mapa')            },
+          { text: t('nav.tools.calendar'),   href: p('herramientas/calendario')      },
+        ],
+      },
+    ],
 
-  actions: [],
-};
+    actions: [],
+  };
+}
 
-export const footerData = {
-  links: [
-    {
-      title: 'Productos y Servicios',
-      links: [
-        { text: 'Banca Personal',       href: getPermalink('/productos/banca-personal') },
-        { text: 'Banca Corporativa',    href: getPermalink('/productos/banca-corporativa') },
-        { text: 'Banca Electrónica',    href: getPermalink('/productos/banca-electronica') },
-        { text: 'Banca Internacional',  href: getPermalink('/productos/banca-internacional') },
-      ],
-    },
+// ── Footer ────────────────────────────────────────────────────────────────────
 
-    {
-      title: 'Sobre Nosotros',
-      links: [
-        { text: 'Misión',      href: getPermalink('/sobre-nosotros/mision') },
-        { text: 'Visión',      href: getPermalink('/sobre-nosotros/vision') },
-        { text: 'Historia',    href: getPermalink('/sobre-nosotros/historia') },
-        { text: 'Nuestra Red', href: getPermalink('/sobre-nosotros/nuestra-red') },
-        { text: 'Actualidad',  href: getPermalink('/actualidad') },
-      ],
-    },
+export function getFooterData(lang: Lang) {
+  const t = useTranslations(lang);
+  const p = (slug: string) => getPermalink(slug, lang);
 
-    {
-      title: 'Herramientas',
-      links: [
-        { text: 'Calculadora Financiera', href: getPermalink('/herramientas/calculadora') },
-        { text: 'Tasa de Cambio',         href: getPermalink('/herramientas/tasas-de-cambio') },
-        { text: 'Mapa Interactivo',       href: getPermalink('/herramientas/mapa') },
-        { text: 'Calendario',             href: getPermalink('/herramientas/calendario') },
-      ],
-    },
-  ],
+  return {
+    links: [
+      {
+        title: t('nav.footer.products'),
+        links: [
+          { text: t('nav.products.personal'),      href: p('productos/banca-personal')      },
+          { text: t('nav.products.corporate'),     href: p('productos/banca-corporativa')   },
+          { text: t('nav.products.electronic'),    href: p('productos/banca-electronica')   },
+          { text: t('nav.products.international'), href: p('productos/banca-internacional') },
+        ],
+      },
+      {
+        title: t('nav.footer.about'),
+        links: [
+          { text: t('nav.about.mission'), href: p('sobre-nosotros/mision')      },
+          { text: t('nav.about.vision'),  href: p('sobre-nosotros/vision')      },
+          { text: t('nav.about.history'), href: p('sobre-nosotros/historia')    },
+          { text: t('nav.about.network'), href: p('sobre-nosotros/nuestra-red') },
+          { text: t('nav.footer.news'),   href: p('actualidad')                 },
+        ],
+      },
+      {
+        title: t('nav.footer.tools'),
+        links: [
+          { text: t('nav.tools.calculator'), href: p('herramientas/calculadora')     },
+          { text: t('nav.tools.rates'),      href: p('herramientas/tasas-de-cambio') },
+          { text: t('nav.tools.map'),        href: p('herramientas/mapa')            },
+          { text: t('nav.tools.calendar'),   href: p('herramientas/calendario')      },
+        ],
+      },
+    ],
 
-  secondaryLinks: [
-    { text: 'Términos y Condiciones', href: getPermalink('/terminos') },
-    { text: 'Política de Privacidad', href: getPermalink('/privacidad') },
-  ],
+    secondaryLinks: [
+      { text: t('nav.terms'),   href: p('terminos')  },
+      { text: t('nav.privacy'), href: p('privacidad') },
+    ],
 
-  socialLinks: [
-    { ariaLabel: 'Facebook',  icon: 'tabler:brand-facebook',  href: '#' },
-    { ariaLabel: 'Instagram', icon: 'tabler:brand-instagram', href: '#' },
-    { ariaLabel: 'Telegram',  icon: 'tabler:brand-telegram',  href: '#' },
-    { ariaLabel: 'YouTube',   icon: 'tabler:brand-youtube',   href: '#' },
-  ],
+    socialLinks: [
+      { ariaLabel: 'Facebook',  icon: 'tabler:brand-facebook',  href: '#' },
+      { ariaLabel: 'Instagram', icon: 'tabler:brand-instagram', href: '#' },
+      { ariaLabel: 'Telegram',  icon: 'tabler:brand-telegram',  href: '#' },
+      { ariaLabel: 'YouTube',   icon: 'tabler:brand-youtube',   href: '#' },
+    ],
 
-  footNote: `
-    <span class="font-semibold">BPA — Banco Popular de Ahorro</span> · Sucursal Provincial Santiago de Cuba · Todos los derechos reservados ${new Date().getFullYear()}.
-  `,
-};
+    footNote: `
+      <span class="font-semibold">BPA — Banco Popular de Ahorro</span>
+      · ${t('nav.footer.copyright')} ${new Date().getFullYear()}.
+    `,
+  };
+}

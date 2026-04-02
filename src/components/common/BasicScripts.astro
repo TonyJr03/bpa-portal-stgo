@@ -1,4 +1,18 @@
 ---
+/**
+ * @componente  src/components/common/BasicScripts.astro
+ *
+ * @descripcion
+ *   Scripts globales del portal BPA. Se ejecutan en todas las páginas.
+ *   Incluye los handlers de:
+ *     - Menú hamburguesa móvil
+ *     - Cambio de tema claro/oscuro
+ *     - Cambio de idioma ES ↔ EN  ← implementado en esta versión
+ *     - Compartir en redes sociales
+ *     - Header sticky al hacer scroll
+ *     - Animaciones de intersección (Intersection Observer)
+ */
+
 import { UI } from 'astrowind:config';
 ---
 
@@ -8,6 +22,8 @@ import { UI } from 'astrowind:config';
   }
 
   window.basic_script = true;
+
+  // ── Tema claro / oscuro ──────────────────────────────────────────────────────
 
   function applyTheme(theme) {
     if (theme === 'dark') {
@@ -31,6 +47,8 @@ import { UI } from 'astrowind:config';
   };
   initTheme();
 
+  // ── Helper de eventos ────────────────────────────────────────────────────────
+
   function attachEvent(selector, event, fn) {
     const matches = typeof selector === 'string' ? document.querySelectorAll(selector) : selector;
     if (matches && matches.length) {
@@ -40,10 +58,46 @@ import { UI } from 'astrowind:config';
     }
   }
 
+  // ── Handler: cambio de idioma ES ↔ EN ────────────────────────────────────────
+  //
+  // Lógica:
+  //   La URL del portal sigue el patrón /[lang]/ruta/subruta
+  //   El primer segmento después de / es siempre el idioma ('es' o 'en').
+  //   Al hacer clic en el botón de idioma, sustituimos ese segmento por el
+  //   idioma alternativo y navegamos a la nueva URL.
+  //
+  //   Ejemplos:
+  //     /es/productos/banca-personal  →  /en/productos/banca-personal
+  //     /en/herramientas/mapa         →  /es/herramientas/mapa
+  //     /es                           →  /en
+  //     /en                           →  /es
+  //
+  //   El idioma activo se lee del atributo data-current-lang del botón,
+  //   que ToggleLang.astro establece en build time con el valor correcto.
+  //   Así no dependemos de parsear la URL (más robusto ante edge cases).
+
+  function buildAlternateUrl(currentLang) {
+    const altLang    = currentLang === 'es' ? 'en' : 'es';
+    const parts      = window.location.pathname.split('/').filter(Boolean);
+    const validLangs = ['es', 'en'];
+
+    if (parts.length > 0 && validLangs.includes(parts[0])) {
+      // Sustituir el segmento de idioma existente
+      parts[0] = altLang;
+      return '/' + parts.join('/');
+    }
+
+    // Sin prefijo de idioma reconocido → ir a la raíz del idioma alternativo
+    return '/' + altLang;
+  }
+
+  // ── Inicialización de todos los handlers ─────────────────────────────────────
+
   const onLoad = function () {
     let lastKnownScrollPosition = window.scrollY;
     let ticking = true;
 
+    // Menú hamburguesa — cerrar al hacer clic en un enlace de la nav
     attachEvent('#header nav', 'click', function () {
       document.querySelector('[data-aw-toggle-menu]')?.classList.remove('expanded');
       document.body.classList.remove('overflow-hidden');
@@ -54,6 +108,7 @@ import { UI } from 'astrowind:config';
       document.querySelector('#header > div > div:last-child')?.classList.add('hidden');
     });
 
+    // Menú hamburguesa — toggle
     attachEvent('[data-aw-toggle-menu]', 'click', function (_, elem) {
       elem.classList.toggle('expanded');
       document.body.classList.toggle('overflow-hidden');
@@ -64,6 +119,7 @@ import { UI } from 'astrowind:config';
       document.querySelector('#header > div > div:last-child')?.classList.toggle('hidden');
     });
 
+    // Tema claro / oscuro
     attachEvent('[data-aw-toggle-color-scheme]', 'click', function () {
       if (defaultTheme.endsWith(':only')) {
         return;
@@ -72,10 +128,18 @@ import { UI } from 'astrowind:config';
       localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
     });
 
+    // ── Cambio de idioma ────────────────────────────────────────────────────────
+    attachEvent('[data-aw-toggle-lang]', 'click', function (_, elem) {
+      const currentLang = elem.getAttribute('data-current-lang') || 'es';
+      const newUrl      = buildAlternateUrl(currentLang);
+      window.location.href = newUrl;
+    });
+
+    // Compartir en redes sociales
     attachEvent('[data-aw-social-share]', 'click', function (_, elem) {
       const network = elem.getAttribute('data-aw-social-share');
-      const url = encodeURIComponent(elem.getAttribute('data-aw-url'));
-      const text = encodeURIComponent(elem.getAttribute('data-aw-text'));
+      const url     = encodeURIComponent(elem.getAttribute('data-aw-url'));
+      const text    = encodeURIComponent(elem.getAttribute('data-aw-text'));
 
       let href;
       switch (network) {
@@ -94,17 +158,17 @@ import { UI } from 'astrowind:config';
         case 'mail':
           href = `mailto:?subject=%22${text}%22&body=${text}%20${url}`;
           break;
-
         default:
           return;
       }
 
-      const newlink = document.createElement('a');
-      newlink.target = '_blank';
-      newlink.href = href;
+      const newlink    = document.createElement('a');
+      newlink.target   = '_blank';
+      newlink.href     = href;
       newlink.click();
     });
 
+    // Menú hamburguesa — cerrar al cambiar a escritorio
     const screenSize = window.matchMedia('(max-width: 1023px)');
     screenSize.addEventListener('change', function () {
       document.querySelector('[data-aw-toggle-menu]')?.classList.remove('expanded');
@@ -116,6 +180,7 @@ import { UI } from 'astrowind:config';
       document.querySelector('#header > div > div:last-child')?.classList.add('hidden');
     });
 
+    // Header sticky — añadir clase 'scroll' al bajar de 60px
     function applyHeaderStylesOnScroll() {
       const header = document.querySelector('#header[data-aw-sticky-header]');
       if (!header) return;
@@ -130,7 +195,6 @@ import { UI } from 'astrowind:config';
 
     attachEvent([document], 'scroll', function () {
       lastKnownScrollPosition = window.scrollY;
-
       if (!ticking) {
         window.requestAnimationFrame(() => {
           applyHeaderStylesOnScroll();
@@ -139,6 +203,7 @@ import { UI } from 'astrowind:config';
       }
     });
   };
+
   const onPageShow = function () {
     document.documentElement.classList.add('motion-safe:scroll-smooth');
     const elem = document.querySelector('[data-aw-toggle-menu]');
@@ -151,7 +216,7 @@ import { UI } from 'astrowind:config';
     document.querySelector('#header nav')?.classList.add('hidden');
   };
 
-  window.onload = onLoad;
+  window.onload    = onLoad;
   window.onpageshow = onPageShow;
 
   document.addEventListener('astro:after-swap', () => {
@@ -162,6 +227,7 @@ import { UI } from 'astrowind:config';
 </script>
 
 <script is:inline>
+  /* Animaciones de intersección — Intersection Observer */
   /* Inspired by: https://github.com/heidkaemper/tailwindcss-intersect */
   const Observer = {
     observer: null,
@@ -179,16 +245,13 @@ import { UI } from 'astrowind:config';
         '[class$=" intersect"]',
       ];
 
-      const elements = Array.from(document.querySelectorAll(selectors.join(',')));
-
-      const isMobile = window.innerWidth < 768;
+      const elements  = Array.from(document.querySelectorAll(selectors.join(',')));
+      const isMobile  = window.innerWidth < 768;
 
       const getThreshold = (element) => {
-        // En móvil siempre disparar al primer píxel visible (borde del viewport)
         if (isMobile) return 0.1;
-        // En escritorio usar el umbral definido por la clase del elemento
-        if (element.classList.contains('intersect-full')) return 0.99;
-        if (element.classList.contains('intersect-half')) return 0.5;
+        if (element.classList.contains('intersect-full'))    return 0.99;
+        if (element.classList.contains('intersect-half'))    return 0.5;
         if (element.classList.contains('intersect-quarter')) return 0.25;
         return 0;
       };
@@ -201,9 +264,9 @@ import { UI } from 'astrowind:config';
       const callback = (entries) => {
         entries.forEach((entry) => {
           requestAnimationFrame(() => {
-            const target = entry.target;
+            const target            = entry.target;
             const intersectionRatio = entry.intersectionRatio;
-            const threshold = target._intersectionThreshold;
+            const threshold         = target._intersectionThreshold;
 
             if (target.classList.contains('intersect-no-queue')) {
               if (entry.isIntersecting) {
@@ -226,7 +289,7 @@ import { UI } from 'astrowind:config';
                 this.animationCounter++;
 
                 target.style.transitionDelay = `${delay}ms`;
-                target.style.animationDelay = `${delay}ms`;
+                target.style.animationDelay  = `${delay}ms`;
 
                 if (target.classList.contains('intersect-once')) {
                   this.observer.unobserve(target);
@@ -236,15 +299,16 @@ import { UI } from 'astrowind:config';
               target.setAttribute('no-intersect', '');
               target.removeAttribute('data-animated');
               target.style.transitionDelay = '';
-              target.style.animationDelay = '';
-
+              target.style.animationDelay  = '';
               this.animationCounter = 0;
             }
           });
         });
       };
 
-      this.observer = new IntersectionObserver(callback.bind(this), { threshold: [0, 0.1, 0.25, 0.5, 0.99] });
+      this.observer = new IntersectionObserver(callback.bind(this), {
+        threshold: [0, 0.1, 0.25, 0.5, 0.99],
+      });
 
       elements.forEach((el) => {
         this.observer.observe(el);

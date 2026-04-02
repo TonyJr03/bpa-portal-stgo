@@ -1,21 +1,55 @@
 ---
+/**
+ * @componente  src/components/common/ToggleLang.astro
+ *
+ * @descripcion
+ *   Botón de cambio de idioma ES ↔ EN.
+ *   Muestra el código del idioma al que se puede cambiar (no el activo).
+ *   Al hacer clic navega a la misma ruta en el idioma alternativo.
+ *
+ *   Lógica de construcción de la URL alternativa:
+ *     /es/productos/banca-personal  →  /en/productos/banca-personal
+ *     /en/herramientas/mapa         →  /es/herramientas/mapa
+ *
+ *   El handler de clic está implementado en BasicScripts.astro mediante
+ *   el selector [data-aw-toggle-lang], igual que el resto de handlers
+ *   globales del portal.
+ *
+ * @props
+ *   lang       Lang     Idioma activo ('es' | 'en'). Recibido desde Header.
+ *   class      string   Clases CSS adicionales para el botón.
+ *   iconClass  string   Clases para el ícono.
+ */
+
 import { Icon } from 'astro-icon/components';
+import type { Lang } from '~/i18n/utils';
 
 export interface Props {
+  lang: Lang;
   label?: string;
   class?: string;
   iconClass?: string;
-  iconName?: string;
 }
 
 const {
-  label = 'Cambiar idioma / Switch language',
-  class: className = 'text-default dark:text-default hover:bg-bpa-100 dark:hover:bg-bpa-amber-800/40 focus:outline-none focus:ring-4 focus:ring-bpa-200 dark:focus:ring-bpa-amber-800 rounded-lg text-sm p-2.5 inline-flex items-center',
-  iconClass = 'w-6 h-6 md:w-5 md:h-5',
-  iconName = 'tabler:world',
+  lang,
+  label      = lang === 'es' ? 'Cambiar a inglés' : 'Switch to Spanish',
+  class: className = 'text-default dark:text-default hover:bg-bpa-100 dark:hover:bg-bpa-amber-800/40 focus:outline-none focus:ring-4 focus:ring-bpa-200 dark:focus:ring-bpa-amber-800 rounded-lg text-sm p-2.5 inline-flex items-center gap-1.5 font-semibold',
+  iconClass  = 'w-4 h-4 md:w-4 md:h-4',
 } = Astro.props;
+
+// El idioma alternativo es el que se mostrará en el botón —
+// el usuario ve a qué idioma puede cambiar, no en cuál está.
+const altLang = lang === 'es' ? 'EN' : 'ES';
 ---
 
-<button type="button" class={className} aria-label={label} data-aw-toggle-lang>
-  <Icon name={iconName} class={iconClass} />
+<button
+  type="button"
+  class={className}
+  aria-label={label}
+  data-aw-toggle-lang
+  data-current-lang={lang}
+>
+  <Icon name="tabler:world" class={iconClass} />
+  <span class="text-xs leading-none">{altLang}</span>
 </button>

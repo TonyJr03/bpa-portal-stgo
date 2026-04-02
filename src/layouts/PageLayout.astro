@@ -1,9 +1,29 @@
 ---
-import Layout from '~/layouts/Layout.astro';
-import Header from '~/components/widgets/Header.astro';
-import Footer from '~/components/widgets/Footer.astro';
+/**
+ * @archivo  src/layouts/PageLayout.astro
+ *
+ * @descripcion
+ *   Layout completo del portal BPA: Header + main + Footer.
+ *   Usado en todas las páginas del portal.
+ *
+ *   En la versión i18n, este layout:
+ *     1. Extrae el `lang` activo de la URL mediante getLangFromUrl()
+ *     2. Construye los datos de navegación traducidos con getHeaderData()
+ *        y getFooterData()
+ *     3. Pasa `lang` a Layout.astro para el atributo <html lang>
+ *     4. Pasa `lang` a Header para que ToggleLang conozca el idioma actual
+ *
+ *   Las páginas individuales NO necesitan calcular el lang — PageLayout
+ *   lo hace por ellas. Solo necesitan pasar `metadata` como siempre.
+ */
 
-import { headerData, footerData } from '~/navigation';
+import Layout  from '~/layouts/Layout.astro';
+import Header  from '~/components/widgets/Header.astro';
+import Footer  from '~/components/widgets/Footer.astro';
+
+import { getLangFromUrl }               from '~/i18n/utils';
+import { getHeaderData, getFooterData } from '~/navigation';
+
 import type { MetaData } from '~/types';
 
 export interface Props {
@@ -11,13 +31,21 @@ export interface Props {
 }
 
 const { metadata } = Astro.props;
+
+// Extraer el idioma activo de la URL actual.
+// Para rutas bajo /[lang]/... → 'es' o 'en'
+// Para rutas fuera de ese patrón (ej: /404) → 'es' (DEFAULT_LANG)
+const lang       = getLangFromUrl(Astro.url);
+const headerData = getHeaderData(lang);
+const footerData = getFooterData(lang);
 ---
 
-<Layout metadata={metadata}>
+<Layout metadata={metadata} lang={lang}>
 
   <slot name="header">
     <Header
       {...headerData}
+      lang={lang}
       isSticky
       showToggleTheme
       showToggleLang

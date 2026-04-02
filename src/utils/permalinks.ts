@@ -1,10 +1,45 @@
+/**
+ * @archivo  src/utils/permalinks.ts
+ *
+ * @descripcion
+ *   Utilidades de construcción de URLs del portal BPA.
+ *   Versión depurada — se eliminaron todas las funciones del módulo de blog
+ *   (desactivado) y la función applyGetPermalinks (reemplazada por navigation.ts).
+ *
+ *   Funciones que permanecen:
+ *
+ *   trimSlash(s)              → elimina slashes al inicio y al final de un string
+ *                               Usada en Header.astro para detectar la ruta activa.
+ *
+ *   getCanonical(path)        → construye la URL canónica completa para SEO.
+ *                               Usada en Metadata.astro.
+ *
+ *   getAsset(path)            → URL de un asset estático (ej: /sitemap-index.xml).
+ *                               Usada en CommonMeta.astro.
+ *
+ *   getPermalink(slug, lang)  → construye una URL con prefijo de idioma.
+ *                               Para uso puntual en páginas o componentes que
+ *                               necesiten un enlace fuera de navigation.ts.
+ *
+ *   getHomePermalink(lang)    → shorthand para la raíz del idioma activo.
+ */
+
 import slugify from 'limax';
-
-import { SITE, APP_BLOG } from 'astrowind:config';
-
+import { SITE } from 'astrowind:config';
 import { trim } from '~/utils/utils';
+import type { Lang } from '~/i18n/utils';
 
+// ── Utilidad base ─────────────────────────────────────────────────────────────
+
+/** Elimina los slashes del inicio y el final de un string. */
 export const trimSlash = (s: string) => trim(trim(s, '/'));
+
+// ── Base del sitio ────────────────────────────────────────────────────────────
+
+const BASE_PATHNAME = SITE.base || '/';
+
+// ── Construcción interna de rutas ─────────────────────────────────────────────
+
 const createPath = (...params: string[]) => {
   const paths = params
     .map((el) => trimSlash(el))
@@ -13,7 +48,7 @@ const createPath = (...params: string[]) => {
   return '/' + paths + (SITE.trailingSlash && paths ? '/' : '');
 };
 
-const BASE_PATHNAME = SITE.base || '/';
+// ── Slugificación ─────────────────────────────────────────────────────────────
 
 export const cleanSlug = (text = '') =>
   trimSlash(text)
@@ -21,13 +56,14 @@ export const cleanSlug = (text = '') =>
     .map((slug) => slugify(slug))
     .join('/');
 
-export const BLOG_BASE = cleanSlug(APP_BLOG?.list?.pathname);
-export const CATEGORY_BASE = cleanSlug(APP_BLOG?.category?.pathname);
-export const TAG_BASE = cleanSlug(APP_BLOG?.tag?.pathname) || 'tag';
+// ── URL Canónica (SEO) ────────────────────────────────────────────────────────
 
-export const POST_PERMALINK_PATTERN = trimSlash(APP_BLOG?.post?.permalink || `${BLOG_BASE}/%slug%`);
-
-/** */
+/**
+ * Construye la URL canónica completa para una ruta dada.
+ * Usada en Metadata.astro para el tag <link rel="canonical">.
+ *
+ * @param path  Ruta relativa. Ej: '/es/productos'
+ */
 export const getCanonical = (path = ''): string | URL => {
   const url = String(new URL(path, SITE.site));
   if (SITE.trailingSlash == false && path && url.endsWith('/')) {
@@ -38,61 +74,14 @@ export const getCanonical = (path = ''): string | URL => {
   return url;
 };
 
-/** */
-export const getPermalink = (slug = '', type = 'page'): string => {
-  let permalink: string;
+// ── Assets estáticos ──────────────────────────────────────────────────────────
 
-  if (
-    slug.startsWith('https://') ||
-    slug.startsWith('http://') ||
-    slug.startsWith('://') ||
-    slug.startsWith('#') ||
-    slug.startsWith('javascript:')
-  ) {
-    return slug;
-  }
-
-  switch (type) {
-    case 'home':
-      permalink = getHomePermalink();
-      break;
-
-    case 'blog':
-      permalink = getBlogPermalink();
-      break;
-
-    case 'asset':
-      permalink = getAsset(slug);
-      break;
-
-    case 'category':
-      permalink = createPath(CATEGORY_BASE, trimSlash(slug));
-      break;
-
-    case 'tag':
-      permalink = createPath(TAG_BASE, trimSlash(slug));
-      break;
-
-    case 'post':
-      permalink = createPath(trimSlash(slug));
-      break;
-
-    case 'page':
-    default:
-      permalink = createPath(slug);
-      break;
-  }
-
-  return definitivePermalink(permalink);
-};
-
-/** */
-export const getHomePermalink = (): string => getPermalink('/');
-
-/** */
-export const getBlogPermalink = (): string => getPermalink(BLOG_BASE);
-
-/** */
+/**
+ * Construye la URL de un asset estático del sitio.
+ * Usada en CommonMeta.astro para el enlace al sitemap.
+ *
+ * @param path  Ruta del asset. Ej: '/sitemap-index.xml'
+ */
 export const getAsset = (path: string): string =>
   '/' +
   [BASE_PATHNAME, path]
@@ -100,35 +89,47 @@ export const getAsset = (path: string): string =>
     .filter((el) => !!el)
     .join('/');
 
-/** */
-const definitivePermalink = (permalink: string): string => createPath(BASE_PATHNAME, permalink);
+// ── URL con prefijo de idioma ─────────────────────────────────────────────────
 
-/** */
-export const applyGetPermalinks = (menu: object = {}) => {
-  if (Array.isArray(menu)) {
-    return menu.map((item) => applyGetPermalinks(item));
-  } else if (typeof menu === 'object' && menu !== null) {
-    const obj = {};
-    for (const key in menu) {
-      if (key === 'href') {
-        if (typeof menu[key] === 'string') {
-          obj[key] = getPermalink(menu[key]);
-        } else if (typeof menu[key] === 'object') {
-          if (menu[key].type === 'home') {
-            obj[key] = getHomePermalink();
-          } else if (menu[key].type === 'blog') {
-            obj[key] = getBlogPermalink();
-          } else if (menu[key].type === 'asset') {
-            obj[key] = getAsset(menu[key].url);
-          } else if (menu[key].url) {
-            obj[key] = getPermalink(menu[key].url, menu[key].type);
-          }
-        }
-      } else {
-        obj[key] = applyGetPermalinks(menu[key]);
-      }
-    }
-    return obj;
+/**
+ * Construye una URL con el prefijo del idioma activo.
+ * Para uso puntual en páginas o componentes que necesiten construir un
+ * enlace fuera de navigation.ts.
+ *
+ * El patrón de URLs del portal es: /[lang]/ruta/subruta
+ *
+ * @param slug  Ruta sin prefijo de idioma. Ej: 'productos/banca-personal'
+ * @param lang  Idioma activo ('es' | 'en'). Por defecto 'es'.
+ *
+ * @ejemplo
+ *   getPermalink('contacto', lang)          → '/es/contacto'
+ *   getPermalink('herramientas/mapa', 'en') → '/en/herramientas/mapa'
+ *   getPermalink('', lang)                  → '/es'
+ */
+export const getPermalink = (slug = '', lang: Lang = 'es'): string => {
+  // Si el slug ya es una URL absoluta o un ancla, devolverlo sin modificar
+  if (
+    slug.startsWith('https://') ||
+    slug.startsWith('http://')  ||
+    slug.startsWith('://')      ||
+    slug.startsWith('#')        ||
+    slug.startsWith('javascript:')
+  ) {
+    return slug;
   }
-  return menu;
+
+  const cleanedSlug = trimSlash(slug);
+  return createPath(BASE_PATHNAME, lang, cleanedSlug);
 };
+
+/**
+ * Shorthand para la URL de inicio del idioma activo.
+ *
+ * @param lang  Idioma activo. Por defecto 'es'.
+ *
+ * @ejemplo
+ *   getHomePermalink('es') → '/es'
+ *   getHomePermalink('en') → '/en'
+ */
+export const getHomePermalink = (lang: Lang = 'es'): string =>
+  getPermalink('', lang);
