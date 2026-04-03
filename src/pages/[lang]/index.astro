@@ -1,0 +1,201 @@
+---
+/**
+ * @pagina   src/pages/index.astro
+ * @ruta     /
+ *
+ * @descripcion
+ *   Página de Inicio del portal institucional del BPA Santiago de Cuba.
+ *   Actúa como nodo central de enrutamiento, permitiendo al usuario
+ *   alcanzar cualquier sección en máximo dos clics.
+ *
+ * ─── Estructura top-to-bottom ──────────────────────────────────────────────
+ *
+ *   BLOQUE 1 · Hero               → CTA principal (SSG estático)
+ *   BLOQUE 2 · NoticiasWidget     → Tablón de avisos (isla Vue, runtime)
+ *   BLOQUE 3 · AccesoRapidoHome   → 4 herramientas (2 islas Vue, 2 estáticas)
+ *   BLOQUE 4 · Productos          → Categorías (src/data/categorias.ts — SSG puro)
+ *   BLOQUE 5 · Aplicaciones       → EnZona y Transfermóvil (SSG estático)
+ *   BLOQUE 6 · CallToAction       → Contacto rápido
+ *
+ * ─── Datos estáticos ───────────────────────────────────────────────────────
+ *   CATEGORIAS  →  src/data/categorias.ts  (fuente de verdad única)
+ *   Las categorías son estructura fija del sitio y NO se consultan en
+ *   PocketBase. Si se necesita añadir o renombrar una categoría, ese
+ *   es el único archivo a modificar.
+ *
+ * ─── Islas Vue (runtime, cliente) ──────────────────────────────────────────
+ *   TasasMiniWidget.vue      →  colección monedas
+ *   CalendarioMiniWidget.vue →  colección eventos
+ *   NoticiasRecientes.vue    →  colección noticias
+ */
+
+// ── Imports de layout y widgets ────────────────────────────────────────────
+import Layout           from '~/layouts/PageLayout.astro';
+import Hero             from '~/components/widgets/Hero.astro';
+import Features2        from '~/components/widgets/Features2.astro';
+import Features3        from '~/components/widgets/Features3.astro';
+import CallToAction     from '~/components/widgets/CallToAction.astro';
+import Comunicados      from '~/components/sections/Comunicados.astro';
+import Noticias         from '~/components/sections/Noticias.astro';
+import AccesoRapidoHome from '~/components/sections/AccesoRapidoHome.astro';
+
+// ── Datos estáticos de categorías ─────────────────────────────────────────
+// Fuente de verdad única: src/data/categorias.ts
+// NO se consulta PocketBase para este bloque.
+//import { CATEGORIAS } from '~/data/categorias';
+
+// ── Items para el componente Features2 (Bloque 4) ─────────────────────────
+
+
+// ── Metadata SEO ───────────────────────────────────────────────────────────
+const metadata = {
+  title:               'Inicio — BPA Santiago de Cuba',
+  ignoreTitleTemplate: true,
+  description:
+    'Portal oficial del Banco Popular de Ahorro, Sucursal Provincial Santiago de Cuba. Consulte nuestros productos, tasas de cambio, trámites y herramientas financieras.',
+};
+---
+
+<Layout metadata={metadata}>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+      BLOQUE 1 · HERO — CTA Principal
+      ─────────────────────────────────────────────────────────────────────
+      El hero es 100 % estático. Sin imagen externa (restricción air-gapped).
+      Dos botones: acción primaria "Realizar un Trámite" y secundaria
+      "Explorar Productos".
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <Hero
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Realizar un Trámite',
+        href:    '/tramites',
+        icon:    'tabler:file-description',
+      },
+      {
+        variant: 'secondary',
+        text:    'Explorar Productos',
+        href:    '/productos',
+        icon:    'tabler:building-bank',
+      },
+    ]}
+  >
+    <Fragment slot="title">
+      Bienvenido al
+      <span class="text-primary dark:text-primary highlight">
+        Banco Popular de Ahorro
+      </span>
+    </Fragment>
+
+    <Fragment slot="subtitle">
+      <span class="hidden sm:inline">
+        <strong>Sucursal Provincial Santiago de Cuba.</strong><br />
+        Gestione sus finanzas, consulte sus productos e infórmese sobre nuestros
+        servicios desde la comodidad de su hogar.
+      </span>
+      <span class="sm:hidden">
+        Sucursal Provincial Santiago de Cuba. Información y servicios al alcance de su mano.
+      </span>
+    </Fragment>
+  </Hero>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+      BLOQUE 2 · TABLÓN DE AVISOS — Isla Vue (runtime)
+      ─────────────────────────────────────────────────────────────────────
+      Posicionado en segundo lugar para que el usuario vea inmediatamente
+      cualquier aviso urgente antes de explorar el resto del portal.
+      Usa client:visible para hidratar solo al entrar en el viewport.
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <Comunicados id="avisos" />
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+      BLOQUE 3 · ACCESO RÁPIDO — 4 Tarjetas (2 islas Vue + 2 estáticas)
+      ─────────────────────────────────────────────────────────────────────
+      Las tarjetas de Tasas y Calendario muestran datos en vivo desde
+      PocketBase. Calculadora y Mapa son enlaces estáticos.
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <AccesoRapidoHome id="herramientas" />
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+      BLOQUE 4 · PRODUCTOS Y SERVICIOS — Datos de src/data/categorias.ts
+      ─────────────────────────────────────────────────────────────────────
+      Las 5 categorías provienen del archivo estático categorias.ts,
+      que es la fuente de verdad única para la estructura del catálogo.
+      Este bloque es 100 % SSG — cero peticiones en build ni en runtime.
+      Fondo azul suave: alterna con el bloque anterior (blanco).
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <Features2
+    id="productos"
+    tagline="Nuestro Catálogo"
+    title="Productos y Servicios"
+    subtitle="Descubra la cartera completa de productos financieros que el BPA tiene disponibles para la población y las empresas de Santiago de Cuba."
+    columns={3}
+  />
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+      BLOQUE 5 · Últimas Noticias — Isla Vue (runtime)
+      ─────────────────────────────────────────────────────────────────────
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <Noticias    id="noticias" />
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+      BLOQUE 6 · APLICACIONES BANCARIAS — Estático
+      ─────────────────────────────────────────────────────────────────────
+      Información sobre EnZona y Transfermóvil, las plataformas de banca
+      móvil compatibles con las cuentas del BPA. Los enlaces apuntan a
+      páginas internas, no a CDNs externos (restricción air-gapped).
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <Features3
+    id="apps"
+    tagline="Banca Digital"
+    title="Gestione sus finanzas desde su móvil"
+    subtitle="El BPA es compatible con las principales plataformas de banca electrónica de Cuba. Descargue la aplicación y opere sus cuentas sin salir de casa."
+    columns={2}
+    items={[
+      {
+        title:       'EnZona',
+        description: 'Plataforma de pagos y transferencias entre cuentas en CUP. Disponible para dispositivos Android e iOS. Recargue el móvil, pague servicios y transfiera fondos de forma segura.',
+        icon:        'tabler:device-mobile-dollar',
+        callToAction: {
+          variant: 'link',
+          text:    'Más información sobre EnZona',
+          href:    'https://www.enzona.net',
+          icon:    'tabler:arrow-right',
+        },
+      },
+      {
+        title:       'Transfermóvil',
+        description: 'Aplicación del Banco Central de Cuba para operaciones bancarias desde el celular. Consulte saldos, realice transferencias y pague servicios comunales vinculados a su cuenta BPA.',
+        icon:        'tabler:transfer',
+        callToAction: {
+          variant: 'link',
+          text:    'Más información sobre Transfermóvil',
+          href:    'https://www.etecsa.cu/es/aplicaciones/transfermovil',
+          icon:    'tabler:arrow-right',
+        },
+      },
+    ]}
+  />
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+      BLOQUE 7 · CALL TO ACTION — Contacto Rápido
+      ─────────────────────────────────────────────────────────────────────
+      Cierre de la página con acceso directo al formulario de contacto.
+      Un único botón para no dispersar la atención del usuario.
+      Fondo oscuro para crear contraste visual fuerte antes del footer.
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <CallToAction
+    title="¿Necesita orientación personalizada?"
+    subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están disponibles para asesorarle. También puede enviarnos su consulta o sugerencia a través del formulario de contacto."
+    actions={[
+      {
+        variant: 'primary',
+        text:    'Contáctenos',
+        href:    '/contacto',
+        icon:    'tabler:headset',
+      },
+    ]}
+  />
+
+</Layout>
