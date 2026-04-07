@@ -1,73 +1,84 @@
 ---
 /**
- * @pagina  src/pages/herramientas/calculadora.astro
- * @ruta    /herramientas/calculadora
+ * @pagina   src/pages/[lang]/herramientas/calculadora.astro
+ * @ruta     /[lang]/herramientas/calculadora
  *
  * @descripcion
- * Página del módulo Calculadora Financiera. Declara los bloques de la
- * página y no sabe nada de Vue ni de cálculos — responsabilidad
- * exclusiva de CalculadoraWidget.astro y CalculadoraFinanciera.vue.
+ *   Página del módulo Calculadora Financiera.
+ *   Wrapper fino que delega toda la lógica reactiva a la isla Vue
+ *   CalculadoraFinanciera a través de Herramienta.astro.
  *
  * Estructura:
- *   BLOQUE 1 · HeroText            → tagline + title + subtitle
- *   BLOQUE 2 · CalculadoraWidget   → widget propio (bg-bpa-alt)
- *                                     Headline + isla Vue
- *   BLOQUE 3 · CallToAction        → cierre institucional
- *   BLOQUE 4 · PageNav             → prev: "Volver a Herramientas"
+ *   BLOQUE 1 · HeroText    → tagline + title + subtitle
+ *   BLOQUE 2 · Herramienta → isla Vue CalculadoraFinanciera (client:load)
+ *   BLOQUE 3 · CallToAction → siguiente paso natural tras calcular
+ *   BLOQUE 4 · PageNav     → prev: "Volver a Herramientas"
  *
- * @colecciones  ninguna — componente completamente autónomo
+ * @colecciones  ninguna en build time
+ *   tasas_intereses → consultada en el cliente por CalculadoraFinanciera.vue
  */
 
-import Layout              from '~/layouts/PageLayout.astro';
-import HeroText            from '~/components/widgets/HeroText.astro';
-import Herramienta from '~/components/sections/Herramienta.astro';
-import CallToAction        from '~/components/widgets/CallToAction.astro';
-import PageNav             from '~/components/widgets/PageNav.astro';
+import type { GetStaticPaths } from 'astro';
+
+import Layout       from '~/layouts/PageLayout.astro';
+import HeroText     from '~/components/widgets/HeroText.astro';
+import Herramienta  from '~/components/sections/Herramienta.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav      from '~/components/widgets/PageNav.astro';
+
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t        = useTranslations(lang);
+const p        = (slug: string) => getPermalink(slug, lang);
 
 const metadata = {
-  title: 'Calculadora Financiera — BPA Santiago de Cuba',
-  description:
-    'Calcule los intereses de su cuenta a la vista, el rendimiento de un depósito a plazo fijo y la cuota mensual de su crédito con el Banco Popular de Ahorro.',
+  title:       `${t('tools.calc.hero.title')} — BPA Santiago de Cuba`,
+  description: t('tools.calc.hero.subtitle'),
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Tagline "Herramientas" sitúa al usuario dentro del módulo.
+      El HeroText cumple el rol de Headline; por eso Herramienta.astro
+      no recibe title ni subtitle propios.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Herramientas"
-    title="Calculadora Financiera"
-    subtitle="Estime los intereses de su ahorro, el rendimiento de un depósito a plazo o la cuota mensual de su crédito. Tres herramientas de cálculo en una sola página."
+    tagline={t('tools.calc.hero.tagline')}
+    title={t('tools.calc.hero.title')}
+    subtitle={t('tools.calc.hero.subtitle')}
   />
 
-  <!-- BLOQUE 2 · CalculadoraWidget ────────────────────────────────────────────
-      Widget propio: WidgetWrapper + isla Vue CalculadoraFinanciera.
-      Sin Headline — el HeroText ya cumple ese rol en esta página.
-      max-w-2xl en el widget: la calculadora es más legible en columna
-      estrecha sin desperdiciar espacio en pantallas anchas.
+  <!-- BLOQUE 2 · Herramienta ───────────────────────────────────────────────────
+      Monta la isla Vue CalculadoraFinanciera con client:load.
+      El wrapper infiere max-w-2xl e inyecta el prop `lang` internamente.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Herramienta herramienta="calculadora" id="calculadora" />
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
-      El siguiente paso natural tras calcular es ir a la sucursal o
-      consultar las tasas de cambio.
+      El paso natural tras calcular es ir a la sucursal o ver el catálogo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Listo para abrir su producto financiero?"
-    subtitle="Nuestros especialistas le orientarán sobre los requisitos y condiciones vigentes de cada producto. Visítenos en cualquiera de nuestras sucursales."
+    title={t('tools.calc.cta.title')}
+    subtitle={t('tools.calc.cta.subtitle')}
     actions={[
       {
         variant: 'primary',
-        text:    'Localizar sucursal',
-        href:    '/herramientas/mapa',
+        text:    t('tools.calc.cta.map'),
+        href:    p('herramientas/mapa'),
         icon:    'tabler:map-pin',
       },
       {
         variant: 'secondary',
-        text:    'Ver productos',
-        href:    '/productos',
+        text:    t('tools.calc.cta.products'),
+        href:    p('productos'),
         icon:    'tabler:layout-grid',
       },
     ]}
@@ -77,7 +88,7 @@ const metadata = {
       Solo botón izquierdo: regresa al índice del módulo Herramientas.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: 'Volver a Herramientas', href: '/herramientas' }}
+    prev={{ text: t('tools.nav.back.tools'), href: p('herramientas') }}
   />
 
 </Layout>

@@ -1,150 +1,116 @@
 ---
 /**
- * @widget   src/components/sections/ContactoBPA.astro
+ * @seccion   src/components/sections/ContactoBPA.astro
  *
  * @descripcion
- * Widget de contacto personalizado del BPA. Sigue exactamente el patrón
- * de todos los widgets de AstroWind (WidgetWrapper + Headline + contenido),
- * adaptado a las necesidades específicas del banco:
+ *   Sección de contacto que encapsula el formulario de contacto y la información
+ *   de atención. Actúa como capa intermedia entre la página .astro y la isla Vue:
+ *     · Lee el idioma activo de la URL mediante getLangFromUrl()
+ *     · Lo propaga a la isla Vue como prop `lang`
+ *     · Obtiene las traducciones según el idioma detectado
+ *     · Genera permalinks localizados para los enlaces
+ *     · Recibe contenido dinámico mediante slots para titular y subtítulo
  *
- *   · WidgetWrapper  — padding, max-width, bg de sección, animación intersect
- *   · Headline       — tagline + title + subtitle (SSG, cero JS)
- *   · Grid 2/3 + 1/3 — layout generado en build
- *       IZQUIERDA: cabecera "Escríbanos" + <FormularioContacto client:load />
- *       DERECHA:   aside 100% estático — card sede provincial, nota 30 días
- *                  y enlace a canales. Generado en build, cero JS.
+ * @isla  FormularioContacto.vue
+ *        client:load porque es un elemento interactivo importante.
  *
- * @colecciones  Ninguna — el widget es estático. La isla Vue maneja PocketBase.
+ * @props
+ *   id?          string   — id HTML del WidgetWrapper (para anclas)
+ *   isDark?      boolean  — activa la variante oscura del wrapper
+ *   classes?     Record<string, string> — clases extra para el contenedor
+ *   tagline?     string   — tagline del titular (puede venir de slot)
+ *   title?       string   — título principal (puede venir de slot)
+ *   subtitle?    string   — subtítulo (puede venir de slot)
  *
- * NOTA: Los campos [COMPLETAR] del aside deben sustituirse por los datos
- * reales de la Dirección Provincial antes del despliegue en producción.
+ * @uso
+ *   <ContactoBPA id="contacto" />
  */
 
 import WidgetWrapper      from '~/components/ui/WidgetWrapper.astro';
-import Headline           from '~/components/ui/Headline.astro';
 import FormularioContacto from '~/components/vue/FormularioContacto.vue';
 import { Icon }           from 'astro-icon/components';
 import type { Widget }    from '~/types';
+import { useTranslations, getLangFromUrl } from '~/i18n/utils';
+import { getPermalink }   from '~/utils/permalinks';
 
-export interface Props extends Widget {
-  tagline?: string;
-  title?: string;
-  subtitle?: string;
-}
+// ── Props ─────────────────────────────────────────────────────────────────────
+type Props = Widget;
 
 const {
-  tagline  = await Astro.slots.render('tagline'),
-  title    = await Astro.slots.render('title'),
-  subtitle = await Astro.slots.render('subtitle'),
-
   id,
-  isDark   = false,
-  classes  = {},
-  bg       = await Astro.slots.render('bg'),
+  isDark = false,
+  classes = {},
 } = Astro.props;
+
+const bg = await Astro.slots.render('bg');
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
 ---
 
-<WidgetWrapper
-  id={id}
-  isDark={isDark}
-  containerClass={`max-w-6xl mx-auto ${classes?.container ?? ''}`}
-  bg={bg}
->
-
-  <Headline
-    tagline={tagline}
-    title={title}
-    subtitle={subtitle}
-    classes={classes?.headline as Record<string, string>}
-  />
+<WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-6xl mx-auto ${classes?.container ?? ''}`} bg={bg}>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-14 items-start">
 
-    <!-- ══ COLUMNA IZQUIERDA (2/3) — Formulario ══════════════════════════ -->
+    <!-- Formulario -->
     <div class="lg:col-span-2">
-
       <div class="mb-6">
         <h2 class="text-2xl font-bold font-heading text-default dark:text-default">
-          Escríbanos
+          {t('form.write.title')}
         </h2>
-        <p class="mt-1 text-muted text-sm">
-          Seleccione el tipo de comunicación que desea enviarnos.
-        </p>
+        <p class="mt-1 text-muted text-sm">{t('form.write.subtitle')}</p>
       </div>
-
-      <FormularioContacto client:load />
-
+      <FormularioContacto client:load lang={lang} />
     </div>
 
-    <!-- ══ COLUMNA DERECHA (1/3) — Aside estático ════════════════════════ -->
+    <!-- Aside estático -->
     <aside class="space-y-5 lg:pt-[4.5rem]">
 
-      <!-- Card: datos de contacto de la Sede Provincial -->
       <div class="rounded-xl border border-bpa-100 dark:border-bpa-amber-800 bg-bpa-50 dark:bg-bpa-950/60 p-6">
         <h3 class="text-base font-semibold font-heading text-default dark:text-default mb-4 flex items-center gap-2">
           <Icon name="tabler:building-bank" class="w-5 h-5 text-primary shrink-0" />
-          Sede Provincial
+          {t('contact.aside.title')}
         </h3>
-
         <ul class="space-y-3.5 text-sm text-muted dark:text-muted">
-
-          <!-- Dirección -->
           <li class="flex gap-3">
             <Icon name="tabler:map-pin" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
             <span>[COMPLETAR: Calle, número, entre calles, Santiago de Cuba]</span>
           </li>
-
-          <!-- Teléfonos -->
           <li class="flex gap-3">
             <Icon name="tabler:phone" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
             <span>
-              Recepción: <strong class="text-default dark:text-default">[COMPLETAR]</strong><br/>
-              Atención al Cliente: <strong class="text-default dark:text-default">[COMPLETAR]</strong>
+              {lang === 'es' ? 'Recepción' : 'Reception'}: <strong class="text-default dark:text-default">[COMPLETAR]</strong><br/>
+              {lang === 'es' ? 'Atención al Cliente' : 'Customer Service'}: <strong class="text-default dark:text-default">[COMPLETAR]</strong>
             </span>
           </li>
-
-          <!-- Correo -->
           <li class="flex gap-3">
             <Icon name="tabler:mail" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
             <span>[COMPLETAR: atencion@bpa.scu.cu]</span>
           </li>
-
-          <!-- Horario -->
           <li class="flex gap-3">
             <Icon name="tabler:clock" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
             <span>
-              Lunes a Viernes<br/>
+              {lang === 'es' ? 'Lunes a Viernes' : 'Monday to Friday'}<br/>
               <strong class="text-default dark:text-default">[COMPLETAR: 8:00 am – 4:00 pm]</strong>
             </span>
           </li>
-
         </ul>
       </div>
 
-      <!-- Card: nota sobre el plazo legal de respuesta -->
       <div class="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-5 text-sm text-amber-800 dark:text-amber-300">
         <p class="font-semibold mb-1.5 flex items-center gap-2">
           <Icon name="tabler:info-circle" class="w-4 h-4 shrink-0" />
-          Plazo de respuesta
+          {t('contact.aside.deadline.title')}
         </p>
-        <p>
-          Las reclamaciones formales tienen garantizado un plazo máximo de
-          <strong>30 días hábiles</strong>. Si no recibe contestación en ese
-          período, puede escalar directamente a la Dirección Provincial.
-        </p>
+        <p set:html={t('contact.aside.deadline.text')} />
       </div>
 
-      <!-- Enlace rápido a Canales de Atención -->
-      <a
-        href="/sobre-nosotros/nuestra-red/canales-de-atencion"
-        class="flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline"
-      >
+      <a href={p('sobre-nosotros/nuestra-red/canales-de-atencion')}
+        class="flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline">
         <Icon name="tabler:arrow-right" class="w-4 h-4 shrink-0" />
-        Ver todos los canales de atención
+        {t('contact.aside.channels.link')}
       </a>
 
     </aside>
-
   </div>
-
 </WidgetWrapper>

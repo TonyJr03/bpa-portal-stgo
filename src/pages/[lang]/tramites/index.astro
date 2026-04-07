@@ -1,17 +1,18 @@
 ---
 /**
- * @pagina     Trámites — Listado General
- * @ruta       /tramites
- * @descripcion Página de índice que lista todos los trámites disponibles en el
+ * @pagina   src/pages/[lang]/tramites/index.astro
+ * @ruta     /es/tramites  |  /en/tramites
+ *@descripcion Página de índice que lista todos los trámites disponibles en el
  *              BPA Santiago de Cuba. Cada trámite se presenta como una tarjeta
  *              interactiva con icono, nombre y descripción corta. Al hacer clic
  *              se redirige a la página de detalle del trámite (/tramites/[tramite]).
  *
  * @colecciones
- *   - tramites  →  getFullList, filtro: publicado = true, orden: orden ASC
+ *   tramites → publicado = true, sort: orden
+ *   Campos nuevos: nombre_en, descripcion_en
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import Layout          from '~/layouts/PageLayout.astro';
 import HeroText        from '~/components/widgets/HeroText.astro';
 import Features2       from '~/components/widgets/Features2.astro';
@@ -19,49 +20,65 @@ import CallToAction    from '~/components/widgets/CallToAction.astro';
 import PageNav         from '~/components/widgets/PageNav.astro';
 import DatabaseError   from '~/components/ui/DatabaseError.astro';
 import EmptyCollection from '~/components/ui/EmptyCollection.astro';
-import { pb } from '~/lib/pocketbase';
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
+import { LANGS, useTranslations, translateField } from '~/i18n/utils';
+import { getPermalink }                           from '~/utils/permalinks';
+import { pb }                                     from '~/lib/pocketbase';
+
 interface Tramite {
-  id: string;
-  nombre: string;
-  slug: string;
-  descripcion: string;
-  icono: string;
-  orden: number;
-  publicado: boolean;
+  id:            string;
+  nombre:        string;
+  nombre_en:     string;
+  slug:          string;
+  descripcion:   string;
+  descripcion_en:string;
+  icono:         string;
+  orden:         number;
+  publicado:     boolean;
 }
 
-// ── Carga de datos desde PocketBase ──────────────────────────────────────────
-let tramites: Tramite[] = [];
-let dbError = false;
+export const getStaticPaths = (async () => {
+  let tramites: Tramite[] = [];
+  let dbError = false;
 
-try {
-  tramites = await pb.collection('tramites').getFullList<Tramite>({
-    filter: 'publicado = true',
-    sort:   'orden',
-  });
-} catch {
-  dbError = true;
-}
+  try {
+    tramites = await pb.collection('tramites').getFullList<Tramite>({
+      filter: 'publicado = true',
+      sort:   'orden',
+    });
+  } catch {
+    dbError = true;
+  }
 
-// ── Mapeo al formato que espera Features2 ─────────────────────────────────────
-const items = tramites.map((tramite) => ({
-  title:       tramite.nombre,
-  description: tramite.descripcion,
-  icon:        `tabler:${tramite.icono}`,
+  // Genera una ruta por cada combinación [lang, tramite]
+  // Si PocketBase no responde, genera las rutas de idioma sin datos
+  return LANGS.map((lang) => ({
+    params: { lang },
+    props:  { tramites, dbError },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { tramites, dbError } = Astro.props as Props;
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
+
+const items = tramites.map((tr) => ({
+  title:       translateField(lang, tr.nombre, tr.nombre_en),
+  description: translateField(lang, tr.descripcion, tr.descripcion_en),
+  icon:        `tabler:${tr.icono}`,
   callToAction: {
     variant: 'link' as const,
-    text:    'Ver más',
-    href:    `/tramites/${tramite.slug}`,
+    text:    t('procedures.view'),
+    href:    p(`tramites/${tr.slug}`),
     icon:    'tabler:arrow-right',
   },
 }));
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
-  title:       'Trámites — BPA Santiago de Cuba',
-  description: 'Consulte los trámites disponibles en el Banco Popular de Ahorro de Santiago de Cuba: solicitudes, requisitos, pasos y documentos necesarios.',
+  title: `${t('procedures.hero.title')} — BPA Santiago de Cuba`,
+  description: t('procedures.hero.subtitle'),
 };
 ---
 
@@ -72,8 +89,8 @@ const metadata = {
       Transmite al usuario de qué trata esta área del portal.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    title="Trámites"
-    subtitle="Consulte los procedimientos disponibles en nuestra sucursal. Conozca los requisitos, los pasos a seguir y los documentos que necesita antes de visitar el banco."
+    title={t('procedures.hero.title')}
+    subtitle={t('procedures.hero.subtitle')}
   />
 
   <!-- BLOQUE 2 · Features2 ─────────────────────────────────────────────────────
@@ -81,16 +98,23 @@ const metadata = {
       Se muestra DatabaseError si PB no respondió, EmptyCollection si no hay datos.
   ─────────────────────────────────────────────────────────────────────────── -->
   {dbError ? (
-    <DatabaseError coleccion="tramites" />
+    <DatabaseError
+      coleccion="tramites"
+      mensaje={lang === 'es'
+        ? 'No pudimos acceder a la información de los trámites. Por favor, intente más tarde o contacte con nosotros.'
+        : 'We could not access the procedure information. Please try again later or contact us.'}
+    />
   ) : items.length === 0 ? (
     <EmptyCollection
       coleccion="tramites"
-      mensaje="No hay trámites publicados en este momento. Consulte con nosotros si necesita información sobre un procedimiento específico."
+      mensaje={lang === 'es'
+        ? 'No hay trámites publicados en este momento. Consulte con nosotros si necesita información sobre un procedimiento específico.'
+        : 'No procedures are currently published. Contact us if you need information about a specific procedure.'}
       icono="tabler:clipboard-off"
     />
   ) : (
     <Features2
-      tagline="Seleccione un trámite"
+      tagline={t('procedures.tagline')}
       columns={3}
       items={items}
     />
@@ -101,23 +125,19 @@ const metadata = {
       sobre algún trámite que no encuentre en el listado.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿No encontró lo que buscaba?"
-    subtitle="Contáctenos y un representante del banco le orientará sobre el trámite que necesita realizar."
-    actions={[
-      {
-        variant: 'primary',
-        text:    'Contáctenos',
-        href:    '/contacto',
-        icon:    'tabler:headset',
-      },
-    ]}
+    title={t('procedures.cta.title')}
+    subtitle={t('procedures.cta.subtitle')}
+    actions={[{
+      variant: 'primary',
+      text:    t('procedures.cta.button'),
+      href:    p('contacto'),
+      icon:    'tabler:headset',
+    }]}
   />
 
   <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
       Navegación contextual. Solo botón izquierdo: regresa al inicio.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: 'Volver a Inicio', href: '/' }}
-  />
+  <PageNav prev={{ text: t('procedures.nav.prev'), href: p('') }} />
 
 </Layout>

@@ -1,7 +1,8 @@
 ---
 /**
- * @pagina  src/pages/sobre-nosotros/index.astro
- * @ruta    /sobre-nosotros
+ * @pagina  src/pages/[lang]/sobre-nosotros/index.astro
+ * @ruta    es/sobre-nosotros
+ *          en/sobre-nosotros
  *
  * @descripcion
  * Página de entrada al módulo "Sobre Nosotros" del portal institucional
@@ -27,7 +28,7 @@
  * @colecciones  Ninguna — contenido 100 % hardcodeado.
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
+import type { GetStaticPaths } from 'astro';
 import Layout    from '~/layouts/PageLayout.astro';
 import HeroText  from '~/components/widgets/HeroText.astro';
 import Content   from '~/components/widgets/Content.astro';
@@ -36,92 +37,74 @@ import PageNav   from '~/components/widgets/PageNav.astro';
 import SvgMision from '~/components/icons/SvgMision.astro';
 import SvgVision from '~/components/icons/SvgVision.astro';
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
+
 const metadata = {
-  title: 'Sobre Nosotros — BPA Santiago de Cuba',
-  description:
-    'Conozca el Banco Popular de Ahorro de Santiago de Cuba: nuestra Misión, Visión, historia institucional y la red de oficinas que nos acerca a cada santiaguero.',
+  title: `${t('about.hero.title')} — BPA Santiago de Cuba`,
+  description: t('about.hero.subtitle'),
 };
 ---
 
 <Layout metadata={metadata}>
 
   <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
-      Entrada al módulo. Sin tagline — este es el nivel raíz.
-      El subtítulo presenta al banco en una sola frase antes de que
-      el usuario entre en cualquiera de las subsecciones.
+      Entrada al módulo. 
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    title="Sobre Nosotros"
-    subtitle="Más de cuatro décadas sirviendo a los cubanos. Conozca quiénes somos, qué nos mueve, de dónde venimos y cómo estamos presentes en cada rincón de Santiago de Cuba."
+    title={t('about.hero.title')}
+    subtitle={t('about.hero.subtitle')}
   />
 
   <!-- BLOQUE 2 · Content — Misión ──────────────────────────────────────────────
       SVG a la derecha, texto a la izquierda (sin isReversed).
-      Fondo bg-bpa-alt: abre el recorrido visual del módulo con color.
-      El callToAction dentro de items[] invita a leer la página completa.
-      Extracto del texto oficial de la Misión — lo suficiente para presentar,
-      sin reemplazar la página dedicada.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Content
-    tagline="Nuestra razón de ser"
-    title="Misión"
-    content="
-      <p>
-        El BPA es una institución financiera destinada a <strong>captar y colocar
-        recursos financieros</strong> a través de productos y servicios, con una
-        orientación de banca universal, líder en el segmento de personas naturales.
-      </p>
-    "
-    items={[
-      {
-        title: 'Leer nuestra Misión completa',
-        description: 'Conozca los seis principios que guían cada gestión del BPA y las funciones que nos comprometen con usted.',
-        icon: 'tabler:arrow-right',
-        callToAction: {
-          variant: 'link',
-          text: 'Ver Misión',
-          href: '/sobre-nosotros/mision',
-          icon: 'tabler:arrow-right',
-        },
+    tagline={t('about.mission.tagline')}
+    title={t('about.mission.title')}
+    content={`<p>${t('about.mission.content.p1')}</p>`}
+    items={[{
+      title:       t('about.mission.readMore'),
+      description: t('about.mission.readMore.desc'),
+      icon:        'tabler:arrow-right',
+      callToAction: {
+        variant: 'link',
+        text:    t('about.mission.readMore.link'),
+        href:    p('sobre-nosotros/mision'),
+        icon:    'tabler:arrow-right',
       },
-    ]}
+    }]}
   >
     <SvgMision slot="image" />
   </Content>
 
   <!-- BLOQUE 3 · Content — Visión ──────────────────────────────────────────────
       isReversed=true: SVG a la izquierda, texto a la derecha.
-      Sin fondo propio: el blanco contrasta con el bg-bpa-alt del bloque anterior
-      y con el bg-bpa-alt del Features2 que viene a continuación,
-      creando el ritmo alternado color/blanco/color.
-      Mismo patrón: extracto oficial + callToAction hacia la página completa.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Content
     isReversed
-    tagline="Hacia dónde vamos"
-    title="Visión"
-    content="
-      <p>
-        El BPA es la institución financiera <strong>líder en la atención a las
-        personas naturales</strong>, con un control interno razonable y en
-        fortalecimiento constante. Mantiene la mayor red de sucursales en el
-        país, dotadas de un sistema informático único.
-      </p>
-    "
-    items={[
-      {
-        title: 'Leer nuestra Visión completa',
-        description: 'Descubra los cuatro compromisos estratégicos que definen el rumbo del BPA hacia el futuro.',
-        icon: 'tabler:arrow-right',
-        callToAction: {
-          variant: 'link',
-          text: 'Ver Visión',
-          href: '/sobre-nosotros/vision',
-          icon: 'tabler:arrow-right',
-        },
+    tagline={t('about.vision.tagline')}
+    title={t('about.vision.title')}
+    content={`<p>${t('about.vision.content.p1')}</p>`}
+    items={[{
+      title:       t('about.vision.readMore'),
+      description: t('about.vision.readMore.desc'),
+      icon:        'tabler:arrow-right',
+      callToAction: {
+        variant: 'link',
+        text:    t('about.vision.readMore.link'),
+        href:    p('sobre-nosotros/vision'),
+        icon:    'tabler:arrow-right',
       },
-    ]}
+    }]}
   >
     <SvgVision slot="image" />
   </Content>
@@ -129,49 +112,37 @@ const metadata = {
   <!-- BLOQUE 4 · Features2 — Historia + Nuestra Red ───────────────────────────
       Dos tarjetas de acceso rápido para las secciones de menor peso narrativo
       en esta página de presentación.
-      columns=2: una tarjeta por columna en desktop, apiladas en móvil.
-      Fondo bg-bpa-alt: cierra el módulo con el mismo tono que lo abrió,
-      creando simetría visual con el bloque 2.
-      callToAction variant='link' → discreto, no compite con los Content.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features2
-    tagline="Conózcanos más"
+    tagline={t('about.more.tagline')}
     columns={2}
     items={[
       {
-        title: 'Historia',
-        description:
-          'Desde su fundación en 1983 mediante el Decreto-Ley No. 69 hasta su consolidación como banco universal en 2022, el BPA ha recorrido cuatro décadas de transformación al servicio de los cubanos. Conozca los hitos que forjaron la institución que somos hoy.',
-        icon: 'tabler:timeline',
+        title:       t('about.history.title'),
+        description: t('about.history.desc'),
+        icon:        'tabler:timeline',
         callToAction: {
           variant: 'link',
-          text: 'Ver Historia',
-          href: '/sobre-nosotros/historia',
-          icon: 'tabler:arrow-right',
+          text:    t('about.history.link'),
+          href:    p('sobre-nosotros/historia'),
+          icon:    'tabler:arrow-right',
         },
       },
       {
-        title: 'Nuestra Red',
-        description:
-          'El BPA está presente en cada municipio de Santiago de Cuba a través de su Dirección Provincial, una extensa red de sucursales y cajas de ahorro, y cajeros automáticos distribuidos en los principales puntos de la provincia. Descubra cómo acercarnos.',
-        icon: 'tabler:map-pins',
+        title:       t('about.network.title'),
+        description: t('about.network.desc'),
+        icon:        'tabler:map-pins',
         callToAction: {
           variant: 'link',
-          text: 'Ver Nuestra Red',
-          href: '/sobre-nosotros/nuestra-red',
-          icon: 'tabler:arrow-right',
+          text:    t('about.network.link'),
+          href:    p('sobre-nosotros/nuestra-red'),
+          icon:    'tabler:arrow-right',
         },
       },
     ]}
   />
 
-  <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
-      Sin prev ni next explícitos: esta es la página raíz del módulo.
-      El usuario navega hacia adentro mediante los botones de cada bloque.
-      Solo se añade el prev hacia Inicio para dar salida hacia el portal.
-  ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: 'Volver a Inicio', href: '/' }}
-  />
+  <!-- BLOQUE 5 · PageNav ─────────────────────────────────────────────────────── -->
+  <PageNav prev={{ text: t('about.nav.back'), href: p('') }} />
 
 </Layout>

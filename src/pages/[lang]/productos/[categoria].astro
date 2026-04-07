@@ -1,10 +1,9 @@
 ---
 /**
- * @pagina   src/pages/productos/[categoria].astro
- * @ruta     /productos/[categoria]
- * @ejemplo  /productos/banca-personal
+ * @pagina   src/pages/[lang]/productos/[categoria].astro
+ * @ruta     /es/productos/[categoria]  |  /en/productos/[categoria]
  *
- * @descripcion
+ *  @descripcion
  * Página dinámica generada en build time para cada categoría de productos.
  * getStaticPaths itera sobre las 5 categorías definidas en src/data/categorias.ts
  * y por cada una carga sus productos publicados desde PocketBase.
@@ -14,11 +13,10 @@
  * slug directamente — sin necesidad de IDs de PocketBase.
  *
  * @colecciones
- *   productos → nombre, slug, categoria (Select = slug), descripcion,
- *               icono, orden, publicado
+ *   productos → categoria = slug && publicado = true
+ *   Campos nuevos: nombre_en, descripcion_en
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import Layout          from '~/layouts/PageLayout.astro';
 import HeroText        from '~/components/widgets/HeroText.astro';
@@ -27,74 +25,70 @@ import CallToAction    from '~/components/widgets/CallToAction.astro';
 import PageNav         from '~/components/widgets/PageNav.astro';
 import EmptyCollection from '~/components/ui/EmptyCollection.astro';
 import DatabaseError   from '~/components/ui/DatabaseError.astro';
-import { CATEGORIAS }  from '~/data/categorias';
-import type { Categoria } from '~/data/categorias';
-import { pb, fetchParaBuild } from '~/lib/pocketbase';
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
+import { LANGS, useTranslations, translateField } from '~/i18n/utils';
+import { getPermalink }                           from '~/utils/permalinks';
+import { pb, fetchParaBuild }                     from '~/lib/pocketbase';
+import { CATEGORIAS }                             from '~/data/categorias';
+
 interface Producto {
-  id: string;
-  nombre: string;
-  slug: string;
-  descripcion: string;
-  icono: string;
-  orden: number;
-  publicado: boolean;
-  /** Valor del campo Select en PocketBase — coincide con el slug de la categoría. */
-  categoria: string;
+  id:             string;
+  nombre:         string;
+  nombre_en:      string;
+  slug:           string;
+  descripcion:    string;
+  descripcion_en: string;
+  icono:          string;
+  orden:          number;
+  publicado:      boolean;
+  categoria:      string;
 }
 
-// ── getStaticPaths ─────────────────────────────────────────────────────────────
-// Itera sobre las 5 categorías estáticas y carga los productos de cada una.
-// Toda la lógica de carga ocurre aquí. Cero consultas al renderizar.
 export const getStaticPaths = (async () => {
   const paths = await Promise.all(
-    CATEGORIAS.map(async (cat: Categoria) => {
-      // fetchParaBuild devuelve [] si PocketBase no está disponible (ej: CI/CD),
-      // evitando que el build falle. dbError=true activa el componente DatabaseError.
+    CATEGORIAS.map(async (cat) => {
       const productos = await fetchParaBuild<Producto>(
         () => pb.collection('productos').getFullList<Producto>({
-          // Filtra por el valor del campo Select, que es el slug de la categoría
           filter: `categoria = "${cat.slug}" && publicado = true`,
           sort:   'orden',
         }),
         `productos/${cat.slug}`
       );
 
-      // Si PocketBase no respondió, productos será [] y dbError lo refleja en la UI
       const dbError = productos.length === 0;
 
-      return {
-        params: { categoria: cat.slug },
-        props:  { categoria: cat, productos, dbError },
-      };
+      // Una ruta por idioma × por categoría
+      return LANGS.map((lang) => ({
+        params: { lang, categoria: cat.slug },
+        props:  { productos, dbError },
+      }));
     })
   );
 
-  return paths;
+  return paths.flat();
 }) satisfies GetStaticPaths;
 
-// ── Props ─────────────────────────────────────────────────────────────────────
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-const { categoria, productos, dbError } = Astro.props;
+const { productos, dbError } = Astro.props as Props;
+const { lang, categoria } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
 
-// ── Mapeo a Item[] para Features2 ─────────────────────────────────────────────
 const items = productos.map((prod) => ({
-  title:       prod.nombre,
-  description: prod.descripcion,
+  title:       translateField(lang, prod.nombre, prod.nombre_en),
+  description: translateField(lang, prod.descripcion, prod.descripcion_en),
   icon:        `tabler:${prod.icono}`,
   callToAction: {
-    text:    'Ver detalles',
-    href:    `/productos/${categoria.slug}/${prod.slug}`,
+    text:    t('products.view'),
+    href:    p(`productos/${categoria}/${prod.slug}`),
     variant: 'link' as const,
     icon:    'tabler:arrow-right',
   },
 }));
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
-  title:       `${categoria.nombre} — BPA Santiago de Cuba`,
-  description: categoria.descripcion,
+  title:       `${t(`cat.${categoria}.nombre`)} — BPA Santiago de Cuba`,
+  description: t(`cat.${categoria}.desc`),
 };
 ---
 
@@ -105,9 +99,9 @@ const metadata = {
       Title = nombre de la categoría. Subtitle = descripción de la categoría.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Productos y Servicios"
-    title={categoria.nombre}
-    subtitle={categoria.descripcion}
+    tagline={t('products.tagline.parent')}
+    title={t(`cat.${categoria}.nombre`)}
+    subtitle={t(`cat.${categoria}.desc`)}
   />
 
   <!-- BLOQUE 2 · Features2 / estados ──────────────────────────────────────────
@@ -117,17 +111,24 @@ const metadata = {
         3. Con productos     → Features2 con el grid
   ─────────────────────────────────────────────────────────────────────────── -->
   {dbError ? (
-    <DatabaseError coleccion="productos" />
+    <DatabaseError
+      coleccion="productos"
+      mensaje={lang === 'es'
+        ? 'No pudimos acceder a la información de los productos. Por favor, intente más tarde o contacte con nosotros.'
+        : 'We could not access the product information. Please try again later or contact us.'}
+    />
   ) : items.length === 0 ? (
     <EmptyCollection
       coleccion="productos"
-      mensaje={`No hay productos publicados en ${categoria.nombre} por el momento.`}
+      mensaje={lang === 'es'
+        ? `No hay productos publicados en ${t(`cat.${categoria}.nombre`)} por el momento.`
+        : `No products are currently published in ${t(`cat.${categoria}.nombre`)}.`}
       icono="tabler:package-off"
     />
   ) : (
     <Features2
       id="productos"
-      tagline="Seleccione un producto"
+      tagline={t('products.select.tagline')}
       columns={3}
       items={items}
     />
@@ -137,23 +138,19 @@ const metadata = {
       Cierre institucional consistente con el resto del módulo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Necesita orientación personalizada?"
-    subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están disponibles para asesorarle sin compromiso."
-    actions={[
-      {
-        variant: 'primary',
-        text:    'Contáctenos',
-        href:    '/contacto',
-        icon:    'tabler:headset',
-      },
-    ]}
+    title={t('products.cta.title')}
+    subtitle={t('products.cta.subtitle')}
+    actions={[{
+      variant: 'primary',
+      text:    t('products.cta.button'),
+      href:    p('contacto'),
+      icon:    'tabler:headset',
+    }]}
   />
 
   <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
       Navegación contextual: regresa al índice de Productos y Servicios.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: 'Volver a Productos y Servicios', href: '/productos' }}
-  />
+  <PageNav prev={{ text: t('products.nav.back'), href: p('productos') }} />
 
 </Layout>

@@ -1,7 +1,7 @@
 ---
 /**
- * @pagina src/pages/productos/index.astro
- * @ruta   /productos
+ * @pagina   src/pages/[lang]/productos/index.astro
+ * @ruta     /es/productos  |  /en/productos
  *
  * @descripcion
  * Página de índice de "Productos y Servicios".
@@ -12,31 +12,40 @@
  * no se consulta PocketBase en esta página.
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
+import type { GetStaticPaths } from 'astro';
 import Layout       from '~/layouts/PageLayout.astro';
 import HeroText     from '~/components/widgets/HeroText.astro';
 import Features2    from '~/components/widgets/Features2.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
 import PageNav      from '~/components/widgets/PageNav.astro';
-import { CATEGORIAS } from '~/data/categorias';
 
-// ── Mapeo a Item[] para Features2 ─────────────────────────────────────────────
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+import { CATEGORIAS }              from '~/data/categorias';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
+
 const items = CATEGORIAS.map((cat) => ({
-  title:       cat.nombre,
-  description: cat.descripcion,
+  title:       t(`cat.${cat.slug}.nombre`),
+  description: t(`cat.${cat.slug}.desc`),
   icon:        `tabler:${cat.icono}`,
   callToAction: {
-    text:    'Ver productos',
-    href:    `/productos/${cat.slug}`,
     variant: 'link' as const,
+    text:    t('products.view'),
+    href:    p(`productos/${cat.slug}`),
     icon:    'tabler:arrow-right',
   },
 }));
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
-  title:       'Productos y Servicios — BPA Santiago de Cuba',
-  description: 'Conozca toda la cartera de productos y servicios del Banco Popular de Ahorro en Santiago de Cuba: ahorro, créditos, banca electrónica, servicios internacionales y más.',
+  title: `${t('products.hero.title')} — BPA Santiago de Cuba`,
+  description: t('products.hero.subtitle'),
 };
 ---
 
@@ -46,8 +55,8 @@ const metadata = {
       Título y subtítulo institucional de la sección. Sin tagline.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    title="Productos y Servicios"
-    subtitle="Conozca la cartera completa de productos financieros diseñados para personas naturales, empresas y la comunidad en general."
+    title={t('products.hero.title')}
+    subtitle={t('products.hero.subtitle')}
   />
 
   <!-- BLOQUE 2 · Features2 ─────────────────────────────────────────────────────
@@ -55,7 +64,7 @@ const metadata = {
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features2
     id="categorias"
-    tagline="Seleccione una categoría"
+    tagline={t('products.tagline')}
     columns={3}
     items={items}
   />
@@ -64,23 +73,19 @@ const metadata = {
       Cierre institucional. Un solo botón hacia Contacto.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿No sabe cuál producto es el adecuado para usted?"
-    subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están disponibles para orientarle sin compromiso."
-    actions={[
-      {
-        variant: 'primary',
-        text:    'Contáctenos',
-        href:    '/contacto',
-        icon:    'tabler:headset',
-      },
-    ]}
+    title={t('products.cta.title')}
+    subtitle={t('products.cta.subtitle')}
+    actions={[{
+      variant: 'primary',
+      text:    t('products.cta.button'),
+      href:    p('contacto'),
+      icon:    'tabler:headset',
+    }]}
   />
 
   <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
       Botón izquierdo para volver a Inicio.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: 'Volver a Inicio', href: '/' }}
-  />
+  <PageNav prev={{ text: t('products.nav.prev'), href: p('') }} />
 
 </Layout>

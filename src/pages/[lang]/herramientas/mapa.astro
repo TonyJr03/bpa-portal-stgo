@@ -1,82 +1,98 @@
 ---
 /**
- * @pagina   src/pages/herramientas/mapa.astro
- * @ruta     /herramientas/mapa
+ * @pagina   src/pages/[lang]/herramientas/mapa.astro
+ * @ruta     /[lang]/herramientas/mapa
  *
  * @descripcion
- *   Página de la herramienta "Mapa de Oficinas".
- *   Muestra el mapa SVG interactivo de las sucursales, cajas de ahorro
- *   y cajeros ATM del BPA en la provincia de Santiago de Cuba.
+ *   Página del módulo Mapa de Oficinas.
+ *   Wrapper fino que delega la lógica reactiva a MapaSucursales.vue
+ *   a través de Herramienta.astro.
  *
- * @bloques
- *   1. HeroText  — Título + subtítulo de sección
- *   2. MapaWidget — Isla Vue con mapa + panel de lista (contenido dinámico)
- *   3. CallToAction — Enlace al directorio de canales de atención
- *   4. PageNav — Navegación entre herramientas
+ *   Sin Leaflet, sin OpenStreetMap en la declaración de la página.
+ *   Todo eso lo gestiona MapaSucursales.vue en el cliente.
  *
- * @no_CDN  Sin Leaflet, sin OpenStreetMap, sin APIs externas.
- *          El mapa es un SVG local con paths interactivos.
+ * Estructura:
+ *   BLOQUE 1 · HeroText    → tagline + title + subtitle
+ *   BLOQUE 2 · Herramienta → isla Vue MapaSucursales (client:load)
+ *   BLOQUE 3 · CallToAction → información adicional sobre oficinas
+ *   BLOQUE 4 · PageNav     → prev: "Volver a Herramientas"
+ *
+ * @colecciones  ninguna en build time
+ *   puntos_de_atencion → consultada en el cliente por MapaSucursales.vue
+ *   disponibilidad_at  → ídem
  */
 
-import Layout         from '~/layouts/PageLayout.astro';
-import HeroText       from '~/components/widgets/HeroText.astro';
-import Herramienta from '~/components/sections/Herramienta.astro';
-import CallToAction   from '~/components/widgets/CallToAction.astro';
-import PageNav        from '~/components/widgets/PageNav.astro';
+import type { GetStaticPaths } from 'astro';
 
-const meta = {
-  title:       'Mapa de Oficinas — BPA Santiago de Cuba',
-  description: 'Localice sucursales, cajas de ahorro y cajeros automáticos del Banco Popular de Ahorro en la provincia de Santiago de Cuba.',
+import Layout       from '~/layouts/PageLayout.astro';
+import HeroText     from '~/components/widgets/HeroText.astro';
+import Herramienta  from '~/components/sections/Herramienta.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav      from '~/components/widgets/PageNav.astro';
+
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t        = useTranslations(lang);
+const p        = (slug: string) => getPermalink(slug, lang);
+
+const metadata = {
+  title:       `${t('tools.map.hero.title')} — BPA Santiago de Cuba`,
+  description: t('tools.map.hero.subtitle'),
 };
 ---
 
-<Layout metadata={meta}>
+<Layout metadata={metadata}>
 
   <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
-      Hero sin imagen, centrado, texto institucional.
-      tagline vincula con la sección Herramientas para orientación contextual.
+      Tagline "Herramientas" sitúa al usuario dentro del módulo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Herramientas"
-    title="Mapa de Oficinas"
-    subtitle="Localice la sucursal, caja de ahorro o cajero automático del BPA más cercano a usted en la provincia de Santiago de Cuba. Filtre por municipio o tipo de punto de atención."
+    tagline={t('tools.map.hero.tagline')}
+    title={t('tools.map.hero.title')}
+    subtitle={t('tools.map.hero.subtitle')}
   />
 
-  <!-- BLOQUE 2 · MapaWidget ────────────────────────────────────────────────────
-      Isla Vue con el mapa SVG interactivo.
-      Se pasa bg-white para diferenciar visualmente del HeroText anterior.
-      No se pasa título porque ya lo muestra el HeroText superior.
+  <!-- BLOQUE 2 · Herramienta ───────────────────────────────────────────────────
+      Monta la isla Vue MapaSucursales con client:load.
+      El wrapper infiere max-w-6xl (el mapa necesita todo el ancho).
+      El prop `lang` se inyecta internamente en Herramienta.astro.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <Herramienta herramienta="mapa" id="mapa" /> 
+  <Herramienta herramienta="mapa" id="mapa" />
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
-      Derivación a la página de canales de atención donde están los teléfonos
-      y horarios generales de cada tipo de oficina.
+      Si el usuario necesita más información sobre las oficinas que
+      la que ofrece el mapa (horarios generales, teléfonos, etc.).
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Necesita más información sobre las oficinas?"
-    subtitle="Consulte los horarios generales, teléfonos institucionales y canales de atención disponibles en toda la provincia."
+    title={t('tools.map.cta.title')}
+    subtitle={t('tools.map.cta.subtitle')}
     actions={[
       {
         variant: 'primary',
-        text:    'Ver canales de atención',
-        href:    '/sobre-nosotros/nuestra-red/canales-de-atencion',
+        text:    t('tools.map.cta.channels'),
+        href:    p('sobre-nosotros/nuestra-red/canales-de-atencion'),
         icon:    'tabler:phone',
       },
       {
         variant: 'secondary',
-        text:    'Sobre nuestra red',
-        href:    '/sobre-nosotros/nuestra-red/sucursales',
+        text:    t('tools.map.cta.network'),
+        href:    p('sobre-nosotros/nuestra-red/sucursales'),
         icon:    'tabler:building-bank',
       },
     ]}
   />
 
   <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
-      Volver a herramientas
+      Solo botón izquierdo: regresa al índice del módulo Herramientas.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: 'Volver a Herramientas', href: '/herramientas' }}
+    prev={{ text: t('tools.nav.back.tools'), href: p('herramientas') }}
   />
 
 </Layout>

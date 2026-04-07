@@ -1,8 +1,8 @@
 ---
 /**
- * @pagina   src/pages/productos/[categoria]/[producto].astro
- * @ruta     /productos/[categoria]/[producto]
- * @ejemplo  /productos/banca-personal/depositos-plazo-fijo
+ * @pagina   src/pages/[lang]/productos/[categoria]/[producto].astro
+ * @ruta     /es/productos/[categoria]/[producto]
+ *           /en/productos/[categoria]/[producto]
  *
  * @descripcion
  * Página de detalle de un producto o servicio individual. Muestra el contenido
@@ -18,16 +18,11 @@
  * cada producto carga sus documentos descargables. Todo el fetching ocurre aquí.
  *
  * @colecciones
- *   productos  → nombre, slug, categoria (Select = slug), descripcion,
- *                contenido (Plain Text / Markdown), icono, orden, publicado
- *   documentos → nombre, archivo, referencia, tipo, orden,
- *                collectionId, collectionName
- *                Filtro: referencia = "{producto.slug}" && tipo = "producto"
- *
- * @patron  getStaticPaths: TODO el fetching ocurre aquí. Cero consultas al renderizar.
+ *   productos  → categoria = slug && publicado = true
+ *   documentos → referencia = slug && tipo = "producto"
+ *   Campos nuevos: nombre_en, descripcion_en, contenido_en
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { marked }               from 'marked';
 import Layout                   from '~/layouts/PageLayout.astro';
@@ -38,41 +33,36 @@ import CallToAction             from '~/components/widgets/CallToAction.astro';
 import PageNav                  from '~/components/widgets/PageNav.astro';
 import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
-import { CATEGORIAS }           from '~/data/categorias';
-import type { Categoria }       from '~/data/categorias';
-import { pb, fetchParaBuild }   from '~/lib/pocketbase';
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
+import { LANGS, useTranslations, translateField } from '~/i18n/utils';
+import { getPermalink }                           from '~/utils/permalinks';
+import { pb, fetchParaBuild }                     from '~/lib/pocketbase';
+import { CATEGORIAS_SLUGS }                       from '~/data/categorias';
+
 interface Producto {
-  id: string;
-  nombre: string;
-  slug: string;
-  descripcion: string;
-  contenido: string;
-  icono: string;
-  orden: number;
-  publicado: boolean;
-  /** Valor del campo Select en PocketBase — coincide con el slug de la categoría. */
-  categoria: string;
+  id:             string;
+  nombre:         string;
+  nombre_en:      string;
+  slug:           string;
+  descripcion:    string;
+  descripcion_en: string;
+  contenido:      string;
+  contenido_en:   string;
+  icono:          string;
+  orden:          number;
+  publicado:      boolean;
+  categoria:      string;
 }
 
 interface Documento {
-  id: string;
-  nombre: string;
-  archivo: string;
-  referencia: string;
-  tipo: string;
-  orden: number;
-  collectionId: string;
-  collectionName: string;
+  id: string; nombre: string; archivo: string;
+  referencia: string; tipo: string; orden: number;
+  collectionId: string; collectionName: string;
 }
 
-// ── getStaticPaths ─────────────────────────────────────────────────────────────
 export const getStaticPaths = (async () => {
   const paths = await Promise.all(
-    CATEGORIAS.map(async (cat: Categoria) => {
-      // fetchParaBuild devuelve [] si PocketBase no está disponible (ej: CI/CD),
-      // lo que hace que este .map() produzca un array vacío y el build no falle.
+    CATEGORIAS_SLUGS.map(async (cat) => {
       const productos = await fetchParaBuild<Producto>(
         () => pb.collection('productos').getFullList<Producto>({
           filter: `categoria = "${cat.slug}" && publicado = true`,
@@ -83,7 +73,6 @@ export const getStaticPaths = (async () => {
 
       if (productos.length === 0) return [];
 
-      // Por cada producto, cargar sus documentos descargables
       return Promise.all(
         productos.map(async (prod) => {
           let documentos: Documento[] = [];
@@ -99,29 +88,32 @@ export const getStaticPaths = (async () => {
             dbErrorDocs = true;
           }
 
-          return {
-            params: { categoria: cat.slug, producto: prod.slug },
-            props:  { producto: prod, categoria: cat, documentos, dbErrorDocs },
-          };
+          // Una ruta por idioma × por producto
+          return LANGS.map((lang) => ({
+            params: { lang, categoria: cat.slug, producto: prod.slug },
+            props:  { producto: prod, documentos, dbErrorDocs },
+          }));
         })
       );
     })
   );
 
-  return paths.flat(2);
+  return paths.flat(3);
 }) satisfies GetStaticPaths;
 
-// ── Props ─────────────────────────────────────────────────────────────────────
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-const { producto, categoria, documentos, dbErrorDocs } = Astro.props;
+const { producto, documentos, dbErrorDocs } = Astro.props as Props;
+const { lang, categoria } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
 
-// ── Conversión Markdown → HTML ────────────────────────────────────────────────
-// marked.parse() es síncrono y se ejecuta en build time — cero coste en runtime.
-const contenidoHtml = producto.contenido?.trim()
-  ? marked.parse(producto.contenido) as string
+const nombreTraducido    = translateField(lang, producto.nombre,    producto.nombre_en);
+const descripcionTrad    = translateField(lang, producto.descripcion, producto.descripcion_en);
+const contenidoRaw       = translateField(lang, producto.contenido,  producto.contenido_en);
+const contenidoHtml      = contenidoRaw?.trim()
+  ? marked.parse(contenidoRaw) as string
   : '';
 
-// ── Construcción de URLs de descarga ──────────────────────────────────────────
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   id:      doc.id,
   nombre:  doc.nombre,
@@ -130,10 +122,9 @@ const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   orden:   doc.orden,
 }));
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
-  title:       `${producto.nombre} — BPA Santiago de Cuba`,
-  description: producto.descripcion,
+  title: `${nombreTraducido} — BPA Santiago de Cuba`,
+  description: descripcionTrad,
 };
 ---
 
@@ -144,8 +135,8 @@ const metadata = {
       Title = nombre del producto. Sin subtitle: el contenido habla por sí mismo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline={categoria.nombre}
-    title={producto.nombre}
+    tagline={t(`cat.${categoria}.nombre`)}
+    title={nombreTraducido}
   />
 
   <!-- BLOQUE 2 · ProseContent / EmptyCollection ───────────────────────────────
@@ -156,7 +147,9 @@ const metadata = {
     ? <ProseContent contenido={contenidoHtml} />
     : <EmptyCollection
         coleccion="productos"
-        mensaje="La información detallada sobre este producto no está disponible todavía."
+        mensaje={lang === 'es'
+          ? 'La información detallada sobre este producto no está disponible todavía.'
+          : 'Detailed information about this product is not available yet.'}
         icono="tabler:info-circle"
       />
   }
@@ -170,23 +163,21 @@ const metadata = {
   <DocumentosDescargables
     documentos={documentosConUrl}
     error={dbErrorDocs}
-    titulo="Documentos relacionados"
+    titulo={t('products.detail.docs')}
   />
 
   <!-- BLOQUE 4 · CallToAction ──────────────────────────────────────────────────
       Cierre institucional consistente con el resto del módulo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Necesita más información sobre este servicio?"
-    subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están disponibles para asesorarle sin compromiso."
-    actions={[
-      {
-        variant: 'primary',
-        text:    'Contáctenos',
-        href:    '/contacto',
-        icon:    'tabler:headset',
-      },
-    ]}
+    title={t('products.detail.cta.title')}
+    subtitle={t('products.detail.cta.subtitle')}
+    actions={[{
+      variant: 'primary',
+      text:    t('products.detail.cta.button'),
+      href:    p('contacto'),
+      icon:    'tabler:headset',
+    }]}
   />
 
   <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
@@ -194,8 +185,8 @@ const metadata = {
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
     prev={{
-      text: `Volver a ${categoria.nombre}`,
-      href: `/productos/${categoria.slug}`,
+      text: `${t('products.detail.nav.back')} ${t(`cat.${categoria}.nombre`)}`,
+      href: p(`productos/${categoria}`),
     }}
   />
 

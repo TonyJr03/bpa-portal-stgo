@@ -1,7 +1,8 @@
 ---
 /**
- * @pagina  src/pages/sobre-nosotros/nuestra-red/canales-de-atencion.astro
- * @ruta    /sobre-nosotros/nuestra-red/canales-de-atencion
+ * @pagina   src/pages/[lang]/sobre-nosotros/nuestra-red/canales-de-atencion.astro
+ * @ruta     /es/sobre-nosotros/nuestra-red/canales-de-atencion
+ *           /en/sobre-nosotros/nuestra-red/canales-de-atencion
  *
  * @descripcion
  * Página estática que centraliza todos los modos de comunicación del BPA
@@ -28,79 +29,85 @@
  *   - Horarios actualizados de sucursales y cajas de ahorro
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
+import type { GetStaticPaths } from 'astro';
 import Layout    from '~/layouts/PageLayout.astro';
 import HeroText  from '~/components/widgets/HeroText.astro';
 import Features2 from '~/components/widgets/Features2.astro';
 import Steps     from '~/components/widgets/Steps.astro';
 import PageNav   from '~/components/widgets/PageNav.astro';
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
+
 const metadata = {
-  title: 'Canales de Atención — BPA Santiago de Cuba',
-  description:
-    'Encuentre todos los canales para comunicarse con el Banco Popular de Ahorro en Santiago de Cuba: atención presencial, teléfonos, correos institucionales y horarios de servicio.',
+  title: `${t('network.channels.hero.title')} — BPA Santiago de Cuba`,
+  description: t('network.channels.hero.subtitle'),
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
-      Tagline ubica al usuario dentro del módulo "Nuestra Red".
-      Subtitle resume qué encontrará en esta página antes de desplazarse.
-  ─────────────────────────────────────────────────────────────────────────── -->
+  <!-- BLOQUE 1 · HeroText ────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Nuestra Red"
-    title="Canales de Atención"
-    subtitle="Estos son todos los modos de comunicarse con el BPA en Santiago de Cuba. Elija el canal más conveniente según su necesidad."
+    tagline={t('network.channels.hero.tagline')}
+    title={t('network.channels.hero.title')}
+    subtitle={t('network.channels.hero.subtitle')}
   />
 
   <!-- BLOQUE 2 · Features2 — Los cuatro canales ────────────────────────────────
-      columns=2: cuatro cards en dos filas de dos en desktop, apiladas en móvil.
-      Fondo bg-bpa-alt: sección principal de la página, predominante visualmente.
       Los campos de contacto real están marcados [COMPLETAR] para facilitar
       la actualización por parte del administrador.
-      Se usa set:html implícito en description a través del widget — los <br/>
-      dentro del string funcionan porque Features2 renderiza con set:html.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features2
     columns={2}
     items={[
       {
-        title: 'Atención Presencial',
-        description:
-          'La vía más completa para cualquier gestión bancaria. Acuda a la sucursal o caja de ahorro más cercana con su carné de identidad. Para trámites que la sucursal no puede resolver directamente, diríjase a la sede de la <a href="/sobre-nosotros/nuestra-red/direccion-provincial" class="text-primary hover:underline">Dirección Provincial</a>. Consulte la ubicación de todas las oficinas en el <a href="/herramientas/mapa" class="text-primary hover:underline">mapa interactivo</a>.',
+        title:       t('network.channels.c1.title'),
+        description: lang === 'es'
+          ? `La vía más completa para cualquier gestión bancaria. Acuda a la sucursal o caja de ahorro más cercana con su carné de identidad. Para trámites que la sucursal no puede resolver directamente, diríjase a la sede de la <a href="${p('sobre-nosotros/nuestra-red/direccion-provincial')}" class="text-primary hover:underline">Dirección Provincial</a>. Consulte la ubicación de todas las oficinas en el <a href="${p('herramientas/mapa')}" class="text-primary hover:underline">mapa interactivo</a>.`
+          : `The most comprehensive way to handle any banking matter. Visit the nearest branch or savings office with your identity document. For matters the branch cannot resolve directly, go to the <a href="${p('sobre-nosotros/nuestra-red/direccion-provincial')}" class="text-primary hover:underline">Provincial Directorate</a>. Find all offices on the <a href="${p('herramientas/mapa')}" class="text-primary hover:underline">interactive map</a>.`,
         icon: 'tabler:users',
       },
       {
-        title: 'Teléfonos por Área',
+        title:       t('network.channels.c2.title'),
         description:
-          'Recepción general: <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
-          'Banca Personal: <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
-          'Banca de Negocios: <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
-          'Atención al Cliente: <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
-          'Operaciones y Efectivo: <strong>[COMPLETAR: (022) XXXXX]</strong>',
+          (lang === 'es' ? 'Recepción general' : 'Main reception') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
+          (lang === 'es' ? 'Banca Personal'    : 'Personal Banking') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
+          (lang === 'es' ? 'Banca de Negocios' : 'Business Banking') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
+          (lang === 'es' ? 'Atención al Cliente': 'Customer Service') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
+          (lang === 'es' ? 'Operaciones y Efectivo': 'Operations & Cash') + ': <strong>[COMPLETAR: (022) XXXXX]</strong>',
         icon: 'tabler:phone',
       },
       {
-        title: 'Correos Institucionales',
+        title:       t('network.channels.c3.title'),
         description:
-          'Dirección Provincial: <strong>[COMPLETAR: direccion@bpa.scu.cu]</strong><br/>' +
-          'Atención al Cliente: <strong>[COMPLETAR: atencion@bpa.scu.cu]</strong><br/>' +
-          'Banca Personal: <strong>[COMPLETAR: bancapersonal@bpa.scu.cu]</strong><br/>' +
-          'Banca de Negocios: <strong>[COMPLETAR: negocios@bpa.scu.cu]</strong><br/>' +
-          'Para consultas generales utilice el correo de Atención al Cliente.',
+          (lang === 'es' ? 'Dirección Provincial'  : 'Provincial Directorate') + ': <strong>[COMPLETAR: direccion@bpa.scu.cu]</strong><br/>' +
+          (lang === 'es' ? 'Atención al Cliente'   : 'Customer Service') + ': <strong>[COMPLETAR: atencion@bpa.scu.cu]</strong><br/>' +
+          (lang === 'es' ? 'Banca Personal'        : 'Personal Banking') + ': <strong>[COMPLETAR: bancapersonal@bpa.scu.cu]</strong><br/>' +
+          (lang === 'es' ? 'Banca de Negocios'     : 'Business Banking') + ': <strong>[COMPLETAR: negocios@bpa.scu.cu]</strong><br/>' +
+          (lang === 'es'
+            ? 'Para consultas generales utilice el correo de Atención al Cliente.'
+            : 'For general inquiries use the Customer Service email.'),
         icon: 'tabler:mail',
       },
       {
-        title: 'Horarios de Servicio',
+        title:       t('network.channels.c4.title'),
         description:
-          '<strong>Sucursales grandes y medianas</strong><br/>' +
-          'Lunes a Viernes: <strong>[COMPLETAR: 8:00 am – 3:30 pm]</strong><br/>' +
-          'Sábados: <strong>[COMPLETAR: 8:00 am – 12:00 m]</strong><br/><br/>' +
-          '<strong>Cajas de Ahorro</strong><br/>' +
-          'Lunes a Viernes: <strong>[COMPLETAR: 8:00 am – 3:00 pm]</strong><br/>' +
-          '<strong>Cajeros Automáticos (ATM):</strong> 24 horas, todos los días.',
+          '<strong>' + (lang === 'es' ? 'Sucursales grandes y medianas' : 'Large and medium branches') + '</strong><br/>' +
+          (lang === 'es' ? 'Lunes a Viernes' : 'Monday to Friday') + ': <strong>[COMPLETAR: 8:00 am – 3:30 pm]</strong><br/>' +
+          (lang === 'es' ? 'Sábados'         : 'Saturdays') + ': <strong>[COMPLETAR: 8:00 am – 12:00 m]</strong><br/><br/>' +
+          '<strong>' + (lang === 'es' ? 'Cajas de Ahorro' : 'Savings Offices') + '</strong><br/>' +
+          (lang === 'es' ? 'Lunes a Viernes' : 'Monday to Friday') + ': <strong>[COMPLETAR: 8:00 am – 3:00 pm]</strong><br/>' +
+          '<strong>' + (lang === 'es' ? 'Cajeros Automáticos (ATM)' : 'ATMs') + ':</strong> ' +
+          (lang === 'es' ? '24 horas, todos los días.' : '24 hours, every day.'),
         icon: 'tabler:clock',
       },
     ]}
@@ -110,36 +117,30 @@ const metadata = {
       4 pasos extraídos del rol del Oficial de Salón y del Departamento de
       Comunicación Institucional (documento oficial §Título III - Sucursales
       y §Dirección de Comunicación Institucional).
-      Sin prop `image`: el timeline ocupa el ancho completo.
-      classes.container='max-w-3xl': limita el ancho para facilitar la lectura.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Steps
-    title="¿Cómo presentar una queja o reclamación?"
-    subtitle="Si tiene una inconformidad con algún servicio, siga estos pasos. El BPA está obligado a dar respuesta en los plazos establecidos por la legislación vigente."
+    title={t('network.channels.claims.title')}
+    subtitle={t('network.channels.claims.subtitle')}
     items={[
       {
-        title: 'Diríjase al Oficial de Salón',
-        description:
-          'En cualquier sucursal del BPA encontrará un Oficial de Salón, la persona responsable de orientar a los clientes y canalizar sus inquietudes. Explíquele su situación — muchas inconformidades se resuelven en el momento.',
-        icon: 'tabler:user-check',
+        title:       t('network.channels.step1.title'),
+        description: t('network.channels.step1.desc'),
+        icon:        'tabler:user-check',
       },
       {
-        title: 'Solicite el registro formal de su queja',
-        description:
-          'Si la situación no se resuelve de inmediato, solicite que su queja quede registrada formalmente. El banco está obligado a dejar constancia de toda reclamación recibida. Exija un número de radicación o comprobante de recepción.',
-        icon: 'tabler:clipboard-text',
+        title:       t('network.channels.step2.title'),
+        description: t('network.channels.step2.desc'),
+        icon:        'tabler:clipboard-text',
       },
       {
-        title: 'Espere la respuesta en el plazo establecido',
-        description:
-          'Una vez registrada, el BPA dispone de un plazo reglamentario para investigar y responder. Si no recibe respuesta en ese plazo, puede escalar la reclamación a la Dirección Provincial a través del correo o teléfono de Atención al Cliente.',
-        icon: 'tabler:clock-check',
+        title:       t('network.channels.step3.title'),
+        description: t('network.channels.step3.desc'),
+        icon:        'tabler:clock-check',
       },
       {
-        title: 'Escale a la Dirección Provincial si es necesario',
-        description:
-          'Si la respuesta de la sucursal no le satisface o no recibe contestación, comuníquese directamente con el Departamento de Comunicación y Atención al Cliente de la Dirección Provincial. Ellos supervisarán el proceso y garantizarán una respuesta definitiva.',
-        icon: 'tabler:arrow-up-right',
+        title:       t('network.channels.step4.title'),
+        description: t('network.channels.step4.desc'),
+        icon:        'tabler:arrow-up-right',
       },
     ]}
     classes={{ container: 'max-w-3xl' }}
@@ -150,8 +151,6 @@ const metadata = {
       Sin botón "next": el usuario ha completado el recorrido del módulo.
       El botón "prev" regresa a Sucursales y Oficinas.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: 'Nuestra Red', href: '/sobre-nosotros/nuestra-red' }}
-  />
+  <PageNav prev={{ text: t('network.channels.nav.prev'), href: p('sobre-nosotros/nuestra-red') }} />
 
 </Layout>

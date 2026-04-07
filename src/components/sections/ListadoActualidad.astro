@@ -4,36 +4,48 @@
  *
  * @descripcion
  *   Sección que encapsula el widget Vue del listado de Actualidad.
- *   Sigue el patrón del proyecto: la página no importa islas Vue directamente,
- *   siempre a través de una sección o widget Astro intermediario.
+ *   Actúa como capa intermedia entre la página .astro y la isla Vue:
+ *     · Lee el idioma activo de la URL mediante getLangFromUrl()
+ *     · Lo propaga a la isla Vue como prop `lang`
+ *     · Proporciona un contenedor estilizado mediante WidgetWrapper
  *
  * @isla  ActualidadListado.vue  →  colección: noticias
- *        client:load porque es el contenido principal de la página y debe
- *        estar listo inmediatamente al cargar.
+ *        client:load porque es el contenido principal y debe estar listo
+ *        inmediatamente al cargar.
+ *
+ * @props
+ *   id?          string   — id HTML del WidgetWrapper (para anclas)
+ *   isDark?      boolean  — activa la variante oscura del wrapper
+ *   classes?     Record<string, string> — clases extra para el contenedor
+ *
+ * @uso
+ *   <ListadoActualidad id="actualidad" />
  */
 
 import WidgetWrapper     from '~/components/ui/WidgetWrapper.astro';
 import ActualidadListado from '~/components/vue/ActualidadListado.vue';
 import type { Widget }   from '~/types';
+import { getLangFromUrl } from '~/i18n/utils';
 
-// Widget ya define id, isDark, classes y bg — no se añaden props propias.
+// ── Props ─────────────────────────────────────────────────────────────────────
+type Props = Widget;
+
 const {
   id,
-  isDark  = false,
+  isDark = false,
   classes = {},
-  bg      = await Astro.slots.render('bg'),
-} = Astro.props as Widget;
+} = Astro.props;
+
+const lang = getLangFromUrl(Astro.url);
 ---
 
 <WidgetWrapper
   id={id}
   isDark={isDark}
   containerClass={`max-w-7xl mx-auto ${classes?.container ?? ''}`}
-  bg={bg}
 >
-  <ActualidadListado client:load />
+  
+  <ActualidadListado client:load lang={lang} />
 
-  <Fragment slot="bg">
-    <slot name="bg" />
-  </Fragment>
+  <Fragment slot="bg"><slot name="bg" /></Fragment>
 </WidgetWrapper>

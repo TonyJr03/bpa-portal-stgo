@@ -1,126 +1,132 @@
 ---
 /**
- * @pagina  src/pages/herramientas/index.astro
- * @ruta    /herramientas
+ * @pagina   src/pages/[lang]/herramientas/index.astro
+ * @ruta     /[lang]/herramientas
  *
  * @descripcion
- * Página índice del módulo de Herramientas Interactivas del portal BPA Santiago
- * de Cuba. Presenta las cuatro herramientas digitales disponibles como tarjetas
- * de acceso rápido. Es una página completamente estática (SSG puro) — no consume
- * ninguna colección de PocketBase ni inyecta islas Vue.
+ *   Página índice del módulo de Herramientas Interactivas.
+ *   Es una página completamente estática (SSG puro) — no consume PocketBase
+ *   ni inyecta islas Vue. Todo su contenido semántico viene de es.ts / en.ts.
  *
  * Estructura:
  *   BLOQUE 1 · HeroText    → tagline + title + subtitle
- *   BLOQUE 2 · Features2   → 4 cards de herramientas (bg-bpa-alt)
+ *   BLOQUE 2 · Features2   → 4 tarjetas de herramientas
  *   BLOQUE 3 · CallToAction → cierre institucional → /contacto
  *   BLOQUE 4 · PageNav     → prev: "Volver a Inicio"
  *
  * @colecciones  ninguna — página estática
  */
 
-import Layout      from '~/layouts/PageLayout.astro';
-import HeroText    from '~/components/widgets/HeroText.astro';
-import Features2   from '~/components/widgets/Features2.astro';
+import type { GetStaticPaths } from 'astro';
+
+import Layout       from '~/layouts/PageLayout.astro';
+import HeroText     from '~/components/widgets/HeroText.astro';
+import Features2    from '~/components/widgets/Features2.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
-import PageNav     from '~/components/widgets/PageNav.astro';
+import PageNav      from '~/components/widgets/PageNav.astro';
+
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t        = useTranslations(lang);
+const p        = (slug: string) => getPermalink(slug, lang);
 
 const metadata = {
-  title: 'Herramientas — BPA Santiago de Cuba',
-  description:
-    'Acceda a las herramientas digitales del Banco Popular de Ahorro: calculadora financiera, tasas de cambio actualizadas, mapa interactivo de sucursales y calendario de pagos.',
+  title:       `${t('tools.hero.title')} — BPA Santiago de Cuba`,
+  description: t('tools.hero.subtitle'),
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
-      Encabezado del módulo. Tagline corto que sitúa al usuario dentro del portal.
-      El subtitle explica el valor conjunto de las cuatro herramientas.
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
+      Encabezado del módulo. El tagline "BPA Digital" sitúa al usuario
+      dentro del área de herramientas digitales.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="BPA Digital"
-    title="Herramientas"
-    subtitle="Gestione sus consultas financieras sin desplazarse. Calcule intereses, consulte tasas de cambio, localice sucursales y conozca las próximas fechas de pago."
+    tagline={t('tools.hero.tagline')}
+    title={t('tools.hero.title')}
+    subtitle={t('tools.hero.subtitle')}
   />
 
   <!-- BLOQUE 2 · Features2 — Catálogo de herramientas ─────────────────────────
-      Cuatro tarjetas, una por herramienta. Cada callToAction apunta directamente
-      a la subpágina correspondiente. El fondo bg-bpa-alt alterna con el blanco
-      del HeroText superior y del CallToAction inferior.
+      Cuatro tarjetas, una por herramienta. Cada callToAction apunta
+      directamente a la subpágina correspondiente dentro del idioma activo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features2
     columns={2}
     items={[
       {
-        title: 'Calculadora Financiera',
-        description:
-          'Simule intereses de ahorro a la vista o a plazo fijo, y estime las cuotas de un crédito personal. Resultados en tiempo real según los parámetros que usted ingrese.',
-        icon: 'tabler:calculator',
+        title:       t('tools.index.calc.title'),
+        description: t('tools.index.calc.desc'),
+        icon:        'tabler:calculator',
         callToAction: {
           variant: 'link',
-          text: 'Abrir calculadora →',
-          href: '/herramientas/calculadora',
+          text:    t('tools.index.calc.link'),
+          href:    p('herramientas/calculadora'),
         },
       },
       {
-        title: 'Tasas de Cambio',
-        description:
-          'Consulte las tasas oficiales de compra y venta de divisas actualizadas por el banco. Incluye conversor rápido de moneda extranjera a pesos cubanos.',
-        icon: 'tabler:currency-dollar',
+        title:       t('tools.index.rates.title'),
+        description: t('tools.index.rates.desc'),
+        icon:        'tabler:currency-dollar',
         callToAction: {
           variant: 'link',
-          text: 'Ver tasas de cambio →',
-          href: '/herramientas/tasas-de-cambio',
+          text:    t('tools.index.rates.link'),
+          href:    p('herramientas/tasas-de-cambio'),
         },
       },
       {
-        title: 'Mapa de Sucursales',
-        description:
-          'Localice sucursales, cajas de ahorro, áreas de negocio y cajeros automáticos del BPA en los municipios de Santiago de Cuba. Seleccione una zona para ver los detalles.',
-        icon: 'tabler:map-pin',
+        title:       t('tools.index.map.title'),
+        description: t('tools.index.map.desc'),
+        icon:        'tabler:map-pin',
         callToAction: {
           variant: 'link',
-          text: 'Abrir mapa →',
-          href: '/herramientas/mapa',
+          text:    t('tools.index.map.link'),
+          href:    p('herramientas/mapa'),
         },
       },
       {
-        title: 'Calendario de Pagos',
-        description:
-          'Consulte las fechas de pago a jubilados y pensionados, días feriados bancarios y eventos institucionales del mes. Navegue entre meses para planificar con antelación.',
-        icon: 'tabler:calendar-event',
+        title:       t('tools.index.calendar.title'),
+        description: t('tools.index.calendar.desc'),
+        icon:        'tabler:calendar-event',
         callToAction: {
           variant: 'link',
-          text: 'Ver calendario →',
-          href: '/herramientas/calendario',
+          text:    t('tools.index.calendar.link'),
+          href:    p('herramientas/calendario'),
         },
       },
     ]}
   />
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
-      Cierre del módulo. Si el usuario no encuentra lo que busca con las
-      herramientas, se le orienta a contactar directamente al banco.
+      Si el usuario no encuentra lo que busca con las herramientas,
+      se le orienta a contactar directamente al banco.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Necesita orientación personalizada?"
-    subtitle="Nuestros especialistas están disponibles para resolver sus dudas sobre tasas, créditos o ubicación de nuestras oficinas."
+    title={t('tools.cta.title')}
+    subtitle={t('tools.cta.subtitle')}
     actions={[
       {
         variant: 'primary',
-        text:    'Contáctenos',
-        href:    '/contacto',
+        text:    t('tools.cta.contact'),
+        href:    p('contacto'),
         icon:    'tabler:headset',
       },
     ]}
   />
 
   <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
-      Solo botón izquierdo: regresa al inicio. Las subpáginas del módulo tienen
-      su propio PageNav con "Volver a Herramientas".
+      Solo botón izquierdo: regresa al inicio. Las subpáginas del módulo
+      tienen su propio PageNav con "Volver a Herramientas".
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: 'Volver a Inicio', href: '/' }}
+    prev={{ text: t('tools.nav.back'), href: p('') }}
   />
 
 </Layout>

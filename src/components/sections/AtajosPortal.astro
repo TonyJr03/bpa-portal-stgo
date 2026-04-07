@@ -7,17 +7,25 @@
  *   del portal BPA. Pensada para la página 404 para que el usuario
  *   pueda reorientarse con un solo clic sin necesidad de usar el menú.
  *
- * @colecciones  Ninguna — contenido 100 % hardcodeado.
+ *   Extrae el idioma de la URL actual. Si no hay idioma en la URL,
+ *   usa español como fallback.
+ *
+ * @colecciones  Ninguna — contenido 100 % hardcodeado en diccionarios.
  */
 
 import { Icon }         from 'astro-icon/components';
 import { getPermalink } from '~/utils/permalinks';
+import { useTranslations, getLangFromUrl } from '~/i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
 
 const atajos = [
-  { href: getPermalink('/productos'),       label: 'Productos',      icon: 'tabler:building-bank' },
-  { href: getPermalink('/tramites'),        label: 'Trámites',       icon: 'tabler:file-text'     },
-  { href: getPermalink('/herramientas'),    label: 'Herramientas',   icon: 'tabler:tools'         },
-  { href: getPermalink('/sobre-nosotros'),  label: 'Sobre Nosotros', icon: 'tabler:info-circle'   },
+  { href: p('/productos'),       label: t('shortcuts.products'),    icon: 'tabler:building-bank' },
+  { href: p('/tramites'),        label: t('shortcuts.procedures'),  icon: 'tabler:file-text'     },
+  { href: p('/herramientas'),    label: t('shortcuts.tools'),       icon: 'tabler:tools'         },
+  { href: p('/sobre-nosotros'),  label: t('shortcuts.about'),       icon: 'tabler:info-circle'   },
 ];
 ---
 
@@ -25,7 +33,7 @@ const atajos = [
 <div class="flex items-center gap-4 mb-6 max-w-xs mx-auto">
   <div class="flex-1 h-px bg-bpa-100 dark:bg-bpa-amber-800"></div>
   <span class="text-xs font-medium text-primary uppercase tracking-widest whitespace-nowrap">
-    Secciones del portal
+    {t('shortcuts.sections')}
   </span>
   <div class="flex-1 h-px bg-bpa-100 dark:bg-bpa-amber-800"></div>
 </div>

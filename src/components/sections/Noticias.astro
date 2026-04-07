@@ -3,17 +3,22 @@
  * @seccion   src/components/sections/Noticias.astro
  *
  * @descripcion
- *   Sección "Últimas Noticias" de la página de inicio.
- *   Encapsula la isla Vue UltimasNoticias con su Headline y el enlace
- *   "Ver todas las noticias" que pre-filtra la página /actualidad.
+ *   Sección que muestra las últimas noticias con un titular y enlace.
+ *   Actúa como capa intermedia entre la página .astro y la isla Vue:
+ *     · Lee el idioma activo de la URL mediante getLangFromUrl()
+ *     · Lo propaga a la isla Vue como prop `lang`
+ *     · Obtiene las traducciones según el idioma detectado
  *
- *   Si no hay noticias publicadas, la isla es silenciosa (no renderiza nada)
- *   pero el Headline y el enlace siguen visibles. En producción se asume
- *   que siempre habrá noticias; durante desarrollo el admin puede omitir
- *   registros de esta categoría sin romper la página.
+ * @isla  UltimasNoticias.vue
+ *        client:visible para optimizar el tiempo de carga inicial.
  *
- * @isla  UltimasNoticias.vue  →  client:visible
- *        colección: actualidad (categoria = "noticia")
+ * @props
+ *   id?          string   — id HTML del WidgetWrapper (para anclas)
+ *   isDark?      boolean  — activa la variante oscura del wrapper
+ *   classes?     Record<string, string> — clases extra para el contenedor
+ *
+ * @uso
+ *   <Noticias id="noticias" />
  */
 
 import WidgetWrapper   from '~/components/ui/WidgetWrapper.astro';
@@ -21,40 +26,38 @@ import Headline        from '~/components/ui/Headline.astro';
 import UltimasNoticias from '~/components/vue/UltimasNoticias.vue';
 import { Icon }        from 'astro-icon/components';
 import type { Widget } from '~/types';
+import { useTranslations, getLangFromUrl } from '~/i18n/utils';
+
+// ── Props ─────────────────────────────────────────────────────────────────────
+type Props = Widget;
 
 const {
   id,
-  isDark  = false,
+  isDark = false,
   classes = {},
-} = Astro.props as Widget;
+} = Astro.props;
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
-<WidgetWrapper
-  id={id}
-  isDark={isDark}
-  containerClass={`max-w-6xl ${classes?.container ?? ''}`}
->
+<WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-6xl ${classes?.container ?? ''}`}>
   <Headline
-    tagline="Noticias"
-    title="Últimas Noticias"
-    subtitle="Novedades del sector financiero y del Banco Popular de Ahorro."
+    tagline={t('home.articles.tagline')}
+    title={t('home.articles.title')}
+    subtitle={t('home.articles.subtitle')}
     classes={{ container: 'text-center max-w-3xl mx-auto mb-10' }}
   />
 
-  <UltimasNoticias client:visible />
+  <UltimasNoticias client:visible lang={lang} />
 
-  <!-- Enlace pre-filtrado a la sección de noticias en /actualidad -->
   <div class="text-center mt-8">
-    <a
-      href="/actualidad?categoria=noticia"
-      class="inline-flex items-center gap-2 text-sm font-medium
-             text-primary dark:text-primary hover:underline underline-offset-4 transition-colors">
-      Ver todas las noticias
+    <a href={`/${lang}/actualidad?categoria=noticia`}
+      class="inline-flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline underline-offset-4 transition-colors">
+      {t('home.articles.viewAll')}
       <Icon name="tabler:arrow-right" class="w-4 h-4" />
     </a>
   </div>
 
-  <Fragment slot="bg">
-    <slot name="bg" />
-  </Fragment>
+  <Fragment slot="bg"><slot name="bg" /></Fragment>
 </WidgetWrapper>

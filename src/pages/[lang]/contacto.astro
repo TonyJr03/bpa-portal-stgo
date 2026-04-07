@@ -1,7 +1,8 @@
 ---
 /**
- * @pagina  src/pages/contacto.astro
- * @ruta    /contacto
+ * @pagina  src/pages/[lang]/contacto.astro
+ * @ruta    /es/contacto
+ *          /en/contacto
  *
  * @descripcion
  * Página dedicada de Contáctenos del portal institucional del BPA Santiago
@@ -21,6 +22,7 @@
  *   ContactoBPA.astro. Ver schema completo en el JSDoc de ese widget.
  */
 
+import type { GetStaticPaths } from 'astro';
 import Layout      from '~/layouts/PageLayout.astro';
 import HeroText    from '~/components/widgets/HeroText.astro';
 import ContactoBPA from '~/components/sections/ContactoBPA.astro';
@@ -28,10 +30,20 @@ import Steps       from '~/components/widgets/Steps.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
 import PageNav     from '~/components/widgets/PageNav.astro';
 
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
+
 const metadata = {
-  title: 'Contáctenos — BPA Santiago de Cuba',
-  description:
-    'Comuníquese con el Banco Popular de Ahorro en Santiago de Cuba: envíe su mensaje o reclamación, consulte nuestros teléfonos, correos y horarios de atención.',
+  title: `${t('contact.hero.title')} — BPA Santiago de Cuba`,
+  description: t('contact.hero.subtitle'),
 };
 ---
 
@@ -41,8 +53,8 @@ const metadata = {
       Página terminal — sin tagline, sin imagen.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    title="Contáctenos"
-    subtitle="Escríbanos directamente o consulte los datos de la sede provincial. Atendemos consultas generales y reclamaciones formales."
+    title={t('contact.hero.title')}
+    subtitle={t('contact.hero.subtitle')}
   />
 
   <!-- BLOQUE 2 · ContactoBPA ───────────────────────────────────────────────────
@@ -58,32 +70,28 @@ const metadata = {
       max-w-3xl: proceso lineal, gana legibilidad en columna estrecha.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Steps
-    tagline="Protocolo Oficial"
-    title="¿Cómo presentar una queja o reclamación formal?"
-    subtitle="Si su situación requiere una respuesta oficial del banco, siga estos pasos. Tiene derecho a recibir respuesta en un plazo máximo de 30 días hábiles."
+    tagline={t('contact.claims.tagline')}
+    title={t('contact.claims.title')}
+    subtitle={t('contact.claims.subtitle')}
     items={[
       {
-        title: 'Reúna sus datos personales',
-        description:
-          'Necesitará: nombre y apellidos completos, dirección, municipio, provincia y un teléfono de contacto. Estos datos son imprescindibles para que el banco pueda localizarle y responder.',
+        title: t('contact.claims.step1.title'),
+        description: t('contact.claims.step1.desc'),
         icon: 'tabler:user-check',
       },
       {
-        title: 'Identifique el motivo de su reclamación',
-        description:
-          'El BPA clasifica las reclamaciones en categorías: falta de información, demora en el servicio, inconformidad con un trámite, maltrato, servicios de pago a jubilados, créditos sociales, transferencias monetarias, títulos de propiedad u otros.',
+        title: t('contact.claims.step2.title'),
+        description: t('contact.claims.step2.desc'),
         icon: 'tabler:list-check',
       },
       {
-        title: 'Describa los hechos con exactitud y claridad',
-        description:
-          'Explique qué ocurrió, cuándo, en qué sucursal o área del banco y qué trámite realizaba. Cuanto más precisa sea la descripción, más ágil será la resolución. Puede usar el formulario de la pestaña "Queja o Reclamación" en la sección anterior.',
+        title: t('contact.claims.step3.title'),
+        description: t('contact.claims.step3.desc'),
         icon: 'tabler:pencil',
       },
       {
-        title: 'Aguarde la respuesta en el plazo establecido',
-        description:
-          'El banco está obligado a responder en un plazo máximo de 30 días hábiles desde la fecha de recepción. Si no recibe respuesta en ese período, puede escalar directamente a la Dirección Provincial.',
+        title: t('contact.claims.step4.title'),
+        description: t('contact.claims.step4.desc'),
         icon: 'tabler:clock-check',
       },
     ]}
@@ -94,14 +102,14 @@ const metadata = {
       Dos acciones: mapa de sucursales (primary) + canales de atención (secondary).
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Prefiere visitarnos en persona?"
-    subtitle="Consulte la ubicación exacta de todas nuestras sucursales, cajas de ahorro y cajeros automáticos en el mapa interactivo de la provincia."
+    title={t('contact.cta.title')}
+    subtitle={t('contact.cta.subtitle')}
     actions={[
       {
         variant: 'primary',
-        text:    'Ver mapa de sucursales',
-        href:    '/herramientas/mapa',
-        icon:    'tabler:map-pin',
+        text: t('contact.cta.button'),
+        href: p('/herramientas/mapa'),
+        icon: 'tabler:map-pin',
       },
     ]}
   />
@@ -110,7 +118,7 @@ const metadata = {
       Página terminal del portal: sin botón next.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: 'Volver a Inicio', href: '/' }}
+    prev={{ text: t('contact.nav.prev'), href: p('/') }}
   />
 
 </Layout>

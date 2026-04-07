@@ -1,7 +1,8 @@
 ---
 /**
- * @pagina  src/pages/sobre-nosotros/nuestra-red/direccion-provincial.astro
- * @ruta    /sobre-nosotros/nuestra-red/direccion-provincial
+ * @pagina   src/pages/[lang]/sobre-nosotros/nuestra-red/direccion-provincial.astro
+ * @ruta     /es/sobre-nosotros/nuestra-red/direccion-provincial
+ *           /en/sobre-nosotros/nuestra-red/direccion-provincial
  *
  * @descripcion
  * Página estática institucional de la Dirección Provincial del BPA en
@@ -29,62 +30,49 @@
  * Sustitúyalos por los datos reales antes del despliegue en producción.
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
+import type { GetStaticPaths } from 'astro';
 import Layout       from '~/layouts/PageLayout.astro';
 import HeroText     from '~/components/widgets/HeroText.astro';
 import Content      from '~/components/widgets/Content.astro';
-import Features    from '~/components/widgets/Features.astro';
+import Features     from '~/components/widgets/Features.astro';
 import Features2    from '~/components/widgets/Features2.astro';
 import PageNav      from '~/components/widgets/PageNav.astro';
 import SvgDireccion from '~/components/icons/SvgDireccion.astro';
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
+
 const metadata = {
-  title: 'Dirección Provincial — BPA Santiago de Cuba',
-  description:
-    'Conozca la Dirección Provincial del Banco Popular de Ahorro en Santiago de Cuba: su estructura, las áreas de servicio al cliente y cómo comunicarse con la sede provincial.',
+  title: `${t('network.provincial.title')} — BPA Santiago de Cuba`,
+  description: t('network.provincial.content.p1').replace(/<[^>]*>/g, ''),
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
-      Tagline ubica al usuario dentro del módulo "Nuestra Red".
-      Sin subtitle: el bloque Content siguiente ofrece el texto completo.
-  ─────────────────────────────────────────────────────────────────────────── -->
+  <!-- BLOQUE 1 · HeroText ────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Nuestra Red"
-    title="Dirección Provincial"
+    tagline={t('network.provincial.tagline')}
+    title={t('network.provincial.title')}
   />
 
   <!-- BLOQUE 2 · Content ───────────────────────────────────────────────────────
       Presentación institucional de la Dirección Provincial.
-      SVG a la derecha (sin isReversed): patrón estándar del módulo.
-      Fondo bg-bpa-alt: establece el tono visual de la sección.
-      Sin items: las áreas de servicio van en Features2 a continuación.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Content
-    content="
-      <p>
-        La <strong>Dirección Provincial del BPA en Santiago de Cuba</strong> es la
-        instancia territorial que coordina, supervisa y controla el funcionamiento
-        de toda la red de sucursales, cajas de ahorro y oficinas bancarias en la
-        provincia.
-      </p>
-      <p style='margin-top:1rem'>
-        Desde la sede provincial se dirigen las políticas comerciales, se garantiza
-        la calidad del servicio al cliente y se articula la respuesta del banco ante
-        las necesidades financieras de las personas naturales, las entidades estatales
-        y las nuevas formas de gestión no estatal en todo el territorio santiaguero.
-      </p>
-      <p style='margin-top:1rem'>
-        Subordinada a la Oficina Central del BPA, la Dirección Provincial actúa como
-        el <strong>primer nivel de atención especializada</strong> para los casos que
-        requieren gestión por encima de la sucursal: reclamaciones, financiamientos
-        de mayor complejidad, coordinación institucional y supervisión del control
-        interno en toda la red.
-      </p>
-    "
+    content={`
+      <p>${t('network.provincial.content.p1')}</p>
+      <p style="margin-top:1rem">${t('network.provincial.content.p2')}</p>
+      <p style="margin-top:1rem">${t('network.provincial.content.p3')}</p>
+    `}
   >
     <SvgDireccion slot="image" />
   </Content>
@@ -93,39 +81,32 @@ const metadata = {
       Las cuatro áreas de la Dirección Provincial con impacto directo
       en la atención ciudadana, extraídas del documento oficial y reescritas
       en lenguaje accesible.
-      columns=2: cuatro items en dos filas de dos en desktop.
-      Sin fondo propio: hereda el bg-bpa-alt del Content anterior para que
-      se perciban como una sola sección unificada.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features2
-    tagline="Áreas de Servicio"
-    title="¿A qué área puede acudir?"
-    subtitle="La Dirección Provincial cuenta con equipos especializados para atender distintas necesidades. Conozca cuál le corresponde según su gestión."
+    tagline={t('network.provincial.areas.tagline')}
+    title={t('network.provincial.areas.title')}
+    subtitle={t('network.provincial.areas.subtitle')}
     columns={2}
     items={[
       {
-        title: 'Banca Personal',
-        description:
-          'Atiende todo lo relacionado con productos y servicios para personas naturales: cuentas de ahorro, créditos personales, tarjetas magnéticas y recuperación de financiamientos. Es el área de referencia para gestiones que la sucursal no puede resolver de forma directa.',
-        icon: 'tabler:user-dollar',
+        title:       t('network.provincial.a1.title'),
+        description: t('network.provincial.a1.desc'),
+        icon:        'tabler:user-dollar',
       },
       {
-        title: 'Banca de Negocios',
-        description:
-          'Da servicio a entidades estatales, cooperativas y trabajadores por cuenta propia. Gestiona financiamientos al sector no estatal, controla cobros y pagos de empresas y asesora metodológicamente a la red de sucursales en materia de clientes jurídicos.',
-        icon: 'tabler:briefcase',
+        title:       t('network.provincial.a2.title'),
+        description: t('network.provincial.a2.desc'),
+        icon:        'tabler:briefcase',
       },
       {
-        title: 'Comunicación y Atención al Cliente',
-        description:
-          'Desarrolla las estrategias de imagen y comunicación del BPA en la provincia. Gestiona las quejas, reclamaciones y sugerencias de los clientes, y vela por la calidad del servicio en todas las oficinas del territorio. Es el canal para escalar reclamaciones no resueltas en sucursal.',
-        icon: 'tabler:message-circle',
+        title:       t('network.provincial.a3.title'),
+        description: t('network.provincial.a3.desc'),
+        icon:        'tabler:message-circle',
       },
       {
-        title: 'Operaciones y Efectivo',
-        description:
-          'Garantiza la disponibilidad de efectivo en toda la red provincial, supervisa las operaciones con divisas y moneda nacional, y mantiene el funcionamiento correcto de los cajeros automáticos. Coordina con el Centro Provincial Distribuidor de Efectivo (CPDE).',
-        icon: 'tabler:coins',
+        title:       t('network.provincial.a4.title'),
+        description: t('network.provincial.a4.desc'),
+        icon:        'tabler:coins',
       },
     ]}
   />
@@ -134,34 +115,34 @@ const metadata = {
       Información de contacto de la sede de la Dirección Provincial.
       NOTA: Los valores marcados con [COMPLETAR] deben ser sustituidos
       por los datos reales antes del despliegue en producción.
-      columns=2: cuatro items en dos filas de dos.
-      Fondo bg-bpa-alt para alternar el ritmo visual con el bloque anterior.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features
-    tagline="Contáctenos"
-    title="Datos de la Sede Provincial"
-    subtitle="Si necesita comunicarse directamente con la Dirección Provincial, estos son nuestros canales de atención."
+    tagline={t('network.provincial.contact.tagline')}
+    title={t('network.provincial.contact.title')}
+    subtitle={t('network.provincial.contact.subtitle')}
     columns={2}
     items={[
       {
-        title: 'Dirección',
+        title:       lang === 'es' ? 'Dirección'          : 'Address',
         description: '[COMPLETAR: Calle, número, entre calles, municipio Santiago de Cuba]',
-        icon: 'tabler:map-pin',
+        icon:        'tabler:map-pin',
       },
       {
-        title: 'Teléfonos',
+        title:       lang === 'es' ? 'Teléfonos'          : 'Phone Numbers',
         description: '[COMPLETAR: (022) XXXXX — Recepción<br/>(022) XXXXX — Atención al Cliente]',
-        icon: 'tabler:phone',
+        icon:        'tabler:phone',
       },
       {
-        title: 'Correo Institucional',
+        title:       lang === 'es' ? 'Correo Institucional': 'Institutional Email',
         description: '[COMPLETAR: atencion@bpa.scu.cu]',
-        icon: 'tabler:mail',
+        icon:        'tabler:mail',
       },
       {
-        title: 'Horario de Atención',
-        description: '[COMPLETAR: Lunes a Viernes · 8:00 am – 4:00 pm<br/>Sábados · 8:00 am – 12:00 m]',
-        icon: 'tabler:clock',
+        title:       lang === 'es' ? 'Horario de Atención' : 'Service Hours',
+        description: lang === 'es'
+          ? '[COMPLETAR: Lunes a Viernes · 8:00 am – 4:00 pm<br/>Sábados · 8:00 am – 12:00 m]'
+          : '[COMPLETAR: Monday to Friday · 8:00 am – 4:00 pm<br/>Saturdays · 8:00 am – 12:00 noon]',
+        icon:        'tabler:clock',
       },
     ]}
   />
@@ -170,8 +151,6 @@ const metadata = {
       Izquierda: regresa al índice del módulo Nuestra Red.
       Derecha:   avanza a la siguiente subsección (Sucursales y Oficinas).
   ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: 'Nuestra Red', href: '/sobre-nosotros/nuestra-red' }}
-  />
+  <PageNav prev={{ text: t('network.provincial.nav.prev'), href: p('sobre-nosotros/nuestra-red') }} />
 
 </Layout>

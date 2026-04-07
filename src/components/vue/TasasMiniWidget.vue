@@ -3,19 +3,30 @@
  * @componente  src/components/vue/TasasMiniWidget.vue
  * @directiva   client:visible  (inyectado desde AccesoRapidoHome.astro)
  *
- * @responsabilidad
- *   Micro-widget para la tarjeta de Acceso Rápido en el Home.
- *   Muestra únicamente el precio de COMPRA y VENTA del USD y EUR
- *   frente al CUP, con indicador de actualización reciente.
- *   Es intencionalmente minimal — el detalle completo está en
- *   /herramientas/tasas-de-cambio.
+ * @descripcion
+ *   Micro-widget de tasas de cambio para la tarjeta de Acceso Rápido del Home.
+ *   Muestra las primeras 3 monedas activas con sus tasas de compra y venta.
+ *
+ * @i18n — dos capas:
+ *   1. Campos de PocketBase con traducción directa:
+ *      · monedas.nombre_moneda / nombre_moneda_en → nombre de la divisa
+ *      Se usa en el atributo title de cada fila para accesibilidad.
+ *      El código ISO (USD, EUR…) no se traduce — es universal.
+ *
+ *   2. Strings de interfaz pura → objeto local `ui` (NO van a .ts):
+ *      · Labels de columnas, timestamp, mensajes de carga/error
+ *
+ * @props
+ *   lang  'es' | 'en'  — idioma activo, inyectado por AccesoRapidoHome.astro
  *
  * @coleccion  monedas
- *   moneda        Text    → código ISO. Ej: 'USD', 'EUR'
- *   compra        Number  → tasa de compra en CUP
- *   venta         Number  → tasa de venta en CUP
- *   activa        Bool    → true si está operativa
- *   updated       Date    → campo automático de PocketBase
+ *   moneda           Text    → código ISO (USD, EUR, MLC…)
+ *   nombre_moneda    Text    → nombre completo en español
+ *   nombre_moneda_en Text    → nombre completo en inglés (puede estar vacío)
+ *   compra           Number  → tasa de compra en CUP
+ *   venta            Number  → tasa de venta en CUP
+ *   activa           Bool
+ *   updated          Date    → campo automático de PocketBase
  *
  * @dependencias  ~/lib/pocketbase
  */
@@ -23,14 +34,53 @@
 import { ref, computed, onMounted } from 'vue';
 import { pb } from '~/lib/pocketbase';
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
+import type { Lang } from '~/i18n/utils';
+
+// ── Props ─────────────────────────────────────────────────────────────────────
+const props = defineProps<{ lang: Lang }>();
+
+// ── Traducción de campos de PocketBase ───────────────────────────────────────
+// tf() aplica el campo _en si el idioma es inglés y no está vacío.
+function tf(base: string, translated?: string | null): string {
+  if (props.lang === 'es' || !translated?.trim()) return base;
+  return translated.trim();
+}
+
+// ── Strings de interfaz pura (NO van a los archivos .ts) ──────────────────────
+// IMPORTANTE: computed() es necesario porque depende de props.lang (reactivo).
+// Sin computed(), cambiar el idioma NO actualizaría la UI.
+const UILocal = computed(() => props.lang === 'en'
+  ? {
+      colCurrency: 'Currency',
+      colBuy:      'Buy',
+      colSell:     'Sell',
+      updated:     'Updated:',
+      noRates:     'No rates available',
+      retry:       'Retry',
+      errorMsg:    'Not available. No server connection.',
+    }
+  : {
+      colCurrency: 'Moneda',
+      colBuy:      'Compra',
+      colSell:     'Venta',
+      updated:     'Actualizado:',
+      noRates:     'No hay tasas disponibles',
+      retry:       'Reintentar',
+      errorMsg:    'No disponible. Sin conexión con el servidor.',
+    }
+);
+const tUI = (key: keyof (typeof UILocal.value)) => UILocal.value[key];
+
+// ── Tipos ─────────────────────────────────────────────────────────────────────
 interface TasaCambio {
-  id:      string;
-  moneda:  string;
-  compra:  number;
-  venta:   number;
-  activa:  boolean;
-  updated: string;
+  id:               string;
+  moneda:           string;
+  nombre_moneda:    string;
+  nombre_moneda_en: string; // campo _en de PocketBase
+  compra:           number;
+  venta:            number;
+  activa:           boolean;
+  updated:          string;
 }
 
 // ── Estado ────────────────────────────────────────────────────────────────────
@@ -38,23 +88,17 @@ const tasas    = ref<TasaCambio[]>([]);
 const cargando = ref(true);
 const errorDB  = ref(false);
 
-// ── Computed: las 3 primeras monedas activas (según orden de PocketBase) ──────
-const tasasFiltradas = computed(() =>
-  tasas.value.filter(t => t.activa).slice(0, 3)
-);
+// Las primeras 3 monedas activas según el orden de PocketBase
+const tasasFiltradas = computed(() => tasas.value.filter((t) => t.activa).slice(0, 3));
 
-/** Hora de la última actualización en formato corto */
 const ultimaActualizacion = computed<string | null>(() => {
   if (!tasas.value.length) return null;
   const mas = tasas.value.reduce((prev, curr) =>
-    new Date(curr.updated) > new Date(prev.updated) ? curr : prev
+    new Date(curr.updated) > new Date(prev.updated) ? curr : prev,
   );
   try {
-    return new Intl.DateTimeFormat('es-CU', {
-      hour:   '2-digit',
-      minute: '2-digit',
-      day:    '2-digit',
-      month:  'short',
+    return new Intl.DateTimeFormat(props.lang === 'en' ? 'en-US' : 'es-CU', {
+      hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short',
     }).format(new Date(mas.updated));
   } catch { return null; }
 });
@@ -64,10 +108,11 @@ const cargarTasas = async () => {
   cargando.value = true;
   errorDB.value  = false;
   try {
+    // Se solicitan todos los campos incluidos nombre_moneda_en
     const resultado = await pb.collection('monedas').getFullList<TasaCambio>({
       filter: 'activa = true',
       sort:   'orden',
-      fields: 'id,moneda,compra,venta,activa,updated',
+      fields: 'id,moneda,nombre_moneda,nombre_moneda_en,compra,venta,activa,updated',
     });
     tasas.value = resultado;
   } catch {
@@ -81,83 +126,88 @@ onMounted(cargarTasas);
 </script>
 
 <template>
+
   <!-- ── Cargando ────────────────────────────────────────────────────────── -->
   <div v-if="cargando" class="space-y-2 animate-pulse">
     <div class="flex justify-between items-center py-2 border-b border-bpa-100/50 dark:border-bpa-800/50">
-      <div class="h-3 w-20 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
+      <div class="h-3 w-20 bg-bpa-100 dark:bg-bpa-800/40 rounded" />
       <div class="flex gap-3">
-        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
-        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
+        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded" />
+        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded" />
       </div>
     </div>
     <div class="flex justify-between items-center py-2 border-b border-bpa-100/50 dark:border-bpa-800/50">
-      <div class="h-3 w-16 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
+      <div class="h-3 w-16 bg-bpa-100 dark:bg-bpa-800/40 rounded" />
       <div class="flex gap-3">
-        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
-        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
+        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded" />
+        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded" />
       </div>
     </div>
     <div class="flex justify-between items-center py-2">
-      <div class="h-3 w-16 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
+      <div class="h-3 w-16 bg-bpa-100 dark:bg-bpa-800/40 rounded" />
       <div class="flex gap-3">
-        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
-        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded"></div>
+        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded" />
+        <div class="h-3 w-10 bg-bpa-100 dark:bg-bpa-800/40 rounded" />
       </div>
     </div>
   </div>
 
   <!-- ── Error ──────────────────────────────────────────────────────────── -->
   <div v-else-if="errorDB" class="text-center py-2">
-    <p class="text-xs text-red-500 dark:text-red-400 mb-1">No disponible. Sin conexión con el servidor.</p>
-    <button
-      @click="cargarTasas"
-      class="text-xs text-primary dark:text-primary hover:underline"
-    >
-      Reintentar
+    <p class="text-xs text-red-500 dark:text-red-400 mb-1">{{ tUI('errorMsg') }}</p>
+    <button @click="cargarTasas" class="text-xs text-primary dark:text-primary hover:underline">
+      {{ tUI('retry') }}
     </button>
   </div>
 
   <!-- ── Datos ──────────────────────────────────────────────────────────── -->
   <div v-else>
+
     <!-- Cabecera de columnas -->
     <div class="flex justify-between items-center text-xs font-semibold text-primary dark:text-primary uppercase tracking-wide mb-1 pb-1 border-b border-bpa-100/50 dark:border-bpa-amber-800/50">
-      <span>Moneda</span>
+      <span>{{ tUI('colCurrency') }}</span>
       <div class="flex gap-4">
-        <span class="w-14 text-right">Compra</span>
-        <span class="w-14 text-right">Venta</span>
+        <span class="w-14 text-right">{{ tUI('colBuy') }}</span>
+        <span class="w-14 text-right">{{ tUI('colSell') }}</span>
       </div>
     </div>
 
     <!-- Filas de tasas -->
+    <!--
+      El código ISO de la moneda (USD, EUR…) es universal y no se traduce.
+      El nombre completo traducido se usa como title para accesibilidad → tf().
+    -->
     <div
       v-for="tasa in tasasFiltradas"
       :key="tasa.id"
       class="flex justify-between items-center py-2 border-b border-bpa-100/30 dark:border-bpa-amber-800/30 last:border-0"
+      :title="tf(tasa.nombre_moneda, tasa.nombre_moneda_en)"
     >
-      <!-- Código de moneda -->
+      <!-- Código ISO de la moneda (no traducible: es un estándar internacional) -->
       <span class="text-sm font-semibold text-default dark:text-default font-mono tracking-wide">
         {{ tasa.moneda }}
       </span>
       <div class="flex gap-4">
-        <!-- Compra: verde — distinción financiera, se conserva -->
+        <!-- Compra: emerald — distinción financiera semántica universal -->
         <span class="w-14 text-right text-sm font-mono text-emerald-600 dark:text-emerald-400 font-medium">
           {{ tasa.compra.toFixed(2) }}
         </span>
-        <!-- Venta: rojo — distinción financiera, se conserva -->
+        <!-- Venta: rose — distinción financiera semántica universal -->
         <span class="w-14 text-right text-sm font-mono text-rose-600 dark:text-rose-400 font-medium">
           {{ tasa.venta.toFixed(2) }}
         </span>
       </div>
     </div>
 
-    <!-- Sin tasas disponibles -->
+    <!-- Sin tasas -->
     <p v-if="!tasasFiltradas.length" class="text-xs text-muted dark:text-muted text-center py-2">
-      No hay tasas disponibles
+      {{ tUI('noRates') }}
     </p>
 
     <!-- Timestamp de actualización -->
     <p v-if="ultimaActualizacion" class="text-xs text-muted dark:text-muted mt-2 text-right">
-      Actualizado: {{ ultimaActualizacion }}
+      {{ tUI('updated') }} {{ ultimaActualizacion }}
     </p>
+
   </div>
 </template>

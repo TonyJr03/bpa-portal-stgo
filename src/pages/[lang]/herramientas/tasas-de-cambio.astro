@@ -1,74 +1,82 @@
 ---
 /**
- * @pagina  src/pages/herramientas/tasas-de-cambio.astro
- * @ruta    /herramientas/tasas-de-cambio
+ * @pagina   src/pages/[lang]/herramientas/tasas-de-cambio.astro
+ * @ruta     /[lang]/herramientas/tasas-de-cambio
  *
  * @descripcion
- * Página del módulo Tasas de Cambio. Declara los bloques de la página
- * y no sabe nada de Vue ni de PocketBase — responsabilidad exclusiva
- * de TasasDeCambioWidget.astro y TasasDeCambio.vue respectivamente.
+ *   Página del módulo Tasas de Cambio.
+ *   Wrapper fino que delega la lógica reactiva a TasasDeCambio.vue
+ *   a través de Herramienta.astro.
  *
  * Estructura:
- *   BLOQUE 1 · HeroText              → tagline + title + subtitle
- *   BLOQUE 2 · TasasDeCambioWidget   → widget propio (bg-bpa-alt)
- *                                      Headline + isla Vue
- *   BLOQUE 3 · CallToAction          → cierre institucional
- *   BLOQUE 4 · PageNav               → prev: "Volver a Herramientas"
+ *   BLOQUE 1 · HeroText    → tagline + title + subtitle
+ *   BLOQUE 2 · Herramienta → isla Vue TasasDeCambio (client:load)
+ *   BLOQUE 3 · CallToAction → siguiente paso natural tras consultar tasas
+ *   BLOQUE 4 · PageNav     → prev: "Volver a Herramientas"
  *
  * @colecciones  ninguna en build time
  *   monedas → consultada en el cliente por TasasDeCambio.vue
  */
 
-import Layout              from '~/layouts/PageLayout.astro';
-import HeroText            from '~/components/widgets/HeroText.astro';
-import Herramienta from '~/components/sections/Herramienta.astro';
-import CallToAction        from '~/components/widgets/CallToAction.astro';
-import PageNav             from '~/components/widgets/PageNav.astro';
+import type { GetStaticPaths } from 'astro';
+
+import Layout       from '~/layouts/PageLayout.astro';
+import HeroText     from '~/components/widgets/HeroText.astro';
+import Herramienta  from '~/components/sections/Herramienta.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav      from '~/components/widgets/PageNav.astro';
+
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t        = useTranslations(lang);
+const p        = (slug: string) => getPermalink(slug, lang);
 
 const metadata = {
-  title: 'Tasas de Cambio — BPA Santiago de Cuba',
-  description:
-    'Consulte las tasas de cambio oficiales del Banco Popular de Ahorro: compra y venta de divisas en tiempo real. Incluye conversor rápido de moneda extranjera a pesos cubanos.',
+  title:       `${t('tools.rates.hero.title')} — BPA Santiago de Cuba`,
+  description: t('tools.rates.hero.subtitle'),
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Tagline "Herramientas" sitúa al usuario dentro del módulo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Herramientas"
-    title="Tasas de Cambio"
-    subtitle="Consulte las tasas oficiales de compra y venta de divisas del BPA, actualizadas directamente desde nuestro sistema. Use el conversor rápido para estimar equivalencias."
+    tagline={t('tools.rates.hero.tagline')}
+    title={t('tools.rates.hero.title')}
+    subtitle={t('tools.rates.hero.subtitle')}
   />
 
-  <!-- BLOQUE 2 · TasasDeCambioWidget ──────────────────────────────────────────
-      Widget propio: WidgetWrapper + Headline + isla Vue TasasDeCambio.
-      Sin Headline — el HeroText ya cumple ese rol en esta página.
-      bg-bpa-alt alterna con el blanco del HeroText y del CallToAction.
+  <!-- BLOQUE 2 · Herramienta ───────────────────────────────────────────────────
+      Monta la isla Vue TasasDeCambio con client:load.
+      El wrapper infiere max-w-4xl e inyecta el prop `lang` internamente.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Herramienta herramienta="tasas" id="tasas" />
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
-      Cierre del módulo. Ofrece dos salidas naturales desde una consulta
-      de tasas: ir al mapa para encontrar la sucursal más cercana,
-      o contactar al banco para una consulta específica.
+      Dos salidas naturales tras consultar tasas: ir al mapa o contactar.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Necesita realizar una operación de cambio?"
-    subtitle="Acérquese a cualquiera de nuestras sucursales con su documento de identidad. Nuestros especialistas le atenderán y orientarán sobre los requisitos vigentes."
+    title={t('tools.rates.cta.title')}
+    subtitle={t('tools.rates.cta.subtitle')}
     actions={[
       {
         variant: 'primary',
-        text:    'Localizar sucursal',
-        href:    '/herramientas/mapa',
+        text:    t('tools.rates.cta.map'),
+        href:    p('herramientas/mapa'),
         icon:    'tabler:map-pin',
       },
       {
         variant: 'secondary',
-        text:    'Contáctenos',
-        href:    '/contacto',
+        text:    t('tools.rates.cta.contact'),
+        href:    p('contacto'),
         icon:    'tabler:headset',
       },
     ]}
@@ -78,7 +86,7 @@ const metadata = {
       Solo botón izquierdo: regresa al índice del módulo Herramientas.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: 'Volver a Herramientas', href: '/herramientas' }}
+    prev={{ text: t('tools.nav.back.tools'), href: p('herramientas') }}
   />
 
 </Layout>

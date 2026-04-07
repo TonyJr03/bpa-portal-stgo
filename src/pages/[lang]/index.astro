@@ -30,6 +30,7 @@
  */
 
 // ── Imports de layout y widgets ────────────────────────────────────────────
+import type { GetStaticPaths } from 'astro';
 import Layout           from '~/layouts/PageLayout.astro';
 import Hero             from '~/components/widgets/Hero.astro';
 import Features2        from '~/components/widgets/Features2.astro';
@@ -39,20 +40,36 @@ import Comunicados      from '~/components/sections/Comunicados.astro';
 import Noticias         from '~/components/sections/Noticias.astro';
 import AccesoRapidoHome from '~/components/sections/AccesoRapidoHome.astro';
 
-// ── Datos estáticos de categorías ─────────────────────────────────────────
-// Fuente de verdad única: src/data/categorias.ts
-// NO se consulta PocketBase para este bloque.
-//import { CATEGORIAS } from '~/data/categorias';
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+import { CATEGORIAS } from '~/data/categorias';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
 
 // ── Items para el componente Features2 (Bloque 4) ─────────────────────────
-
+const items = CATEGORIAS.map((cat) => ({
+  title:       t(`cat.${cat.slug}.nombre`),
+  description: t(`cat.${cat.slug}.desc`),
+  icon:        `tabler:${cat.icono}`,
+  callToAction: {
+    variant: 'link' as const,
+    text:    t('products.view'),
+    href:    p(`productos/${cat.slug}`),
+    icon:    'tabler:arrow-right',
+  },
+}));
 
 // ── Metadata SEO ───────────────────────────────────────────────────────────
 const metadata = {
-  title:               'Inicio — BPA Santiago de Cuba',
+  title: `${t('home.hero.title').replace(/<[^>]*>/g, '')} — BPA Santiago de Cuba`,
   ignoreTitleTemplate: true,
-  description:
-    'Portal oficial del Banco Popular de Ahorro, Sucursal Provincial Santiago de Cuba. Consulte nuestros productos, tasas de cambio, trámites y herramientas financieras.',
+  description: t('home.hero.subtitle'),
 };
 ---
 
@@ -69,33 +86,27 @@ const metadata = {
     actions={[
       {
         variant: 'primary',
-        text:    'Realizar un Trámite',
-        href:    '/tramites',
-        icon:    'tabler:file-description',
+        text: t('home.hero.cta.primary'),
+        href: p('/tramites'),
+        icon: 'tabler:file-description',
       },
       {
         variant: 'secondary',
-        text:    'Explorar Productos',
-        href:    '/productos',
-        icon:    'tabler:building-bank',
+        text: t('home.hero.cta.secondary'),
+        href: p('/productos'),
+        icon: 'tabler:building-bank',
       },
     ]}
   >
-    <Fragment slot="title">
-      Bienvenido al
-      <span class="text-primary dark:text-primary highlight">
-        Banco Popular de Ahorro
-      </span>
-    </Fragment>
+    <Fragment slot="title" set:html={t('home.hero.title')} />
 
     <Fragment slot="subtitle">
       <span class="hidden sm:inline">
-        <strong>Sucursal Provincial Santiago de Cuba.</strong><br />
-        Gestione sus finanzas, consulte sus productos e infórmese sobre nuestros
-        servicios desde la comodidad de su hogar.
+        <strong>{t('home.hero.tagline')}</strong><br />
+        {t('home.hero.subtitle')}
       </span>
       <span class="sm:hidden">
-        Sucursal Provincial Santiago de Cuba. Información y servicios al alcance de su mano.
+        {t('home.hero.subtitle.mobile')}
       </span>
     </Fragment>
   </Hero>
@@ -127,10 +138,11 @@ const metadata = {
   ══════════════════════════════════════════════════════════════════════════ -->
   <Features2
     id="productos"
-    tagline="Nuestro Catálogo"
-    title="Productos y Servicios"
-    subtitle="Descubra la cartera completa de productos financieros que el BPA tiene disponibles para la población y las empresas de Santiago de Cuba."
+    tagline={t('home.products.tagline')}
+    title={t('home.products.title')}
+    subtitle={t('home.products.subtitle')}
     columns={3}
+    items={items}
   />
 
   <!-- ══════════════════════════════════════════════════════════════════════
@@ -148,29 +160,29 @@ const metadata = {
   ══════════════════════════════════════════════════════════════════════════ -->
   <Features3
     id="apps"
-    tagline="Banca Digital"
-    title="Gestione sus finanzas desde su móvil"
-    subtitle="El BPA es compatible con las principales plataformas de banca electrónica de Cuba. Descargue la aplicación y opere sus cuentas sin salir de casa."
+    tagline={t('home.digital.tagline')}
+    title={t('home.digital.title')}
+    subtitle={t('home.digital.subtitle')}
     columns={2}
     items={[
       {
-        title:       'EnZona',
-        description: 'Plataforma de pagos y transferencias entre cuentas en CUP. Disponible para dispositivos Android e iOS. Recargue el móvil, pague servicios y transfiera fondos de forma segura.',
-        icon:        'tabler:device-mobile-dollar',
+        title: t('home.digital.enzona.title'),
+        description: t('home.digital.enzona.desc'),
+        icon: 'tabler:device-mobile-dollar',
         callToAction: {
           variant: 'link',
-          text:    'Más información sobre EnZona',
+          text: t('home.digital.enzona.link'),
           href:    'https://www.enzona.net',
           icon:    'tabler:arrow-right',
         },
       },
       {
-        title:       'Transfermóvil',
-        description: 'Aplicación del Banco Central de Cuba para operaciones bancarias desde el celular. Consulte saldos, realice transferencias y pague servicios comunales vinculados a su cuenta BPA.',
-        icon:        'tabler:transfer',
+        title: t('home.digital.transfermovil.title'),
+        description: t('home.digital.transfermovil.desc'),
+        icon: 'tabler:transfer',
         callToAction: {
           variant: 'link',
-          text:    'Más información sobre Transfermóvil',
+          text: t('home.digital.transfermovil.link'),
           href:    'https://www.etecsa.cu/es/aplicaciones/transfermovil',
           icon:    'tabler:arrow-right',
         },
@@ -186,14 +198,14 @@ const metadata = {
       Fondo oscuro para crear contraste visual fuerte antes del footer.
   ══════════════════════════════════════════════════════════════════════════ -->
   <CallToAction
-    title="¿Necesita orientación personalizada?"
-    subtitle="Nuestros especialistas en cada sucursal de Santiago de Cuba están disponibles para asesorarle. También puede enviarnos su consulta o sugerencia a través del formulario de contacto."
+    title={t('home.cta.title')}
+    subtitle={t('home.cta.subtitle')}
     actions={[
       {
         variant: 'primary',
-        text:    'Contáctenos',
-        href:    '/contacto',
-        icon:    'tabler:headset',
+        text: t('home.cta.button'),
+        href: p('/contacto'),
+        icon: 'tabler:headset',
       },
     ]}
   />

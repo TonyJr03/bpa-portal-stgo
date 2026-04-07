@@ -1,7 +1,7 @@
 ---
 /**
- * @pagina     Trámite — Detalle
- * @ruta       /tramites/[tramite]   (ej: /tramites/tarjeta-debito)
+ * @pagina   src/pages/[lang]/tramites/[tramite].astro
+ * @ruta     /es/tramites/[tramite]  |  /en/tramites/[tramite]
  * @descripcion Página de detalle de un trámite individual. Muestra el contenido
  *              completo del proceso (pasos, requisitos, beneficios) renderizado
  *              desde Markdown almacenado en PocketBase, más un bloque de descarga
@@ -11,14 +11,11 @@
  * Se convierte a HTML con `marked.parse()` en build time — sin JS en el cliente.
  *
  * @colecciones
- *   - tramites    →  getFullList, filtro: publicado = true  (genera las rutas)
- *   - documentos  →  getFullList, filtro: referencia = "{slug}" && tipo = "tramite"
- *                    orden: orden ASC  (documentos descargables del trámite)
- *
- * @patron  getStaticPaths: TODO el fetching ocurre aquí. Cero consultas al renderizar.
+ *   tramites  → publicado = true
+ *   documentos → referencia = slug && tipo = "tramite"
+ *   Campos nuevos: nombre_en, descripcion_en, contenido_en
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { marked }               from 'marked';
 import Layout                   from '~/layouts/PageLayout.astro';
@@ -29,36 +26,32 @@ import ProseContent             from '~/components/sections/ProseContent.astro';
 import DocumentosDescargables   from '~/components/widgets/DocumentosDescargables.astro';
 import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
-import { pb, fetchParaBuild }   from '~/lib/pocketbase';
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
+import { LANGS, useTranslations, translateField } from '~/i18n/utils';
+import { getPermalink }                           from '~/utils/permalinks';
+import { pb, fetchParaBuild }                     from '~/lib/pocketbase';
+
 interface Tramite {
-  id: string;
-  nombre: string;
-  slug: string;
-  descripcion: string;
-  contenido: string;
-  icono: string;
-  orden: number;
-  publicado: boolean;
+  id:             string;
+  nombre:         string;
+  nombre_en:      string;
+  slug:           string;
+  descripcion:    string;
+  descripcion_en: string;
+  contenido:      string;
+  contenido_en:   string;
+  icono:          string;
+  orden:          number;
+  publicado:      boolean;
 }
 
 interface Documento {
-  id: string;
-  nombre: string;
-  archivo: string;
-  referencia: string;
-  tipo: string;
-  orden: number;
-  collectionId: string;
-  collectionName: string;
+  id: string; nombre: string; archivo: string;
+  referencia: string; tipo: string; orden: number;
+  collectionId: string; collectionName: string;
 }
 
-// ── getStaticPaths ─────────────────────────────────────────────────────────────
 export const getStaticPaths = (async () => {
-  // ✅ fetchParaBuild envuelve el fetch en try/catch.
-  // Si PocketBase no está disponible (ej: GitHub Actions / CI), devuelve []
-  // y el build continúa generando 0 rutas en lugar de explotar con ECONNREFUSED.
   const tramites = await fetchParaBuild<Tramite>(
     () => pb.collection('tramites').getFullList<Tramite>({
       filter: 'publicado = true',
@@ -71,7 +64,6 @@ export const getStaticPaths = (async () => {
     tramites.map(async (tramite) => {
       let documentos: Documento[] = [];
       let dbErrorDocs = false;
-
       try {
         documentos = await pb.collection('documentos').getFullList<Documento>({
           filter: `referencia = "${tramite.slug}" && tipo = "tramite"`,
@@ -82,27 +74,33 @@ export const getStaticPaths = (async () => {
         dbErrorDocs = true;
       }
 
-      return {
-        params: { tramite: tramite.slug },
+      // Una ruta por idioma × por trámite
+      return LANGS.map((lang) => ({
+        params: { lang, tramite: tramite.slug },
         props:  { tramite, documentos, dbErrorDocs },
-      };
+      }));
     })
   );
 
-  return paths;
+  return paths.flat(2);
 }) satisfies GetStaticPaths;
 
-// ── Props ─────────────────────────────────────────────────────────────────────
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-const { tramite, documentos, dbErrorDocs } = Astro.props;
+const { tramite, documentos, dbErrorDocs } = Astro.props as Props;
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
 
-// ── Conversión Markdown → HTML ────────────────────────────────────────────────
-// marked.parse() es síncrono y se ejecuta en build time — cero coste en runtime.
-const contenidoHtml = tramite.contenido?.trim()
-  ? marked.parse(tramite.contenido) as string
+// Seleccionar el campo de contenido según el idioma
+const contenidoRaw  = translateField(lang, tramite.contenido, tramite.contenido_en);
+const contenidoHtml = contenidoRaw?.trim()
+  ? marked.parse(contenidoRaw) as string
   : '';
 
-// ── Construcción de URLs de descarga ──────────────────────────────────────────
+// Nombre traducido (para el tagline del HeroText)
+const nombreTraducido = translateField(lang, tramite.nombre, tramite.nombre_en);
+const descripcionTrad = translateField(lang, tramite.descripcion, tramite.descripcion_en);
+
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   id:      doc.id,
   nombre:  doc.nombre,
@@ -111,10 +109,9 @@ const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   orden:   doc.orden,
 }));
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
 const metadata = {
-  title:       `${tramite.nombre} — Trámites BPA Santiago de Cuba`,
-  description: tramite.descripcion,
+  title: `${nombreTraducido} — BPA Santiago de Cuba`,
+  description: descripcionTrad,
 };
 ---
 
@@ -125,8 +122,8 @@ const metadata = {
       Sin subtitle: el contenido prose aporta el contexto completo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Trámites"
-    title={tramite.nombre}
+    tagline={t('procedures.tagline.parent')}
+    title={nombreTraducido}
   />
 
   <!-- BLOQUE 2 · ProseContent / EmptyCollection ───────────────────────────────
@@ -137,7 +134,9 @@ const metadata = {
     ? <ProseContent contenido={contenidoHtml} />
     : <EmptyCollection
         coleccion="tramites"
-        mensaje="La información detallada sobre este trámite no está disponible todavía."
+        mensaje={lang === 'es'
+          ? 'La información detallada sobre este trámite no está disponible todavía.'
+          : 'Detailed information about this procedure is not available yet.'}
         icono="tabler:info-circle"
       />
   }
@@ -151,30 +150,26 @@ const metadata = {
   <DocumentosDescargables
     documentos={documentosConUrl}
     error={dbErrorDocs}
-    titulo="Documentos del trámite"
+    titulo={t('procedures.detail.docs')}
   />
 
   <!-- BLOQUE 4 · CallToAction ──────────────────────────────────────────────────
       Cierre institucional. Invita a contactar si quedan dudas sobre el trámite.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Tiene alguna duda sobre este trámite?"
-    subtitle="Nuestro equipo puede orientarle sobre los requisitos o el estado de su gestión."
-    actions={[
-      {
-        variant: 'primary',
-        text:    'Contáctenos',
-        href:    '/contacto',
-        icon:    'tabler:message',
-      },
-    ]}
+    title={t('procedures.detail.cta.title')}
+    subtitle={t('procedures.detail.cta.subtitle')}
+    actions={[{
+      variant: 'primary',
+      text:    t('procedures.detail.cta.button'),
+      href:    p('contacto'),
+      icon:    'tabler:message',
+    }]}
   />
 
   <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
       Navegación contextual: regresa al listado de trámites.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: 'Volver a Trámites', href: '/tramites' }}
-  />
+  <PageNav prev={{ text: t('procedures.nav.back'), href: p('tramites') }} />
 
 </Layout>

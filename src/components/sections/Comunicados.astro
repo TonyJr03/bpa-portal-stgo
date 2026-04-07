@@ -3,53 +3,61 @@
  * @seccion   src/components/sections/Comunicados.astro
  *
  * @descripcion
- *   Sección "Tablón de Comunicados" de la página de inicio.
- *   Encapsula la isla Vue TablonComunicados con su Headline y el enlace
- *   "Ver todos los comunicados" que pre-filtra la página /actualidad.
+ *   Sección que muestra el tablón de comunicados con un titular y enlace.
+ *   Actúa como capa intermedia entre la página .astro y la isla Vue:
+ *     · Lee el idioma activo de la URL mediante getLangFromUrl()
+ *     · Lo propaga a la isla Vue como prop `lang`
+ *     · Obtiene las traducciones según el idioma detectado
  *
- * @isla  TablonComunicados.vue  →  client:visible
- *        colección: actualidad (categoria = "comunicado")
+ * @isla  TablonComunicados.vue
+ *        client:visible para optimizar el tiempo de carga inicial.
+ *
+ * @props
+ *   id?          string   — id HTML del WidgetWrapper (para anclas)
+ *   isDark?      boolean  — activa la variante oscura del wrapper
+ *   classes?     Record<string, string> — clases extra para el contenedor
+ *
+ * @uso
+ *   <Comunicados id="comunicados" />
  */
 
-import WidgetWrapper    from '~/components/ui/WidgetWrapper.astro';
-import Headline         from '~/components/ui/Headline.astro';
+import WidgetWrapper     from '~/components/ui/WidgetWrapper.astro';
+import Headline          from '~/components/ui/Headline.astro';
 import TablonComunicados from '~/components/vue/TablonComunicados.vue';
-import { Icon }         from 'astro-icon/components';
-import type { Widget }  from '~/types';
+import { Icon }          from 'astro-icon/components';
+import type { Widget }   from '~/types';
+import { useTranslations, getLangFromUrl } from '~/i18n/utils';
+
+// ── Props ─────────────────────────────────────────────────────────────────────
+type Props = Widget;
 
 const {
   id,
-  isDark  = false,
+  isDark = false,
   classes = {},
-} = Astro.props as Widget;
+} = Astro.props;
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
-<WidgetWrapper
-  id={id}
-  isDark={isDark}
-  containerClass={`max-w-6xl ${classes?.container ?? ''}`}
->
+<WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-6xl ${classes?.container ?? ''}`}>
   <Headline
-    tagline="Comunicados"
-    title="Tablón de Avisos"
-    subtitle="Comunicados institucionales, alertas de servicio y avisos del BPA Santiago de Cuba."
+    tagline={t('home.news.tagline')}
+    title={t('home.news.title')}
+    subtitle={t('home.news.subtitle')}
     classes={{ container: 'text-center max-w-3xl mx-auto mb-10' }}
   />
 
-  <TablonComunicados client:visible />
+  <TablonComunicados client:visible lang={lang} />
 
-  <!-- Enlace pre-filtrado a la sección de comunicados en /actualidad -->
   <div class="text-center mt-10">
-    <a
-      href="/actualidad?categoria=comunicado"
-      class="inline-flex items-center gap-2 text-sm font-medium
-             text-primary dark:text-primary hover:underline underline-offset-4 transition-colors">
-      Ver todos los comunicados
+    <a href={`/${lang}/actualidad?categoria=comunicado`}
+      class="inline-flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline underline-offset-4 transition-colors">
+      {t('home.news.viewAll')}
       <Icon name="tabler:arrow-right" class="w-4 h-4" />
     </a>
   </div>
 
-  <Fragment slot="bg">
-    <slot name="bg" />
-  </Fragment>
+  <Fragment slot="bg"><slot name="bg" /></Fragment>
 </WidgetWrapper>

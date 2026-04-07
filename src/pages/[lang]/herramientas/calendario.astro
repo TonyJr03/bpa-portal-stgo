@@ -1,75 +1,83 @@
 ---
 /**
- * @pagina  src/pages/herramientas/calendario.astro
- * @ruta    /herramientas/calendario
+ * @pagina   src/pages/[lang]/herramientas/calendario.astro
+ * @ruta     /[lang]/herramientas/calendario
  *
  * @descripcion
- * Página del módulo Calendario de Eventos. Declara los bloques de la
- * página y no sabe nada de Vue ni de PocketBase — responsabilidad
- * exclusiva de CalendarioWidget.astro y CalendarioEventos.vue.
+ *   Página del módulo Calendario de Eventos.
+ *   Wrapper fino que delega la lógica reactiva a CalendarioEventos.vue
+ *   a través de Herramienta.astro.
  *
  * Estructura:
- *   BLOQUE 1 · HeroText          → tagline + title + subtitle
- *   BLOQUE 2 · CalendarioWidget  → widget propio (bg-bpa-alt)
- *                                   Headline + isla Vue
- *   BLOQUE 3 · CallToAction      → cierre institucional
- *   BLOQUE 4 · PageNav           → prev: "Volver a Herramientas"
+ *   BLOQUE 1 · HeroText    → tagline + title + subtitle
+ *   BLOQUE 2 · Herramienta → isla Vue CalendarioEventos (client:load)
+ *   BLOQUE 3 · CallToAction → si el usuario tiene dudas sobre los pagos
+ *   BLOQUE 4 · PageNav     → prev: "Volver a Herramientas"
  *
  * @colecciones  ninguna en build time
  *   eventos → consultada en el cliente por CalendarioEventos.vue
  */
 
-import Layout            from '~/layouts/PageLayout.astro';
-import HeroText          from '~/components/widgets/HeroText.astro';
-import Herramienta from '~/components/sections/Herramienta.astro';
-import CallToAction      from '~/components/widgets/CallToAction.astro';
-import PageNav           from '~/components/widgets/PageNav.astro';
+import type { GetStaticPaths } from 'astro';
+
+import Layout       from '~/layouts/PageLayout.astro';
+import HeroText     from '~/components/widgets/HeroText.astro';
+import Herramienta  from '~/components/sections/Herramienta.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav      from '~/components/widgets/PageNav.astro';
+
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t        = useTranslations(lang);
+const p        = (slug: string) => getPermalink(slug, lang);
 
 const metadata = {
-  title: 'Calendario de Eventos — BPA Santiago de Cuba',
-  description:
-    'Consulte el calendario de pagos a jubilados, días feriados bancarios y avisos del Banco Popular de Ahorro en Santiago de Cuba. Navegue por mes para planificar con antelación.',
+  title:       `${t('tools.calendar.hero.title')} — BPA Santiago de Cuba`,
+  description: t('tools.calendar.hero.subtitle'),
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
+  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Tagline "Herramientas" sitúa al usuario dentro del módulo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Herramientas"
-    title="Calendario de Eventos"
-    subtitle="Consulte las fechas de pago a jubilados, días feriados bancarios y avisos institucionales. Navegue entre meses para planificar sus visitas al banco con antelación."
+    tagline={t('tools.calendar.hero.tagline')}
+    title={t('tools.calendar.hero.title')}
+    subtitle={t('tools.calendar.hero.subtitle')}
   />
 
-  <!-- BLOQUE 2 · CalendarioWidget ─────────────────────────────────────────────
-      Widget propio: WidgetWrapper + Headline + isla Vue CalendarioEventos.
-      Sin Headline — el HeroText ya cumple ese rol en esta página.
-      bg-bpa-alt alterna con el blanco del HeroText y del CallToAction.
-      max-w-3xl en el widget: el calendario mensual es más legible en
-      columna estrecha que estirado en pantallas anchas.
+  <!-- BLOQUE 2 · Herramienta ───────────────────────────────────────────────────
+      Monta la isla Vue CalendarioEventos con client:load.
+      El wrapper infiere max-w-3xl e inyecta el prop `lang` internamente.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Herramienta herramienta="calendario" id="calendario" />
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
-      El siguiente paso natural tras consultar el calendario es ir a la
-      sucursal o ver la herramienta de tasas — se ofrecen ambas salidas.
+      El paso natural tras consultar el calendario es ir a la sucursal
+      o contactar al banco para confirmar detalles de pago.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Tiene alguna duda sobre los pagos?"
-    subtitle="Si necesita confirmar su fecha de cobro o tiene alguna consulta, acérquese a su sucursal más cercana o contáctenos directamente."
+    title={t('tools.calendar.cta.title')}
+    subtitle={t('tools.calendar.cta.subtitle')}
     actions={[
       {
         variant: 'primary',
-        text:    'Localizar sucursal',
-        href:    '/herramientas/mapa',
+        text:    t('tools.calendar.cta.map'),
+        href:    p('herramientas/mapa'),
         icon:    'tabler:map-pin',
       },
       {
         variant: 'secondary',
-        text:    'Contáctenos',
-        href:    '/contacto',
+        text:    t('tools.calendar.cta.contact'),
+        href:    p('contacto'),
         icon:    'tabler:headset',
       },
     ]}
@@ -79,7 +87,7 @@ const metadata = {
       Solo botón izquierdo: regresa al índice del módulo Herramientas.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: 'Volver a Herramientas', href: '/herramientas' }}
+    prev={{ text: t('tools.nav.back.tools'), href: p('herramientas') }}
   />
 
 </Layout>

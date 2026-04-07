@@ -1,7 +1,8 @@
 ---
 /**
- * @pagina  src/pages/sobre-nosotros/historia.astro
- * @ruta    /sobre-nosotros/historia
+ * @pagina  src/pages/[lang]/sobre-nosotros/historia.astro
+ * @ruta    es/sobre-nosotros/historia
+ *          en/sobre-nosotros/historia
  *
  * @descripcion
  * Página estática institucional con la historia cronológica del BPA Santiago
@@ -20,18 +21,37 @@
  * @colecciones  Ninguna — contenido 100 % hardcodeado (datos oficiales fijos).
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
+import type { GetStaticPaths } from 'astro';
 import Layout   from '~/layouts/PageLayout.astro';
 import HeroText from '~/components/widgets/HeroText.astro';
 import Steps    from '~/components/widgets/Steps.astro';
 import PageNav  from '~/components/widgets/PageNav.astro';
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
+
 const metadata = {
-  title: 'Historia — BPA Santiago de Cuba',
-  description:
-    'Conozca la historia del Banco Popular de Ahorro: desde su fundación en 1983 mediante el Decreto-Ley No. 69 hasta su consolidación como banco universal en 2022.',
+  title: `${t('about.history.hero.title')} — BPA Santiago de Cuba`,
+  description: t('about.history.hero.subtitle'),
 };
+
+// Los hitos usan HTML en el title para la jerarquía año / nombre / decreto.
+// La estructura es idéntica en ambos idiomas — solo cambia el contenido de t().
+const hitos = [1, 2, 3, 4, 5, 6].map((n) => ({
+  title: `${t(`about.history.m${n}.year`)} <br />
+    <span class="text-xl font-semibold">${t(`about.history.m${n}.title`)}</span><br />
+    <span class="text-sm font-normal text-muted">${t(`about.history.m${n}.decree`)}</span>`,
+  description: t(`about.history.m${n}.desc`),
+  icon: 'tabler:calendar-event',
+}));
 ---
 
 <Layout metadata={metadata}>
@@ -41,61 +61,18 @@ const metadata = {
       Subtitle ofrece contexto inmediato antes del timeline.
   ─────────────────────────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Sobre Nosotros"
-    title="Nuestra Historia"
-    subtitle="Más de cuatro décadas al servicio de los cubanos. Un recorrido por los momentos fundacionales que forjaron la institución que el BPA es hoy."
+    tagline={t('about.history.hero.tagline')}
+    title={t('about.history.hero.title')}
+    subtitle={t('about.history.hero.subtitle')}
   />
 
   <!-- BLOQUE 2 · Steps — Timeline cronológico ──────────────────────────────────
       Seis hitos extraídos del §1 (Disposiciones Generales) del documento oficial.
-      Sin prop `image`: Steps expande el timeline a ancho completo.
-      El campo `title` usa HTML para jerarquizar año / nombre del hito / decreto.
-      El campo `description` narra el significado institucional de cada evento,
-      reescrito en lenguaje accesible (no transcripción literal del decreto legal).
-      Todos los items usan el mismo icono de calendario para coherencia visual,
-      que el widget renderiza dentro de un círculo de color primario.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Steps
-    title="Hitos Fundacionales"
-    subtitle="Los decretos y resoluciones que marcaron el camino del BPA a lo largo de su historia."
-    items={[
-      {
-        title: `1983 <br /><span class="text-xl font-semibold">Fundación del Banco Popular de Ahorro</span><br /><span class="text-sm font-normal text-muted">Decreto-Ley No. 69 · 18 de mayo de 1983</span>`,
-        description:
-          'El BPA nace como banco estatal integrante del sistema bancario nacional, con autonomía orgánica, personalidad jurídica y patrimonio propio aportado por el Estado cubano. Desde su primer día tiene una misión clara: acercar los servicios bancarios a la población cubana.',
-        icon: 'tabler:calendar-event',
-      },
-      {
-        title: `1997 <br /><span class="text-xl font-semibold">Regulación de Funciones</span><br /><span class="text-sm font-normal text-muted">Resolución No. 15 · 4 de noviembre de 1997</span>`,
-        description:
-          'Se establece el marco regulatorio formal de las funciones del BPA, precisando el alcance de su actividad a través de la Oficina Central, Direcciones Provinciales, Sucursales y Cajas de Ahorro. Esta resolución define la arquitectura institucional que aún hoy estructura el banco.',
-        icon: 'tabler:calendar-event',
-      },
-      {
-        title: `1999 <br /><span class="text-xl font-semibold">Aprobación de los Estatutos</span><br /><span class="text-sm font-normal text-muted">Acuerdo No. 93 · 21 de mayo de 1999</span>`,
-        description:
-          'El Consejo de Dirección del Banco Central de Cuba aprueba los Estatutos del BPA, institucionalizando su gobierno interno: un Presidente que preside el Consejo de Dirección, órgano colegiado responsable de los objetivos estratégicos, el presupuesto y las grandes decisiones institucionales.',
-        icon: 'tabler:calendar-event',
-      },
-      {
-        title: `2018 <br /><span class="text-xl font-semibold">Nuevo Marco Legal Bancario</span><br /><span class="text-sm font-normal text-muted">Decreto-Ley No. 362 · 14 de septiembre de 2018</span>`,
-        description:
-          'El Decreto-Ley "Sobre los Bancos e Instituciones Financieras no Bancarias" ratifica el carácter autónomo del BPA y su personalidad jurídica independiente, reforzando que la institución cubre sus gastos con sus propios ingresos y opera con plena responsabilidad patrimonial.',
-        icon: 'tabler:calendar-event',
-      },
-      {
-        title: `2019 <br /><span class="text-xl font-semibold">Nueva Presidencia Institucional</span><br /><span class="text-sm font-normal text-muted">Resolución No. 42 · 20 de julio de 2019</span>`,
-        description:
-          'Por resolución del Presidente de los Consejos de Estado y de Ministros, Tania Fitó Hernández es designada Presidenta del BPA, inaugurando una nueva etapa de liderazgo para la institución.',
-        icon: 'tabler:calendar-event',
-      },
-      {
-        title: `2022 <br /><span class="text-xl font-semibold">Licencia de Banco Universal</span><br /><span class="text-sm font-normal text-muted">Resolución No. 7 BCC · 24 de enero de 2022</span>`,
-        description:
-          'El Banco Central de Cuba otorga al BPA su nueva licencia como banco universal, ampliando su objeto social para operar en todo tipo de actividad lucrativa relacionada con el negocio de la banca, tanto en moneda nacional como en moneda libremente convertible. Un hito que consolida al BPA como institución financiera plena.',
-        icon: 'tabler:calendar-event',
-      },
-    ]}
+    title={t('about.history.milestones.title')}
+    subtitle={t('about.history.milestones.subtitle')}
+    items={hitos}
     classes={{ container: 'max-w-3xl' }}
   />
 
@@ -104,8 +81,8 @@ const metadata = {
       Derecha:   avanza a Directorio (siguiente subsección de Sobre Nosotros).
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: 'Ver Visión',      href: '/sobre-nosotros/vision'     }}
-    next={{ text: 'Ver Nuestra Red',  href: '/sobre-nosotros/nuestra-red' }}
+    prev={{ text: t('about.history.nav.prev'), href: p('sobre-nosotros/vision')     }}
+    next={{ text: t('about.history.nav.next'), href: p('sobre-nosotros/nuestra-red') }}
   />
 
 </Layout>

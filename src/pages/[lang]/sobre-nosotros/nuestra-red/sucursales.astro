@@ -1,7 +1,8 @@
 ---
 /**
- * @pagina  src/pages/sobre-nosotros/nuestra-red/sucursales.astro
- * @ruta    /sobre-nosotros/nuestra-red/sucursales
+ * @pagina   src/pages/[lang]/sobre-nosotros/nuestra-red/sucursales.astro
+ * @ruta     /es/sobre-nosotros/nuestra-red/sucursales
+ *           /en/sobre-nosotros/nuestra-red/sucursales
  *
  * @descripcion
  * Página estática informativa sobre los tipos de oficinas bancarias del BPA
@@ -31,136 +32,94 @@
  * @colecciones  Ninguna — contenido 100 % hardcodeado (información fija).
  */
 
-// ── Imports ────────────────────────────────────────────────────────────────────
-import Layout       from '~/layouts/PageLayout.astro';
-import HeroText     from '~/components/widgets/HeroText.astro';
-import Content      from '~/components/widgets/Content.astro';
-import Features3    from '~/components/widgets/Features3.astro';
-import CallToAction from '~/components/widgets/CallToAction.astro';
-import PageNav      from '~/components/widgets/PageNav.astro';
+import type { GetStaticPaths } from 'astro';
+import Layout        from '~/layouts/PageLayout.astro';
+import HeroText      from '~/components/widgets/HeroText.astro';
+import Content       from '~/components/widgets/Content.astro';
+import Features3     from '~/components/widgets/Features3.astro';
+import CallToAction  from '~/components/widgets/CallToAction.astro';
+import PageNav       from '~/components/widgets/PageNav.astro';
 import SvgSucursales from '~/components/icons/SvgSucursales.astro';
 import SvgATM        from '~/components/icons/SvgATM.astro';
 
-// ── Metadata SEO ──────────────────────────────────────────────────────────────
+import { LANGS, useTranslations } from '~/i18n/utils';
+import { getPermalink }           from '~/utils/permalinks';
+
+export const getStaticPaths = (() =>
+  LANGS.map((lang) => ({ params: { lang } }))
+) satisfies GetStaticPaths;
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
+
 const metadata = {
-  title: 'Sucursales y Oficinas — BPA Santiago de Cuba',
-  description:
-    'Conozca los tipos de oficinas bancarias del BPA en Santiago de Cuba: sucursales, cajas de ahorro y cajeros automáticos. Qué servicios ofrecen y cómo utilizarlos.',
+  title: `${t('network.offices.hero.title')} — BPA Santiago de Cuba`,
+  description: t('network.offices.hero.subtitle'),
 };
 ---
 
 <Layout metadata={metadata}>
 
-  <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
-      Tagline ubica al usuario dentro del módulo "Nuestra Red".
-      Subtitle resume el contenido antes de que el usuario empiece a leer.
-  ─────────────────────────────────────────────────────────────────────────── -->
+  <!-- BLOQUE 1 · HeroText ────────────────────────────────────────────────────── -->
   <HeroText
-    tagline="Nuestra Red"
-    title="Sucursales y Oficinas"
-    subtitle="Conozca los tipos de oficinas bancarias que el BPA opera en Santiago de Cuba, qué servicios ofrece cada una y cómo sacar el mayor provecho de cada punto de atención."
+    tagline={t('network.offices.hero.tagline')}
+    title={t('network.offices.hero.title')}
+    subtitle={t('network.offices.hero.subtitle')}
   />
 
-  <!-- BLOQUE 2 · Content — Qué es una sucursal ─────────────────────────────────
-      isReversed=true: SvgSucursales a la izquierda, texto a la derecha.
-      Sin fondo propio en este bloque — el fondo llega con Features3 (bloque 3).
-      Sin items: los tipos de oficina van en Features3 a continuación
-      para aprovechar el layout a columnas completas.
-  ─────────────────────────────────────────────────────────────────────────── -->
+  <!-- BLOQUE 2 · Content — Qué es una sucursal ───────────────────────────────── -->
   <Content
     isReversed
-    title="La Red de Oficinas del BPA"
-    content="
-      <p>
-        El BPA dispone en Santiago de Cuba de una <strong>red de oficinas bancarias</strong>
-        distribuidas en todos los municipios de la provincia, pensada para que cada
-        santiaguero tenga un punto de atención cercano a su hogar o lugar de trabajo.
-      </p>
-      <p style='margin-top:1rem'>
-        Cada oficina, independientemente de su tamaño, ofrece los servicios esenciales
-        de la banca: apertura de cuentas, depósitos, retiros, pagos, cobros y
-        orientación sobre créditos. Las oficinas de mayor tamaño agregan servicios
-        especializados como la gestión completa de financiamientos, cambio de divisas
-        y atención a personas jurídicas.
-      </p>
-      <p style='margin-top:1rem'>
-        La red se organiza en <strong>tres tipos de oficina</strong> según su tamaño
-        y capacidad de servicio. Conocer las diferencias le ayudará a elegir el punto
-        de atención más adecuado para cada gestión.
-      </p>
-    "
+    title={t('network.offices.content.title')}
+    content={`
+      <p>${t('network.offices.content.p1')}</p>
+      <p style="margin-top:1rem">${t('network.offices.content.p2')}</p>
+      <p style="margin-top:1rem">${t('network.offices.content.p3')}</p>
+    `}
   >
     <SvgSucursales slot="image" />
   </Content>
 
   <!-- BLOQUE 3 · Features3 — Tipos de oficina ──────────────────────────────────
       Tres columnas: una por cada tipo de oficina bancaria.
-      isAfterContent=true: elimina el padding-top para que se una visualmente
-      al Content del bloque anterior como una sola sección.
-      Fondo bg-bpa-alt en ambos bloques (Content + Features3): misma sección.
-      El usuario percibe: presentación arriba → detalle abajo.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Features3
-    tagline="Tipos de oficina"
-    title="¿Qué tipo de oficina necesita?"
-    subtitle="Cada punto de la red tiene un alcance de servicio diferente. Identifique cuál se adapta mejor a su gestión."
+    tagline={t('network.offices.types.tagline')}
+    title={t('network.offices.types.title')}
+    subtitle={t('network.offices.types.subtitle')}
     columns={3}
     isAfterContent={true}
     items={[
       {
-        title: 'Sucursal Grande',
-        description:
-          'Oficina de mayor capacidad, con plantilla completa: Director, Gerente Comercial, Gerente de Efectivo, Área Contable y Gerente de Cajas de Ahorro. Ofrece todos los servicios bancarios incluyendo financiamientos complejos, atención a entidades, cambio de divisas y supervisión de las cajas de ahorro subordinadas.',
-        icon: 'tabler:building-bank',
+        title:       t('network.offices.t1.title'),
+        description: t('network.offices.t1.desc'),
+        icon:        'tabler:building-bank',
       },
       {
-        title: 'Sucursal Mediana y Pequeña',
-        description:
-          'Estructura simplificada con Director, Gerente de Área Contable, Gerente de Efectivo y Jefe de Departamento Comercial. Presta los servicios bancarios esenciales para personas naturales y jurídicas. Ideal para gestiones cotidianas: depósitos, retiros, pagos, cobros y solicitudes de crédito.',
-        icon: 'tabler:building',
+        title:       t('network.offices.t2.title'),
+        description: t('network.offices.t2.desc'),
+        icon:        'tabler:building',
       },
       {
-        title: 'Caja de Ahorro',
-        description:
-          'La oficina más cercana al barrio. Atendida por un Jefe de Caja y cajeros de línea. Cubre las operaciones básicas del día a día: depósitos, extracciones, apertura de cuentas y pagos. Subordinada a una sucursal tutelar que la supervisa y le suministra efectivo y materiales.',
-        icon: 'tabler:pig-money',
+        title:       t('network.offices.t3.title'),
+        description: t('network.offices.t3.desc'),
+        icon:        'tabler:pig-money',
       },
     ]}
   />
 
   <!-- BLOQUE 4 · Content — Cajeros Automáticos ─────────────────────────────────
       Sección dedicada a los ATM: qué son, qué permiten hacer, recomendaciones.
-      SvgATM a la derecha (sin isReversed): alterna la composición respecto al
-      Content del bloque 2 (que sí tenía isReversed).
-      Fondo bg-bpa-alt para separar visualmente del bloque Features3 anterior.
   ─────────────────────────────────────────────────────────────────────────── -->
   <Content
-    title="Cajeros Automáticos (ATM)"
-    content="
-      <p>
-        Los <strong>Cajeros Automáticos (ATM)</strong> del BPA permiten realizar
-        operaciones bancarias básicas las 24 horas del día, sin necesidad de
-        acudir a una oficina durante el horario de atención.
-      </p>
-      <p style='margin-top:1rem'>
-        Con su <strong>tarjeta magnética BPA</strong> puede retirar efectivo en
-        moneda nacional, consultar el saldo de su cuenta, cambiar su PIN de seguridad
-        y, en los equipos habilitados, realizar transferencias entre cuentas del
-        propio banco.
-      </p>
-      <p style='margin-top:1rem'>
-        Los ATM están distribuidos en los principales puntos de afluencia de la
-        provincia: a la entrada de sucursales, centros de trabajo, hospitales y
-        zonas comerciales. Para conocer la ubicación exacta de cada cajero,
-        consulte el mapa interactivo de nuestra red de oficinas.
-      </p>
-      <p style='margin-top:1.5rem'>
-        <strong>Recomendaciones de uso:</strong> proteja su PIN al teclearlo,
-        retire solo el efectivo que necesite, guarde el comprobante de cada
-        operación y reporte de inmediato cualquier incidencia en la sucursal
-        más cercana o llamando a los teléfonos de la Dirección Provincial.
-      </p>
-    "
+    title={t('network.offices.atm.title')}
+    content={`
+      <p>${t('network.offices.atm.p1')}</p>
+      <p style="margin-top:1rem">${t('network.offices.atm.p2')}</p>
+      <p style="margin-top:1rem">${t('network.offices.atm.p3')}</p>
+      <p style="margin-top:1.5rem">${t('network.offices.atm.p4')}</p>
+    `}
   >
     <SvgATM slot="image" />
   </Content>
@@ -168,28 +127,22 @@ const metadata = {
   <!-- BLOQUE 5 · CallToAction — Enlace al mapa ─────────────────────────────────
       Cierre natural de la página: invita al usuario a localizar la oficina
       más cercana en el mapa interactivo de Herramientas.
-      NOTA (Opción A): /herramientas/mapa aún no existe. El enlace está activo
-      y se completará cuando se implemente esa sección del portal.
   ─────────────────────────────────────────────────────────────────────────── -->
   <CallToAction
-    title="¿Dónde está la oficina más cercana?"
-    subtitle="Utilice nuestro mapa interactivo para localizar sucursales, cajas de ahorro y cajeros automáticos en toda la provincia de Santiago de Cuba."
-    actions={[
-      {
-        variant: 'primary',
-        text: 'Ver mapa de oficinas',
-        href: '/herramientas/mapa',
-        icon: 'tabler:map-2',
-      },
-    ]}
+    title={t('network.offices.cta.title')}
+    subtitle={t('network.offices.cta.subtitle')}
+    actions={[{
+      variant: 'primary',
+      text:    t('network.offices.cta.button'),
+      href:    p('herramientas/mapa'),
+      icon:    'tabler:map-2',
+    }]}
   />
 
   <!-- BLOQUE 6 · PageNav ───────────────────────────────────────────────────────
       Izquierda: regresa a Dirección Provincial (sección anterior).
       Derecha:   avanza a Canales de Atención (siguiente subsección).
   ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: 'Nuestra Red', href: '/sobre-nosotros/nuestra-red' }}
-  />
+  <PageNav prev={{ text: t('network.offices.nav.prev'), href: p('sobre-nosotros/nuestra-red') }} />
 
 </Layout>
