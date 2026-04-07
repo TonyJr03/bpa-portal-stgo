@@ -39,7 +39,7 @@ import Features2    from '~/components/widgets/Features2.astro';
 import PageNav      from '~/components/widgets/PageNav.astro';
 import SvgDireccion from '~/components/icons/SvgDireccion.astro';
 
-import { LANGS, useTranslations } from '~/i18n/utils';
+import { LANGS, useTranslations, useLocalTranslations } from '~/i18n/utils';
 import { getPermalink }           from '~/utils/permalinks';
 
 export const getStaticPaths = (() =>
@@ -49,6 +49,22 @@ export const getStaticPaths = (() =>
 const { lang } = Astro.params;
 const t = useTranslations(lang);
 const p = (slug: string) => getPermalink(slug, lang);
+const tl = useLocalTranslations(lang, {
+  es: {
+    address:     'Dirección',
+    phones:      'Teléfonos',
+    email:       'Correo Institucional',
+    hours:       'Horario de Atención',
+    hoursDetail: '[COMPLETAR: Lunes a Viernes · 8:00 am – 4:00 pm<br/>Sábados · 8:00 am – 12:00 m]',
+  },
+  en: {
+    address:     'Address',
+    phones:      'Phone Numbers',
+    email:       'Institutional Email',
+    hours:       'Service Hours',
+    hoursDetail: '[COMPLETAR: Monday to Friday · 8:00 am – 4:00 pm<br/>Saturdays · 8:00 am – 12:00 noon]',
+  },
+});
 
 const metadata = {
   title: `${t('network.provincial.title')} — BPA Santiago de Cuba`,
@@ -123,25 +139,23 @@ const metadata = {
     columns={2}
     items={[
       {
-        title:       lang === 'es' ? 'Dirección'          : 'Address',
+        title:       tl('address'),
         description: '[COMPLETAR: Calle, número, entre calles, municipio Santiago de Cuba]',
         icon:        'tabler:map-pin',
       },
       {
-        title:       lang === 'es' ? 'Teléfonos'          : 'Phone Numbers',
+        title:       tl('phones'),
         description: '[COMPLETAR: (022) XXXXX — Recepción<br/>(022) XXXXX — Atención al Cliente]',
         icon:        'tabler:phone',
       },
       {
-        title:       lang === 'es' ? 'Correo Institucional': 'Institutional Email',
+        title:       tl('email'),
         description: '[COMPLETAR: atencion@bpa.scu.cu]',
         icon:        'tabler:mail',
       },
       {
-        title:       lang === 'es' ? 'Horario de Atención' : 'Service Hours',
-        description: lang === 'es'
-          ? '[COMPLETAR: Lunes a Viernes · 8:00 am – 4:00 pm<br/>Sábados · 8:00 am – 12:00 m]'
-          : '[COMPLETAR: Monday to Friday · 8:00 am – 4:00 pm<br/>Saturdays · 8:00 am – 12:00 noon]',
+        title:       tl('hours'),
+        description: tl('hoursDetail'),
         icon:        'tabler:clock',
       },
     ]}

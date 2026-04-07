@@ -39,116 +39,100 @@
 
 import { ref, reactive, computed, onMounted } from 'vue';
 import { pb } from '~/lib/pocketbase';
-
-import es from '~/i18n/es';
-import en from '~/i18n/en';
-
-import type { Lang } from '~/i18n/utils';
+import { useTranslations, useFieldTranslation, useLocalTranslations, type Lang } from '~/i18n/utils';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 const props = defineProps<{ lang: Lang }>();
 
-// ── Traducción desde el diccionario (textos semánticos institucionales) ───────
-const dict = computed(() => (props.lang === 'en' ? en : es));
-const t    = (key: keyof typeof es) => dict.value[key] ?? key;
+// ── Traducción ────────────────────────────────────────────────────────────────
+const t  = useTranslations(props.lang);
+const tf = useFieldTranslation(props.lang);
 
-// ── Traducción de campos de PocketBase ───────────────────────────────────────
-// tf() aplica el campo _en si el idioma es inglés y el campo existe y no está vacío.
-// En cualquier otro caso devuelve el campo base en español.
-// Esta función se usa en cada lugar donde se muestra un campo de PB traducible.
-function tf(base: string, translated?: string | null): string {
-  if (props.lang === 'es' || !translated?.trim()) return base;
-  return translated.trim();
-}
-
-// ── Strings de interfaz pura (NO van a los archivos .ts) ──────────────────────
-// IMPORTANTE: computed() es necesario porque depende de props.lang (reactivo).
-// Sin computed(), cambiar el idioma NO actualizaría la UI.
-const UILocal = computed(() => props.lang === 'en'
-  ? {
-      tabSight:         'Sight Savings',
-      tabTerm:          'Fixed Term',
-      tabCredit:        'Loan',
-      labelCurrency:    'Currency',
-      labelCapital:     'Initial capital',
-      labelTerm:        'Term (years)',
-      labelDeposit:     'Capital to deposit',
-      labelRate:        'Annual rate (%)',
-      labelMonths:      'Term (months)',
-      labelResult:      'Calculation result',
-      labelInterest:    'Interest earned',
-      labelTotal:       'Amount at maturity',
-      labelTermResult:  'Interest at maturity',
-      labelTermTotal:   'Capital + Interest',
-      labelCreditResult:'Loan result',
-      labelMonthly:     'Fixed monthly installment',
-      labelPrincipal:   'Principal',
-      labelInterests:   'Total interest',
-      labelToPay:       'Total to pay',
-      labelTable:       'Amortization schedule',
-      labelQuotas:      'installments',
-      labelShowAll:     '▼ View all {n} installments',
-      labelShowLess:    '▲ View summary',
-      colMonth:         'Month',
-      colQuota:         'Installment',
-      colInterest:      'Interest',
-      colCapital:       'Principal',
-      colBalance:       'Balance',
-      btnSelectRange:   'Select date range',
-      labelStart:       'Start date',
-      labelEnd:         'Maturity date',
-      btnApply:         'Apply',
-      perYear:          'per year',
-      loading:          'Loading interest rates…',
-      retry:            'Retry',
-      errorTitle:       'Could not load interest rates.',
-      errorSub:         'Connection to server lost.',
-      month:            'month',
-      months:           'months',
-    }
-  : {
-      tabSight:         'A la Vista',
-      tabTerm:          'Plazo Fijo',
-      tabCredit:        'Crédito',
-      labelCurrency:    'Moneda',
-      labelCapital:     'Capital inicial',
-      labelTerm:        'Plazo (años)',
-      labelDeposit:     'Capital a depositar',
-      labelRate:        'Tasa anual (%)',
-      labelMonths:      'Plazo (meses)',
-      labelResult:      'Resultado del cálculo',
-      labelInterest:    'Intereses ganados',
-      labelTotal:       'Monto al vencimiento',
-      labelTermResult:  'Intereses al vencimiento',
-      labelTermTotal:   'Capital + Intereses',
-      labelCreditResult:'Resultado del crédito',
-      labelMonthly:     'Cuota mensual fija',
-      labelPrincipal:   'Capital',
-      labelInterests:   'Total intereses',
-      labelToPay:       'Total a pagar',
-      labelTable:       'Plan de amortización',
-      labelQuotas:      'cuotas',
-      labelShowAll:     '▼ Ver las {n} cuotas',
-      labelShowLess:    '▲ Ver resumen',
-      colMonth:         'Mes',
-      colQuota:         'Cuota',
-      colInterest:      'Interés',
-      colCapital:       'Capital',
-      colBalance:       'Saldo',
-      btnSelectRange:   'Seleccionar rango de fechas',
-      labelStart:       'Fecha de inicio',
-      labelEnd:         'Fecha de vencimiento',
-      btnApply:         'Aceptar',
-      perYear:          'anual',
-      loading:          'Cargando tasas de interés…',
-      retry:            'Reintentar',
-      errorTitle:       'No se pudieron cargar las tasas de interés.',
-      errorSub:         'Se perdió la conexión con el servidor.',
-      month:            'mes',
-      months:           'meses',
-    }
-);
-const tUI = (key: keyof (typeof UILocal.value)) => UILocal.value[key];
+// ── Strings de interfaz pura (local — no van a los archivos .ts) ───────────────
+const tl = useLocalTranslations(props.lang, {
+  es: {
+    tabSight:         'A la Vista',
+    tabTerm:          'Plazo Fijo',
+    tabCredit:        'Crédito',
+    labelCurrency:    'Moneda',
+    labelCapital:     'Capital inicial',
+    labelTerm:        'Plazo (años)',
+    labelDeposit:     'Capital a depositar',
+    labelRate:        'Tasa anual (%)',
+    labelMonths:      'Plazo (meses)',
+    labelResult:      'Resultado del cálculo',
+    labelInterest:    'Intereses ganados',
+    labelTotal:       'Monto al vencimiento',
+    labelTermResult:  'Intereses al vencimiento',
+    labelTermTotal:   'Capital + Intereses',
+    labelCreditResult:'Resultado del crédito',
+    labelMonthly:     'Cuota mensual fija',
+    labelPrincipal:   'Capital',
+    labelInterests:   'Total intereses',
+    labelToPay:       'Total a pagar',
+    labelTable:       'Plan de amortización',
+    labelQuotas:      'cuotas',
+    labelShowAll:     '▼ Ver las {n} cuotas',
+    labelShowLess:    '▲ Ver resumen',
+    colMonth:         'Mes',
+    colQuota:         'Cuota',
+    colInterest:      'Interés',
+    colCapital:       'Capital',
+    colBalance:       'Saldo',
+    btnSelectRange:   'Seleccionar rango de fechas',
+    labelStart:       'Fecha de inicio',
+    labelEnd:         'Fecha de vencimiento',
+    btnApply:         'Aceptar',
+    perYear:          'anual',
+    loading:          'Cargando tasas de interés…',
+    retry:            'Reintentar',
+    errorTitle:       'No se pudieron cargar las tasas de interés.',
+    errorSub:         'Se perdió la conexión con el servidor.',
+    month:            'mes',
+    months:           'meses',
+  },
+  en: {
+    tabSight:         'Sight Savings',
+    tabTerm:          'Fixed Term',
+    tabCredit:        'Loan',
+    labelCurrency:    'Currency',
+    labelCapital:     'Initial capital',
+    labelTerm:        'Term (years)',
+    labelDeposit:     'Capital to deposit',
+    labelRate:        'Annual rate (%)',
+    labelMonths:      'Term (months)',
+    labelResult:      'Calculation result',
+    labelInterest:    'Interest earned',
+    labelTotal:       'Amount at maturity',
+    labelTermResult:  'Interest at maturity',
+    labelTermTotal:   'Capital + Interest',
+    labelCreditResult:'Loan result',
+    labelMonthly:     'Fixed monthly installment',
+    labelPrincipal:   'Principal',
+    labelInterests:   'Total interest',
+    labelToPay:       'Total to pay',
+    labelTable:       'Amortization schedule',
+    labelQuotas:      'installments',
+    labelShowAll:     '▼ View all {n} installments',
+    labelShowLess:    '▲ View summary',
+    colMonth:         'Month',
+    colQuota:         'Installment',
+    colInterest:      'Interest',
+    colCapital:       'Principal',
+    colBalance:       'Balance',
+    btnSelectRange:   'Select date range',
+    labelStart:       'Start date',
+    labelEnd:         'Maturity date',
+    btnApply:         'Apply',
+    perYear:          'per year',
+    loading:          'Loading interest rates…',
+    retry:            'Retry',
+    errorTitle:       'Could not load interest rates.',
+    errorSub:         'Connection to server lost.',
+    month:            'month',
+    months:           'months',
+  },
+});
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 type TabId = 'vista' | 'plazo' | 'credito';
@@ -240,7 +224,7 @@ function ajustar(
 // ── PASO 10: labelPlazo ───────────────────────────────────────────────────────
 // Genera "6 meses" / "1 mes" desde plazo_meses, sin depender del campo nombre
 function labelPlazo(meses: number): string {
-  const unidad = meses === 1 ? tUI('month') : tUI('months');
+  const unidad = meses === 1 ? tl('month') : tl('months');
   return `${meses} ${unidad}`;
 }
 
@@ -283,8 +267,8 @@ const clasesGridPlazo = computed(() => {
 // ── Encabezado del resultado Tab B ────────────────────────────────────────────
 const labelTabBHeader = computed(() => {
   const tasa = plazoTasasFiltradas.value[plazoForm.idx];
-  if (!tasa) return tUI('labelResult');
-  return `${labelPlazo(tasa.plazo_meses)} — ${tasa.tasa}% ${tUI('perYear')} (${plazoMoneda.value})`;
+  if (!tasa) return tl('labelResult');
+  return `${labelPlazo(tasa.plazo_meses)} — ${tasa.tasa}% ${tl('perYear')} (${plazoMoneda.value})`;
 });
 
 // ── Calendario: calcular años desde rango de fechas ──────────────────────────
@@ -386,7 +370,7 @@ onMounted(cargarTasas);
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
         <path d="M12 3a9 9 0 1 0 9 9" />
       </svg>
-      <p class="text-sm">{{ tUI('loading') }}</p>
+      <p class="text-sm">{{ tl('loading') }}</p>
     </div>
 
     <!-- ── ESTADO: Error ─────────────────────────────────────────────────── -->
@@ -396,15 +380,15 @@ onMounted(cargarTasas);
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
         <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 8v4" /><path d="M12 16h.01" />
       </svg>
-      <p class="font-semibold text-sm">{{ tUI('errorTitle') }}</p>
-      <p class="text-xs text-red-500">{{ tUI('errorSub') }}</p>
+      <p class="font-semibold text-sm">{{ tl('errorTitle') }}</p>
+      <p class="text-xs text-red-500">{{ tl('errorSub') }}</p>
       <button @click="cargarTasas" class="inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 transition-colors">
         <!-- tabler:refresh -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
           <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
           <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
         </svg>
-        {{ tUI('retry') }}
+        {{ tl('retry') }}
       </button>
     </div>
 
@@ -419,7 +403,7 @@ onMounted(cargarTasas);
           :class="tabActiva === 'vista' ? 'bg-primary text-white' : 'bg-white dark:bg-bpa-950/60 text-muted hover:bg-bpa-50 dark:hover:bg-bpa-800/30'">
           <!-- tabler:coins -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14c0 1.657 2.686 3 6 3s6 -1.343 6 -3s-2.686 -3 -6 -3s-6 1.343 -6 3" /><path d="M9 14v4c0 1.656 2.686 3 6 3s6 -1.344 6 -3v-4" /><path d="M3 6c0 1.072 1.144 2.062 3 2.598s4.144 .536 6 0c1.856 -.536 3 -1.526 3 -2.598c0 -1.072 -1.144 -2.062 -3 -2.598s-4.144 -.536 -6 0c-1.856 .536 -3 1.526 -3 2.598" /><path d="M3 6v10c0 .888 .772 1.45 2 2" /><path d="M3 11c0 .888 .772 1.45 2 2" /></svg>
-          <span class="text-xs sm:text-sm leading-tight text-center">{{ tUI('tabSight') }}</span>
+          <span class="text-xs sm:text-sm leading-tight text-center">{{ tl('tabSight') }}</span>
         </button>
 
         <button @click="tabActiva = 'plazo'"
@@ -427,7 +411,7 @@ onMounted(cargarTasas);
           :class="tabActiva === 'plazo' ? 'bg-primary text-white' : 'bg-white dark:bg-bpa-950/60 text-muted hover:bg-bpa-50 dark:hover:bg-bpa-800/30'">
           <!-- tabler:building-bank -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0" /><path d="M3 10l18 0" /><path d="M5 6l7 -3l7 3" /><path d="M4 10l0 11" /><path d="M20 10l0 11" /><path d="M8 14l0 3" /><path d="M12 14l0 3" /><path d="M16 14l0 3" /></svg>
-          <span class="text-xs sm:text-sm leading-tight text-center">{{ tUI('tabTerm') }}</span>
+          <span class="text-xs sm:text-sm leading-tight text-center">{{ tl('tabTerm') }}</span>
         </button>
 
         <button @click="tabActiva = 'credito'; tablaCompleta = false"
@@ -435,7 +419,7 @@ onMounted(cargarTasas);
           :class="tabActiva === 'credito' ? 'bg-primary text-white' : 'bg-white dark:bg-bpa-950/60 text-muted hover:bg-bpa-50 dark:hover:bg-bpa-800/30'">
           <!-- tabler:credit-card -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -8" /><path d="M3 10l18 0" /><path d="M7 15l.01 0" /><path d="M11 15l2 0" /></svg>
-          <span class="text-xs sm:text-sm leading-tight text-center">{{ tUI('tabCredit') }}</span>
+          <span class="text-xs sm:text-sm leading-tight text-center">{{ tl('tabCredit') }}</span>
         </button>
 
       </div>
@@ -449,7 +433,7 @@ onMounted(cargarTasas);
           <!-- Selector de moneda -->
           <div class="flex items-center gap-3 flex-wrap">
             <p class="text-xs font-semibold text-muted uppercase tracking-wide flex-shrink-0">
-              {{ tUI('labelCurrency') }}
+              {{ tl('labelCurrency') }}
             </p>
             <div class="flex flex-wrap gap-2">
               <button v-for="mon in vistaMonedasDisponibles" :key="mon.moneda"
@@ -473,7 +457,7 @@ onMounted(cargarTasas);
                 porcentaje y método → t() (texto semántico del diccionario)
               -->
               {{ tf(vistaTasaActual.expand.moneda.nombre_moneda, vistaTasaActual.expand.moneda.nombre_moneda_en) }}:
-              <strong>{{ vistaTasaActual.tasa }}% {{ tUI('perYear') }}</strong>
+              <strong>{{ vistaTasaActual.tasa }}% {{ tl('perYear') }}</strong>
               · {{ t('calculator.sight.method.note') }}
             </p>
           </div>
@@ -484,7 +468,7 @@ onMounted(cargarTasas);
             <!-- Capital -->
             <div>
               <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                {{ tUI('labelCapital') }} ({{ vistaMoneda || '…' }})
+                {{ tl('labelCapital') }} ({{ vistaMoneda || '…' }})
               </label>
               <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
                 <input v-model="vistaForm.monto" type="number" min="0" step="0.1" placeholder="0.00" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
@@ -498,7 +482,7 @@ onMounted(cargarTasas);
             <!-- Plazo + botón calendario -->
             <div>
               <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                {{ tUI('labelTerm') }}
+                {{ tl('labelTerm') }}
               </label>
               <div class="flex gap-2">
                 <div class="campo-numero flex-1 flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
@@ -509,7 +493,7 @@ onMounted(cargarTasas);
                   </div>
                 </div>
                 <!-- Botón calendario -->
-                <button type="button" @click="mostrarCalendario = !mostrarCalendario" :title="tUI('btnSelectRange')"
+                <button type="button" @click="mostrarCalendario = !mostrarCalendario" :title="tl('btnSelectRange')"
                   class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg border transition-colors"
                   :class="mostrarCalendario ? 'bg-primary border-primary text-white' : 'border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-muted hover:border-primary hover:text-primary'">
                   <!-- tabler:calendar -->
@@ -520,10 +504,10 @@ onMounted(cargarTasas);
               <!-- Panel de rango de fechas -->
               <Transition enter-active-class="transition-all duration-150 ease-out" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition-all duration-100 ease-in" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-1">
                 <div v-if="mostrarCalendario" class="mt-2 p-4 rounded-xl border border-bpa-200 dark:border-bpa-amber-800 bg-bpa-50 dark:bg-bpa-950/40 space-y-3">
-                  <p class="text-xs text-primary dark:text-primary font-semibold">{{ tUI('btnSelectRange') }}</p>
+                  <p class="text-xs text-primary dark:text-primary font-semibold">{{ tl('btnSelectRange') }}</p>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] font-medium text-muted mb-1">{{ tUI('labelStart') }}</label>
+                      <label class="block text-[11px] font-medium text-muted mb-1">{{ tl('labelStart') }}</label>
                       <div @click="inputFechaInicio?.showPicker()" class="flex items-center justify-between rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 px-3 py-2 cursor-pointer select-none">
                         <span class="text-sm" :class="fechaInicio ? 'text-default dark:text-default' : 'text-muted'">{{ fechaInicio ? fmtFecha(fechaInicio) : 'dd/mm/aaaa' }}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-muted flex-shrink-0"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M11 15h1" /><path d="M12 15v3" /></svg>
@@ -531,7 +515,7 @@ onMounted(cargarTasas);
                       <input type="date" v-model="fechaInicio" ref="inputFechaInicio" class="sr-only" />
                     </div>
                     <div>
-                      <label class="block text-[11px] font-medium text-muted mb-1">{{ tUI('labelEnd') }}</label>
+                      <label class="block text-[11px] font-medium text-muted mb-1">{{ tl('labelEnd') }}</label>
                       <div @click="inputFechaFin?.showPicker()" class="flex items-center justify-between rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 px-3 py-2 cursor-pointer select-none">
                         <span class="text-sm" :class="fechaFin ? 'text-default dark:text-default' : 'text-muted'">{{ fechaFin ? fmtFecha(fechaFin) : 'dd/mm/aaaa' }}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-muted flex-shrink-0"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M11 15h1" /><path d="M12 15v3" /></svg>
@@ -543,7 +527,7 @@ onMounted(cargarTasas);
                     <button type="button" @click="aplicarRango" :disabled="!fechaInicio || !fechaFin"
                       class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                       :class="fechaInicio && fechaFin ? 'bg-primary hover:bg-secondary text-white' : 'bg-bpa-100 dark:bg-bpa-800/40 text-muted cursor-not-allowed'">
-                      {{ tUI('btnApply') }}
+                      {{ tl('btnApply') }}
                     </button>
                   </div>
                 </div>
@@ -556,16 +540,16 @@ onMounted(cargarTasas);
             <div class="bg-primary px-5 py-3 flex items-center gap-2 text-white">
               <!-- tabler:calculator -->
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -14" /><path d="M8 8a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1l0 -1" /><path d="M8 14l0 .01" /><path d="M12 14l0 .01" /><path d="M16 14l0 .01" /><path d="M8 17l0 .01" /><path d="M12 17l0 .01" /><path d="M16 17l0 .01" /></svg>
-              <span class="font-semibold text-sm">{{ tUI('labelResult') }}</span>
+              <span class="font-semibold text-sm">{{ tl('labelResult') }}</span>
             </div>
             <div class="bg-white dark:bg-bpa-950/60 p-5 grid grid-cols-2 gap-4">
               <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
-                <p class="text-xs text-muted mb-1">{{ tUI('labelInterest') }}</p>
+                <p class="text-xs text-muted mb-1">{{ tl('labelInterest') }}</p>
                 <p class="text-xl font-bold text-bpa-400 dark:text-bpa-amber-400">{{ fmt(resultadoVista?.interes ?? 0) }}</p>
                 <p class="text-xs text-muted mt-0.5">{{ vistaMoneda || '—' }}</p>
               </div>
               <div class="text-center p-3 rounded-lg bg-bpa-100 dark:bg-bpa-amber-950/40">
-                <p class="text-xs text-muted mb-1">{{ tUI('labelTotal') }}</p>
+                <p class="text-xs text-muted mb-1">{{ tl('labelTotal') }}</p>
                 <p class="text-xl font-bold text-primary dark:text-primary">{{ fmt(resultadoVista?.monto ?? 0) }}</p>
                 <p class="text-xs text-muted mt-0.5">{{ vistaMoneda || '—' }}</p>
               </div>
@@ -583,7 +567,7 @@ onMounted(cargarTasas);
 
           <!-- Selector de moneda -->
           <div class="flex items-center gap-3 flex-wrap">
-            <p class="text-xs font-semibold text-muted uppercase tracking-wide flex-shrink-0">{{ tUI('labelCurrency') }}</p>
+            <p class="text-xs font-semibold text-muted uppercase tracking-wide flex-shrink-0">{{ tl('labelCurrency') }}</p>
             <div class="flex flex-wrap gap-2">
               <button v-for="mon in plazoMonedasDisponibles" :key="mon.moneda"
                 @click="plazoMoneda = mon.moneda; plazoForm.idx = 0"
@@ -620,7 +604,7 @@ onMounted(cargarTasas);
           <!-- Capital -->
           <div>
             <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-              {{ tUI('labelDeposit') }} ({{ plazoMoneda || '…' }})
+              {{ tl('labelDeposit') }} ({{ plazoMoneda || '…' }})
             </label>
             <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
               <input v-model="plazoForm.monto" type="number" min="0" step="0.1" placeholder="0.00" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
@@ -642,12 +626,12 @@ onMounted(cargarTasas);
             </div>
             <div class="bg-white dark:bg-bpa-950/60 p-5 grid grid-cols-2 gap-4">
               <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
-                <p class="text-xs text-muted mb-1">{{ tUI('labelTermResult') }}</p>
+                <p class="text-xs text-muted mb-1">{{ tl('labelTermResult') }}</p>
                 <p class="text-xl font-bold text-bpa-400 dark:text-bpa-amber-400">{{ fmt(resultadoPlazo?.interes ?? 0) }}</p>
                 <p class="text-xs text-muted mt-0.5">{{ plazoMoneda || '—' }}</p>
               </div>
               <div class="text-center p-3 rounded-lg bg-bpa-100 dark:bg-bpa-amber-950/40">
-                <p class="text-xs text-muted mb-1">{{ tUI('labelTermTotal') }}</p>
+                <p class="text-xs text-muted mb-1">{{ tl('labelTermTotal') }}</p>
                 <p class="text-xl font-bold text-primary dark:text-primary">{{ fmt(resultadoPlazo?.total ?? 0) }}</p>
                 <p class="text-xs text-muted mt-0.5">{{ plazoMoneda || '—' }}</p>
               </div>
@@ -675,7 +659,7 @@ onMounted(cargarTasas);
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <!-- Monto -->
             <div>
-              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">{{ tUI('labelPrincipal') }} (CUP)</label>
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">{{ tl('labelPrincipal') }} (CUP)</label>
               <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
                 <input v-model="creditoForm.monto" type="number" min="0" step="0.1" placeholder="0.00" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
                 <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
@@ -686,7 +670,7 @@ onMounted(cargarTasas);
             </div>
             <!-- Tasa -->
             <div>
-              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">{{ tUI('labelRate') }}</label>
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">{{ tl('labelRate') }}</label>
               <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
                 <input v-model="creditoForm.tasaAnual" type="number" min="0" step="0.1" placeholder="0.0" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
                 <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
@@ -697,7 +681,7 @@ onMounted(cargarTasas);
             </div>
             <!-- Plazo -->
             <div>
-              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">{{ tUI('labelMonths') }}</label>
+              <label class="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">{{ tl('labelMonths') }}</label>
               <div class="campo-numero flex items-center rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition">
                 <input v-model="creditoForm.plazoMeses" type="number" min="1" step="1" placeholder="0" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm text-default dark:text-default placeholder:text-muted focus:outline-none" />
                 <div class="flex flex-col self-stretch border-l border-bpa-200 dark:border-bpa-amber-800">
@@ -713,12 +697,12 @@ onMounted(cargarTasas);
             <div class="bg-primary px-5 py-3 flex items-center gap-2 text-white">
               <!-- tabler:calculator -->
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -14" /><path d="M8 8a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1l0 -1" /><path d="M8 14l0 .01" /><path d="M12 14l0 .01" /><path d="M16 14l0 .01" /><path d="M8 17l0 .01" /><path d="M12 17l0 .01" /><path d="M16 17l0 .01" /></svg>
-              <span class="font-semibold text-sm">{{ tUI('labelCreditResult') }}</span>
+              <span class="font-semibold text-sm">{{ tl('labelCreditResult') }}</span>
             </div>
             <div class="bg-white dark:bg-bpa-950/60 p-5">
               <!-- Cuota mensual destacada -->
               <div class="text-center mb-5 p-4 rounded-xl bg-bpa-50 dark:bg-bpa-950/40 border border-bpa-200 dark:border-bpa-amber-800">
-                <p class="text-xs text-muted mb-1 uppercase tracking-wide font-semibold">{{ tUI('labelMonthly') }}</p>
+                <p class="text-xs text-muted mb-1 uppercase tracking-wide font-semibold">{{ tl('labelMonthly') }}</p>
                 <p class="text-3xl font-bold text-primary dark:text-primary">
                   {{ fmt(resultadoCredito?.cuota ?? 0) }}
                   <span class="text-base font-medium text-muted ml-1">CUP</span>
@@ -727,15 +711,15 @@ onMounted(cargarTasas);
               <!-- 3 stats -->
               <div class="grid grid-cols-3 gap-3">
                 <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
-                  <p class="text-[11px] text-muted mb-1">{{ tUI('labelPrincipal') }}</p>
+                  <p class="text-[11px] text-muted mb-1">{{ tl('labelPrincipal') }}</p>
                   <p class="text-sm font-bold text-default dark:text-default">{{ fmt(parsear(creditoForm.monto)) }}</p>
                 </div>
                 <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
-                  <p class="text-[11px] text-muted mb-1">{{ tUI('labelInterests') }}</p>
+                  <p class="text-[11px] text-muted mb-1">{{ tl('labelInterests') }}</p>
                   <p class="text-sm font-bold text-default dark:text-default">{{ fmt(resultadoCredito?.totalIntereses ?? 0) }}</p>
                 </div>
                 <div class="text-center p-3 rounded-lg bg-bpa-100/50 dark:bg-bpa-amber-950/30">
-                  <p class="text-[11px] text-muted mb-1">{{ tUI('labelToPay') }}</p>
+                  <p class="text-[11px] text-muted mb-1">{{ tl('labelToPay') }}</p>
                   <p class="text-sm font-bold text-default dark:text-default">{{ fmt(resultadoCredito?.totalPagar ?? 0) }}</p>
                 </div>
               </div>
@@ -747,18 +731,18 @@ onMounted(cargarTasas);
             <div class="bg-bpa-800 dark:bg-bpa-amber-950 border-b border-bpa-200 dark:border-bpa-amber-800 px-4 py-2.5 flex items-center gap-2 text-white">
               <!-- tabler:table -->
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14" /><path d="M3 10h18" /><path d="M10 3v18" /></svg>
-              <span class="text-sm font-semibold">{{ tUI('labelTable') }}</span>
-              <span class="ml-auto text-xs text-bpa-200 dark:text-bpa-amber-600">{{ resultadoCredito.n }} {{ tUI('labelQuotas') }}</span>
+              <span class="text-sm font-semibold">{{ tl('labelTable') }}</span>
+              <span class="ml-auto text-xs text-bpa-200 dark:text-bpa-amber-600">{{ resultadoCredito.n }} {{ tl('labelQuotas') }}</span>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
                   <tr class="bg-bpa-50 dark:bg-bpa-950/80 border-b border-bpa-200 dark:border-bpa-amber-800">
-                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-muted">{{ tUI('colMonth') }}</th>
-                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-default">{{ tUI('colQuota') }}</th>
-                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-bpa-400 dark:text-bpa-amber-400">{{ tUI('colInterest') }}</th>
-                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-bpa-400 dark:text-bpa-amber-400">{{ tUI('colCapital') }}</th>
-                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-default">{{ tUI('colBalance') }}</th>
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-muted">{{ tl('colMonth') }}</th>
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-default">{{ tl('colQuota') }}</th>
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-bpa-400 dark:text-bpa-amber-400">{{ tl('colInterest') }}</th>
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-bpa-400 dark:text-bpa-amber-400">{{ tl('colCapital') }}</th>
+                    <th class="text-center px-3 py-2.5 text-xs font-semibold text-default">{{ tl('colBalance') }}</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-bpa-200 dark:divide-bpa-amber-800/50">
@@ -780,8 +764,8 @@ onMounted(cargarTasas);
             <div v-if="resultadoCredito.n > 8" class="border-t border-bpa-200 dark:border-bpa-amber-800 px-4 py-2.5 bg-white dark:bg-bpa-950/60 flex justify-center">
               <button @click="tablaCompleta = !tablaCompleta" class="text-xs font-medium text-primary dark:text-primary hover:text-secondary dark:hover:text-secondary transition-colors">
                 {{ tablaCompleta
-                  ? tUI('labelShowLess')
-                  : tUI('labelShowAll').replace('{n}', String(resultadoCredito.n)) }}
+                  ? tl('labelShowLess')
+                  : tl('labelShowAll').replace('{n}', String(resultadoCredito.n)) }}
               </button>
             </div>
           </div>

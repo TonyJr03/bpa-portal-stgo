@@ -27,7 +27,7 @@ import DocumentosDescargables   from '~/components/widgets/DocumentosDescargable
 import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
 
-import { LANGS, useTranslations, translateField } from '~/i18n/utils';
+import { LANGS, useTranslations, useFieldTranslation, useLocalTranslations } from '~/i18n/utils';
 import { getPermalink }                           from '~/utils/permalinks';
 import { pb, fetchParaBuild }                     from '~/lib/pocketbase';
 
@@ -88,18 +88,20 @@ export const getStaticPaths = (async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { tramite, documentos, dbErrorDocs } = Astro.props as Props;
 const { lang } = Astro.params;
-const t = useTranslations(lang);
+const t  = useTranslations(lang);
+const tf = useFieldTranslation(lang);
 const p = (slug: string) => getPermalink(slug, lang);
+const tl = useLocalTranslations(lang, {
+  es: { empty: 'La información detallada sobre este trámite no está disponible todavía.' },
+  en: { empty: 'Detailed information about this procedure is not available yet.' },
+});
 
 // Seleccionar el campo de contenido según el idioma
-const contenidoRaw  = translateField(lang, tramite.contenido, tramite.contenido_en);
+const nombreTraducido = tf(tramite.nombre, tramite.nombre_en);
+const contenidoRaw  = tf(tramite.contenido, tramite.contenido_en);
 const contenidoHtml = contenidoRaw?.trim()
   ? marked.parse(contenidoRaw) as string
   : '';
-
-// Nombre traducido (para el tagline del HeroText)
-const nombreTraducido = translateField(lang, tramite.nombre, tramite.nombre_en);
-const descripcionTrad = translateField(lang, tramite.descripcion, tramite.descripcion_en);
 
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
   id:      doc.id,
@@ -111,7 +113,7 @@ const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
 
 const metadata = {
   title: `${nombreTraducido} — BPA Santiago de Cuba`,
-  description: descripcionTrad,
+  description: tf(tramite.descripcion, tramite.descripcion_en),
 };
 ---
 
@@ -134,9 +136,7 @@ const metadata = {
     ? <ProseContent contenido={contenidoHtml} />
     : <EmptyCollection
         coleccion="tramites"
-        mensaje={lang === 'es'
-          ? 'La información detallada sobre este trámite no está disponible todavía.'
-          : 'Detailed information about this procedure is not available yet.'}
+        mensaje={tl('empty')}
         icono="tabler:info-circle"
       />
   }

@@ -34,7 +34,7 @@ import PageNav                  from '~/components/widgets/PageNav.astro';
 import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
 
-import { LANGS, useTranslations, translateField } from '~/i18n/utils';
+import { LANGS, useTranslations, useFieldTranslation, useLocalTranslations } from '~/i18n/utils';
 import { getPermalink }                           from '~/utils/permalinks';
 import { pb, fetchParaBuild }                     from '~/lib/pocketbase';
 import { CATEGORIAS_SLUGS }                       from '~/data/categorias';
@@ -104,13 +104,17 @@ export const getStaticPaths = (async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { producto, documentos, dbErrorDocs } = Astro.props as Props;
 const { lang, categoria } = Astro.params;
-const t = useTranslations(lang);
+const t  = useTranslations(lang);
+const tf = useFieldTranslation(lang);
 const p = (slug: string) => getPermalink(slug, lang);
+const tl = useLocalTranslations(lang, {
+  es: { empty: 'La información detallada sobre este producto no está disponible todavía.' },
+  en: { empty: 'Detailed information about this product is not available yet.' },
+});
 
-const nombreTraducido    = translateField(lang, producto.nombre,    producto.nombre_en);
-const descripcionTrad    = translateField(lang, producto.descripcion, producto.descripcion_en);
-const contenidoRaw       = translateField(lang, producto.contenido,  producto.contenido_en);
-const contenidoHtml      = contenidoRaw?.trim()
+const nombreTraducido = tf(producto.nombre,    producto.nombre_en);
+const contenidoRaw    = tf(producto.contenido,  producto.contenido_en);
+const contenidoHtml   = contenidoRaw?.trim()
   ? marked.parse(contenidoRaw) as string
   : '';
 
@@ -124,7 +128,7 @@ const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
 
 const metadata = {
   title: `${nombreTraducido} — BPA Santiago de Cuba`,
-  description: descripcionTrad,
+  description: tf(producto.descripcion, producto.descripcion_en),
 };
 ---
 
@@ -147,9 +151,7 @@ const metadata = {
     ? <ProseContent contenido={contenidoHtml} />
     : <EmptyCollection
         coleccion="productos"
-        mensaje={lang === 'es'
-          ? 'La información detallada sobre este producto no está disponible todavía.'
-          : 'Detailed information about this product is not available yet.'}
+        mensaje={tl('empty')}
         icono="tabler:info-circle"
       />
   }

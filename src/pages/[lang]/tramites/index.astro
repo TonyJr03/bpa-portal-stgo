@@ -21,7 +21,7 @@ import PageNav         from '~/components/widgets/PageNav.astro';
 import DatabaseError   from '~/components/ui/DatabaseError.astro';
 import EmptyCollection from '~/components/ui/EmptyCollection.astro';
 
-import { LANGS, useTranslations, translateField } from '~/i18n/utils';
+import { LANGS, useTranslations, useFieldTranslation, useLocalTranslations } from '~/i18n/utils';
 import { getPermalink }                           from '~/utils/permalinks';
 import { pb }                                     from '~/lib/pocketbase';
 
@@ -61,12 +61,23 @@ export const getStaticPaths = (async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { tramites, dbError } = Astro.props as Props;
 const { lang } = Astro.params;
-const t = useTranslations(lang);
+const t  = useTranslations(lang);
+const tf = useFieldTranslation(lang);
 const p = (slug: string) => getPermalink(slug, lang);
+const tl = useLocalTranslations(lang, {
+  es: {
+    dbError: 'No pudimos acceder a la información de los trámites. Por favor, intente más tarde o contacte con nosotros.',
+    empty:   'No hay trámites publicados en este momento. Consulte con nosotros si necesita información sobre un procedimiento específico.',
+  },
+  en: {
+    dbError: 'We could not access the procedure information. Please try again later or contact us.',
+    empty:   'No procedures are currently published. Contact us if you need information about a specific procedure.',
+  },
+});
 
 const items = tramites.map((tr) => ({
-  title:       translateField(lang, tr.nombre, tr.nombre_en),
-  description: translateField(lang, tr.descripcion, tr.descripcion_en),
+  title:       tf(tr.nombre, tr.nombre_en),
+  description: tf(tr.descripcion, tr.descripcion_en),
   icon:        `tabler:${tr.icono}`,
   callToAction: {
     variant: 'link' as const,
@@ -100,16 +111,12 @@ const metadata = {
   {dbError ? (
     <DatabaseError
       coleccion="tramites"
-      mensaje={lang === 'es'
-        ? 'No pudimos acceder a la información de los trámites. Por favor, intente más tarde o contacte con nosotros.'
-        : 'We could not access the procedure information. Please try again later or contact us.'}
+      mensaje={tl('dbError')}
     />
   ) : items.length === 0 ? (
     <EmptyCollection
       coleccion="tramites"
-      mensaje={lang === 'es'
-        ? 'No hay trámites publicados en este momento. Consulte con nosotros si necesita información sobre un procedimiento específico.'
-        : 'No procedures are currently published. Contact us if you need information about a specific procedure.'}
+      mensaje={tl('empty')}
       icono="tabler:clipboard-off"
     />
   ) : (

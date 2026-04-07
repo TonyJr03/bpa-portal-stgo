@@ -15,9 +15,15 @@
  *
  * @uso en islas Vue
  *   // La isla recibe `lang` como prop desde la sección/widget Astro padre.
- *   // No importa utils.ts directamente — el prop es suficiente.
- *   const props = defineProps<{ lang: 'es' | 'en' }>();
- *   const label = computed(() => props.lang === 'es' ? 'Buscar...' : 'Search...');
+ *   // Importa las funciones centralizadas — no es necesario redefinirlas localmente.
+ *   import { useTranslations, useFieldTranslation, useLocalTranslations } from '~/i18n/utils';
+ *   const props = defineProps<{ lang: Lang }>();
+ *   const t  = useTranslations(props.lang);
+ *   const tf = useFieldTranslation(props.lang);
+ *   const tl = useLocalTranslations(props.lang, {
+ *     es: { placeholder: 'Buscar...' },
+ *     en: { placeholder: 'Search...' },
+ *   });
  */
 
 import es from './es';
@@ -75,16 +81,16 @@ export function getLangFromUrl(url: URL): Lang {
  *   t('nav.missing')   // → 'nav.missing'  (fallback visible — indica key faltante)
  */
 export function useTranslations(lang: Lang) {
-  return function t(key: string): string {
-    const value = translations[lang][key];
+  return function t(key: keyof typeof es): string {
+    const value = translations[lang][key as string];
     if (value !== undefined) return value;
 
     // Fallback al español si la clave no existe en el idioma solicitado
-    const fallback = translations[DEFAULT_LANG][key];
+    const fallback = translations[DEFAULT_LANG][key as string];
     if (fallback !== undefined) return fallback;
 
     // Último recurso: devuelve la propia clave (facilita detectar strings faltantes)
-    return key;
+    return key as string;
   };
 }
 
@@ -136,4 +142,70 @@ export function translateField(
 ): string {
   if (lang === 'es') return base;
   return translated?.trim() ? translated.trim() : base;
+}
+
+/**
+ * Devuelve la función de traducción de campos tf() vinculada al idioma recibido.
+ *
+ * Equivalente curried de translateField(), pensada para islas Vue donde es
+ * más ergonómico obtener una función reutilizable que llamar translateField
+ * pasando lang en cada invocación.
+ *
+ * @ejemplo — en un componente Vue:
+ *   const tf = useFieldTranslation(props.lang);
+ *   // En el template:
+ *   {{ tf(producto.nombre, producto.nombre_en) }}
+ *
+ * @param lang  El idioma activo ('es' | 'en')
+ */
+export function useFieldTranslation(lang: Lang) {
+  return function tf(base: string, translated?: string | null): string {
+    return translateField(lang, base, translated);
+  };
+}
+
+/**
+ * Devuelve la función de traducción tl() vinculada a un diccionario local.
+ *
+ * Diseñada para strings de UI específicos de un componente (labels, placeholders,
+ * mensajes de estado) que no pertenecen al diccionario general. Cada componente
+ * define su propio objeto `{ es: {...}, en: {...} }` y obtiene una función tl()
+ * con tipo seguro sobre las claves de ese objeto.
+ *
+ * El fallback sigue el mismo orden que useTranslations:
+ *   idioma activo → español → la propia clave como string.
+ *
+ * @ejemplo — en un componente Vue:
+ *   const tl = useLocalTranslations(props.lang, {
+ *     es: { buscar: 'Buscar…', sinResultados: 'Sin resultados' },
+ *     en: { buscar: 'Search…', sinResultados: 'No results' },
+ *   });
+ *   tl('buscar')       // → 'Search…'  (si lang = 'en')
+ *   tl('sinResultados') // → 'Sin resultados'  (fallback si falta en 'en')
+ *
+ * @ejemplo — en una página Astro:
+ *   const tl = useLocalTranslations(lang, {
+ *     es: { dbError: 'La información no está disponible temporalmente.' },
+ *     en: { dbError: 'Information is temporarily unavailable.' },
+ *   });
+ *
+ * @param lang         El idioma activo ('es' | 'en')
+ * @param dictionaries Objeto con un sub-diccionario por idioma; las claves deben
+ *                     ser idénticas en ambos idiomas.
+ */
+export function useLocalTranslations<T extends Record<string, string | number | boolean>>(
+  lang: Lang,
+  dictionaries: Record<Lang, T>
+) {
+  return function tl(key: keyof T): string {
+    const value = dictionaries[lang]?.[key];
+    if (value !== undefined) return String(value);
+
+    // Fallback al español
+    const fallback = dictionaries[DEFAULT_LANG]?.[key];
+    if (fallback !== undefined) return String(fallback);
+
+    // Último recurso: devuelve la propia clave
+    return String(key);
+  };
 }

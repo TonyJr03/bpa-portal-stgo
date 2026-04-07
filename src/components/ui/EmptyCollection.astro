@@ -15,6 +15,7 @@
  */
 
 import { Icon } from 'astro-icon/components';
+import { getLangFromUrl, useLocalTranslations } from '~/i18n/utils';
 
 export interface Props {
   coleccion: string;
@@ -22,11 +23,14 @@ export interface Props {
   icono?: string;
 }
 
-const {
-  coleccion,
-  mensaje = 'Esta sección no tiene contenido disponible todavía.',
-  icono = 'tabler:info-circle',
-} = Astro.props;
+const { coleccion, mensaje, icono = 'tabler:info-circle' } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+
+const tl = useLocalTranslations(lang, {
+  es: { default: 'Esta sección no tiene contenido disponible todavía.' },
+  en: { default: 'This section has no content available yet.' },
+});
+const texto = mensaje ?? tl('default');
 ---
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center
@@ -39,7 +43,7 @@ const {
   />
 
   <p class="text-xl font-semibold text-default dark:text-white">
-    {mensaje}
+    {texto}
   </p>
 
   <!-- Bloque oculto: referencia técnica solo para el administrador -->

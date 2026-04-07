@@ -36,7 +36,7 @@ import Features2 from '~/components/widgets/Features2.astro';
 import Steps     from '~/components/widgets/Steps.astro';
 import PageNav   from '~/components/widgets/PageNav.astro';
 
-import { LANGS, useTranslations } from '~/i18n/utils';
+import { LANGS, useTranslations, useLocalTranslations } from '~/i18n/utils';
 import { getPermalink }           from '~/utils/permalinks';
 
 export const getStaticPaths = (() =>
@@ -46,6 +46,43 @@ export const getStaticPaths = (() =>
 const { lang } = Astro.params;
 const t = useTranslations(lang);
 const p = (slug: string) => getPermalink(slug, lang);
+const urlDir  = p('sobre-nosotros/nuestra-red/direccion-provincial');
+const urlMapa = p('herramientas/mapa');
+const c1Desc = lang === 'es'
+  ? `La vía más completa para cualquier gestión bancaria. Acuda a la sucursal o caja de ahorro más cercana con su carné de identidad. Para trámites que la sucursal no puede resolver directamente, diríjase a la sede de la <a href="${urlDir}" class="text-primary hover:underline">Dirección Provincial</a>. Consulte la ubicación de todas las oficinas en el <a href="${urlMapa}" class="text-primary hover:underline">mapa interactivo</a>.`
+  : `The most comprehensive way to handle any banking matter. Visit the nearest branch or savings office with your identity document. For matters the branch cannot resolve directly, go to the <a href="${urlDir}" class="text-primary hover:underline">Provincial Directorate</a>. Find all offices on the <a href="${urlMapa}" class="text-primary hover:underline">interactive map</a>.`;
+const tl = useLocalTranslations(lang, {
+  es: {
+    mainReception:   'Recepción general',
+    personalBanking: 'Banca Personal',
+    businessBanking: 'Banca de Negocios',
+    customerService: 'Atención al Cliente',
+    operatCash:      'Operaciones y Efectivo',
+    provincialDir:   'Dirección Provincial',
+    generalNote:     'Para consultas generales utilice el correo de Atención al Cliente.',
+    largeBranches:   'Sucursales grandes y medianas',
+    weekdays:        'Lunes a Viernes',
+    saturdays:       'Sábados',
+    savingsOffices:  'Cajas de Ahorro',
+    atm:             'Cajeros Automáticos (ATM)',
+    atmHours:        '24 horas, todos los días.',
+  },
+  en: {
+    mainReception:   'Main reception',
+    personalBanking: 'Personal Banking',
+    businessBanking: 'Business Banking',
+    customerService: 'Customer Service',
+    operatCash:      'Operations & Cash',
+    provincialDir:   'Provincial Directorate',
+    generalNote:     'For general inquiries use the Customer Service email.',
+    largeBranches:   'Large and medium branches',
+    weekdays:        'Monday to Friday',
+    saturdays:       'Saturdays',
+    savingsOffices:  'Savings Offices',
+    atm:             'ATMs',
+    atmHours:        '24 hours, every day.',
+  },
+});
 
 const metadata = {
   title: `${t('network.channels.hero.title')} — BPA Santiago de Cuba`,
@@ -71,43 +108,39 @@ const metadata = {
     items={[
       {
         title:       t('network.channels.c1.title'),
-        description: lang === 'es'
-          ? `La vía más completa para cualquier gestión bancaria. Acuda a la sucursal o caja de ahorro más cercana con su carné de identidad. Para trámites que la sucursal no puede resolver directamente, diríjase a la sede de la <a href="${p('sobre-nosotros/nuestra-red/direccion-provincial')}" class="text-primary hover:underline">Dirección Provincial</a>. Consulte la ubicación de todas las oficinas en el <a href="${p('herramientas/mapa')}" class="text-primary hover:underline">mapa interactivo</a>.`
-          : `The most comprehensive way to handle any banking matter. Visit the nearest branch or savings office with your identity document. For matters the branch cannot resolve directly, go to the <a href="${p('sobre-nosotros/nuestra-red/direccion-provincial')}" class="text-primary hover:underline">Provincial Directorate</a>. Find all offices on the <a href="${p('herramientas/mapa')}" class="text-primary hover:underline">interactive map</a>.`,
+        description: c1Desc,
         icon: 'tabler:users',
       },
       {
         title:       t('network.channels.c2.title'),
         description:
-          (lang === 'es' ? 'Recepción general' : 'Main reception') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
-          (lang === 'es' ? 'Banca Personal'    : 'Personal Banking') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
-          (lang === 'es' ? 'Banca de Negocios' : 'Business Banking') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
-          (lang === 'es' ? 'Atención al Cliente': 'Customer Service') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
-          (lang === 'es' ? 'Operaciones y Efectivo': 'Operations & Cash') + ': <strong>[COMPLETAR: (022) XXXXX]</strong>',
+          tl('mainReception') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
+          tl('personalBanking') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
+          tl('businessBanking') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
+          tl('customerService') + ': <strong>[COMPLETAR: (022) XXXXX]</strong><br/>' +
+          tl('operatCash') + ': <strong>[COMPLETAR: (022) XXXXX]</strong>',
         icon: 'tabler:phone',
       },
       {
         title:       t('network.channels.c3.title'),
         description:
-          (lang === 'es' ? 'Dirección Provincial'  : 'Provincial Directorate') + ': <strong>[COMPLETAR: direccion@bpa.scu.cu]</strong><br/>' +
-          (lang === 'es' ? 'Atención al Cliente'   : 'Customer Service') + ': <strong>[COMPLETAR: atencion@bpa.scu.cu]</strong><br/>' +
-          (lang === 'es' ? 'Banca Personal'        : 'Personal Banking') + ': <strong>[COMPLETAR: bancapersonal@bpa.scu.cu]</strong><br/>' +
-          (lang === 'es' ? 'Banca de Negocios'     : 'Business Banking') + ': <strong>[COMPLETAR: negocios@bpa.scu.cu]</strong><br/>' +
-          (lang === 'es'
-            ? 'Para consultas generales utilice el correo de Atención al Cliente.'
-            : 'For general inquiries use the Customer Service email.'),
+          tl('provincialDir') + ': <strong>[COMPLETAR: direccion@bpa.scu.cu]</strong><br/>' +
+          tl('customerService') + ': <strong>[COMPLETAR: atencion@bpa.scu.cu]</strong><br/>' +
+          tl('personalBanking') + ': <strong>[COMPLETAR: bancapersonal@bpa.scu.cu]</strong><br/>' +
+          tl('businessBanking') + ': <strong>[COMPLETAR: negocios@bpa.scu.cu]</strong><br/>' +
+          tl('generalNote'),
         icon: 'tabler:mail',
       },
       {
         title:       t('network.channels.c4.title'),
         description:
-          '<strong>' + (lang === 'es' ? 'Sucursales grandes y medianas' : 'Large and medium branches') + '</strong><br/>' +
-          (lang === 'es' ? 'Lunes a Viernes' : 'Monday to Friday') + ': <strong>[COMPLETAR: 8:00 am – 3:30 pm]</strong><br/>' +
-          (lang === 'es' ? 'Sábados'         : 'Saturdays') + ': <strong>[COMPLETAR: 8:00 am – 12:00 m]</strong><br/><br/>' +
-          '<strong>' + (lang === 'es' ? 'Cajas de Ahorro' : 'Savings Offices') + '</strong><br/>' +
-          (lang === 'es' ? 'Lunes a Viernes' : 'Monday to Friday') + ': <strong>[COMPLETAR: 8:00 am – 3:00 pm]</strong><br/>' +
-          '<strong>' + (lang === 'es' ? 'Cajeros Automáticos (ATM)' : 'ATMs') + ':</strong> ' +
-          (lang === 'es' ? '24 horas, todos los días.' : '24 hours, every day.'),
+          '<strong>' + tl('largeBranches') + '</strong><br/>' +
+          tl('weekdays') + ': <strong>[COMPLETAR: 8:00 am – 3:30 pm]</strong><br/>' +
+          tl('saturdays') + ': <strong>[COMPLETAR: 8:00 am – 12:00 m]</strong><br/><br/>' +
+          '<strong>' + tl('savingsOffices') + '</strong><br/>' +
+          tl('weekdays') + ': <strong>[COMPLETAR: 8:00 am – 3:00 pm]</strong><br/>' +
+          '<strong>' + tl('atm') + ':</strong> ' +
+          tl('atmHours'),
         icon: 'tabler:clock',
       },
     ]}

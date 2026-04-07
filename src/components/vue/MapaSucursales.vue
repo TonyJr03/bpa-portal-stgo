@@ -33,92 +33,68 @@
 
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { pb } from '~/lib/pocketbase';
-
-import es from '~/i18n/es';
-import en from '~/i18n/en';
-
-import type { Lang } from '~/i18n/utils';
+import { useTranslations, useFieldTranslation, useLocalTranslations, type Lang } from '~/i18n/utils';
 import type { Map as LeafletMap, LayerGroup, Marker, DivIcon } from 'leaflet';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 const props = defineProps<{ lang: Lang }>();
 
-// ── Traducción desde el diccionario (tipos de punto y estados AT) ─────────────
-const dict = computed(() => (props.lang === 'en' ? en : es));
-const t    = (key: keyof typeof es) => dict.value[key] ?? key;
+// ── Traducción ────────────────────────────────────────────────────────────────
+const t  = useTranslations(props.lang);
+const tf = useFieldTranslation(props.lang);
 
-// ── Traducción de campos de PocketBase ───────────────────────────────────────
-// tf() aplica el campo _en si el idioma es inglés y no está vacío.
-// Fallback al español en cualquier otro caso.
-function tf(base: string, translated?: string | null): string {
-  if (props.lang === 'es' || !translated?.trim()) return base;
-  return translated.trim();
-}
+// ── Strings de interfaz pura (local — no van a los archivos .ts) ───────────────
+const tl = useLocalTranslations(props.lang, {
+  es: {
+    allMunicipalities: 'Todos los municipios',
+    search:            'Buscar…',
+    clear:             'Limpiar',
+    results:           'punto encontrado',
+    resultsPlural:     'puntos encontrados',
+    resultsGps:        'con ubicación GPS',
+    noResults:         'No se encontraron oficinas con los filtros actuales.',
+    noGps:             'sin GPS',
+    updatedAt:         'Actualizado:',
+    bills:             'Denominaciones disponibles',
+    branchCode:        'Código sucursal:',
+    noAtmStatus:       'Estado del cajero no disponible.',
+    loading:           'Cargando puntos de atención…',
+    retry:             'Reintentar',
+    errorTitle:        'No se pudo cargar la información de oficinas.',
+    errorSub:          'Se perdió la conexión con el servidor.',
+  },
+  en: {
+    allMunicipalities: 'All municipalities',
+    search:            'Search…',
+    clear:             'Clear',
+    results:           'point found',
+    resultsPlural:     'points found',
+    resultsGps:        'with GPS location',
+    noResults:         'No offices found with the current filters.',
+    noGps:             'no GPS',
+    updatedAt:         'Updated:',
+    bills:             'Available denominations',
+    branchCode:        'Branch code:',
+    noAtmStatus:       'ATM status not available.',
+    loading:           'Loading service points…',
+    retry:             'Retry',
+    errorTitle:        'Could not load office information.',
+    errorSub:          'Connection to server lost.',
+  },
+});
 
-// ── Strings de interfaz pura (NO van a los archivos .ts) ──────────────────────
-// IMPORTANTE: computed() es necesario porque depende de props.lang (reactivo).
-// Sin computed(), cambiar el idioma NO actualizaría la UI.
-const UILocal = computed(() => props.lang === 'en'
-  ? {
-      municipios: {
-        'contramaestre':    'Contramaestre',
-        'san-luis':         'San Luis',
-        'segundo-frente':   'Segundo Frente',
-        'songo-la-maya':    'Songo - La Maya',
-        'santiago-de-cuba': 'Santiago de Cuba',
-        'palma-soriano':    'Palma Soriano',
-        'tercer-frente':    'Tercer Frente',
-        'mella':            'Mella',
-        'guama':            'Guamá',
-      } as Record<string, string>,
-      allMunicipalities: 'All municipalities',
-      search:            'Search…',
-      clear:             'Clear',
-      results:           'point found',
-      resultsPlural:     'points found',
-      resultsGps:        'with GPS location',
-      noResults:         'No offices found with the current filters.',
-      noGps:             'no GPS',
-      updatedAt:         'Updated:',
-      bills:             'Available denominations',
-      branchCode:        'Branch code:',
-      noAtmStatus:       'ATM status not available.',
-      loading:           'Loading service points…',
-      retry:             'Retry',
-      errorTitle:        'Could not load office information.',
-      errorSub:          'Connection to server lost.',
-    }
-  : {
-      municipios: {
-        'contramaestre':    'Contramaestre',
-        'san-luis':         'San Luis',
-        'segundo-frente':   'Segundo Frente',
-        'songo-la-maya':    'Songo - La Maya',
-        'santiago-de-cuba': 'Santiago de Cuba',
-        'palma-soriano':    'Palma Soriano',
-        'tercer-frente':    'Tercer Frente',
-        'mella':            'Mella',
-        'guama':            'Guamá',
-      } as Record<string, string>,
-      allMunicipalities: 'Todos los municipios',
-      search:            'Buscar…',
-      clear:             'Limpiar',
-      results:           'punto encontrado',
-      resultsPlural:     'puntos encontrados',
-      resultsGps:        'con ubicación GPS',
-      noResults:         'No se encontraron oficinas con los filtros actuales.',
-      noGps:             'sin GPS',
-      updatedAt:         'Actualizado:',
-      bills:             'Denominaciones disponibles',
-      branchCode:        'Código sucursal:',
-      noAtmStatus:       'Estado del cajero no disponible.',
-      loading:           'Cargando puntos de atención…',
-      retry:             'Reintentar',
-      errorTitle:        'No se pudo cargar la información de oficinas.',
-      errorSub:          'Se perdió la conexión con el servidor.',
-    }
-);
-const tUI = (key: keyof (typeof UILocal.value)) => UILocal.value[key];
+// Nombres de municipios: no van en tl() — son un objeto indexado, no strings planos.
+const municipios: Record<string, string> = {
+  'contramaestre':    'Contramaestre',
+  'san-luis':         'San Luis',
+  'segundo-frente':   'Segundo Frente',
+  'songo-la-maya':    'Songo - La Maya',
+  'santiago-de-cuba': 'Santiago de Cuba',
+  'palma-soriano':    'Palma Soriano',
+  'tercer-frente':    'Tercer Frente',
+  'mella':            'Mella',
+  'guama':            'Guamá',
+};
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 type TipoPunto = 'S' | 'AN' | 'CA' | 'CAE' | 'AT';
@@ -266,7 +242,7 @@ const disponibilidadMap = computed((): Map<string, DisponibilidadAT> => {
 const municipiosDisponibles = computed((): string[] => {
   const slugs = [...new Set(todos.value.map((p) => p.municipio).filter(Boolean))];
   return slugs.sort((a, b) =>
-    (UILocal.value.municipios[a] ?? a).localeCompare(UILocal.value.municipios[b] ?? b),
+    (municipios[a] ?? a).localeCompare(municipios[b] ?? b),
   );
 });
 
@@ -466,7 +442,7 @@ onUnmounted(() => { mapa?.remove(); mapa = null; });
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 animate-spin text-primary">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a9 9 0 1 0 9 9" />
       </svg>
-      <p class="text-sm">{{ tUI('loading') }}</p>
+      <p class="text-sm">{{ tl('loading') }}</p>
     </div>
 
     <!-- ── ESTADO: Error ─────────────────────────────────────────────────── -->
@@ -475,12 +451,12 @@ onUnmounted(() => { mapa?.remove(); mapa = null; });
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 8v4" /><path d="M12 16h.01" />
       </svg>
-      <p class="font-semibold text-sm">{{ tUI('errorTitle') }}</p>
-      <p class="text-xs text-red-500">{{ tUI('errorSub') }}</p>
+      <p class="font-semibold text-sm">{{ tl('errorTitle') }}</p>
+      <p class="text-xs text-red-500">{{ tl('errorSub') }}</p>
       <button @click="cargarDatos" class="inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 transition-colors mt-3">
         <!-- tabler:refresh -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
-        {{ tUI('retry') }}
+        {{ tl('retry') }}
       </button>
     </div>
 
@@ -512,9 +488,9 @@ onUnmounted(() => { mapa?.remove(); mapa = null; });
             <div class="relative">
               <select v-model="municipioActivo" @change="alCambiarMunicipio"
                 class="w-full appearance-none rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-default dark:text-default px-4 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition">
-                <option value="">{{ tUI('allMunicipalities') }}</option>
+                <option value="">{{ tl('allMunicipalities') }}</option>
                 <option v-for="slug in municipiosDisponibles" :key="slug" :value="slug">
-                  {{ UILocal.municipios[slug] ?? slug }}
+                  {{ municipios[slug] ?? slug }}
                 </option>
               </select>
               <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted">
@@ -525,7 +501,7 @@ onUnmounted(() => { mapa?.remove(); mapa = null; });
             <div class="relative">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
               <input :value="busqueda" @input="busqueda = ($event.target as HTMLInputElement).value"
-                type="text" :placeholder="UILocal.search"
+                type="text" :placeholder="tl('search')"
                 class="w-full pl-9 pr-9 py-2.5 text-sm rounded-lg border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/80 text-default dark:text-default placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary transition" />
               <button v-if="busqueda" @click="busqueda = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-default dark:hover:text-default transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
@@ -549,22 +525,22 @@ onUnmounted(() => { mapa?.remove(); mapa = null; });
             <button v-if="filtrosTipo.size > 0 || busqueda" @click="limpiarFiltros"
               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-muted border border-muted dark:border-muted bg-white dark:bg-bpa-950/60 hover:bg-bpa-50 dark:hover:bg-bpa-800/30 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
-              {{ tUI('clear') }}
+              {{ tl('clear') }}
             </button>
           </div>
 
           <!-- Contador de resultados -->
           <p class="text-xs text-muted">
             <span class="font-semibold text-default dark:text-default">{{ puntosFiltrados.length }}</span>
-            {{ puntosFiltrados.length === 1 ? tUI('results') : tUI('resultsPlural') }}
+            {{ puntosFiltrados.length === 1 ? tl('results') : tl('resultsPlural') }}
             <span v-if="puntosConCoordenadas.length < puntosFiltrados.length" class="ml-1 text-amber-600 dark:text-amber-400">
-              ({{ puntosConCoordenadas.length }} {{ tUI('resultsGps') }})
+              ({{ puntosConCoordenadas.length }} {{ tl('resultsGps') }})
             </span>
           </p>
 
           <!-- Sin resultados -->
           <div v-if="puntosFiltrados.length === 0" class="text-center py-10 text-sm text-muted italic">
-            {{ tUI('noResults') }}
+            {{ tl('noResults') }}
           </div>
 
           <!-- Lista agrupada con scroll -->
@@ -605,7 +581,7 @@ onUnmounted(() => { mapa?.remove(); mapa = null; });
                         <!-- Aviso sin GPS -->
                         <span v-if="!punto.latitud || !punto.longitud"
                           class="flex-shrink-0 text-[10px] text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-600 rounded px-1">
-                          {{ tUI('noGps') }}
+                          {{ tl('noGps') }}
                         </span>
                         <!-- Badge estado AT (label → diccionario) -->
                         <div v-if="punto.tipo === 'AT' && disponibilidadMap.get(punto.id)" class="inline-flex items-center gap-1 flex-shrink-0">
@@ -683,12 +659,12 @@ onUnmounted(() => { mapa?.remove(); mapa = null; });
                               </span>
                             </div>
                             <span class="text-[10px] text-muted">
-                              {{ tUI('updatedAt') }} {{ formatearFecha(disponibilidadMap.get(punto.id)!.updated) }}
+                              {{ tl('updatedAt') }} {{ formatearFecha(disponibilidadMap.get(punto.id)!.updated) }}
                             </span>
                           </div>
                           <div v-if="disponibilidadMap.get(punto.id)!.estado === 'operativo' && disponibilidadMap.get(punto.id)!.billetes?.length">
                             <p class="text-[10px] font-semibold uppercase tracking-wide text-muted mb-1.5">
-                              {{ tUI('bills') }}
+                              {{ tl('bills') }}
                             </p>
                             <div class="flex flex-wrap gap-1">
                               <span v-for="b in [...disponibilidadMap.get(punto.id)!.billetes].map(Number).sort((a, b) => a - b)" :key="b"
@@ -699,13 +675,13 @@ onUnmounted(() => { mapa?.remove(); mapa = null; });
                           </div>
                         </div>
                         <div v-else class="rounded-lg px-3 py-2.5 bg-bpa-50/50 dark:bg-bpa-950/30 border border-bpa-100 dark:border-bpa-800">
-                          <p class="text-xs text-muted italic">{{ tUI('noAtmStatus') }}</p>
+                          <p class="text-xs text-muted italic">{{ tl('noAtmStatus') }}</p>
                         </div>
                       </template>
 
                       <!-- Código de sucursal (no traducible: es un código numérico) -->
                       <p v-if="punto.codigo_sucursal" class="text-[10px] text-muted mt-1">
-                        {{ tUI('branchCode') }} {{ punto.codigo_sucursal }}
+                        {{ tl('branchCode') }} {{ punto.codigo_sucursal }}
                       </p>
                     </div>
                   </Transition>

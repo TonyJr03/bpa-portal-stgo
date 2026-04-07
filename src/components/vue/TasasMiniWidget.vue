@@ -34,42 +34,35 @@
 import { ref, computed, onMounted } from 'vue';
 import { pb } from '~/lib/pocketbase';
 
-import type { Lang } from '~/i18n/utils';
+import { useFieldTranslation, useLocalTranslations, type Lang } from '~/i18n/utils';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 const props = defineProps<{ lang: Lang }>();
 
 // ── Traducción de campos de PocketBase ───────────────────────────────────────
-// tf() aplica el campo _en si el idioma es inglés y no está vacío.
-function tf(base: string, translated?: string | null): string {
-  if (props.lang === 'es' || !translated?.trim()) return base;
-  return translated.trim();
-}
+const tf = useFieldTranslation(props.lang);
 
-// ── Strings de interfaz pura (NO van a los archivos .ts) ──────────────────────
-// IMPORTANTE: computed() es necesario porque depende de props.lang (reactivo).
-// Sin computed(), cambiar el idioma NO actualizaría la UI.
-const UILocal = computed(() => props.lang === 'en'
-  ? {
-      colCurrency: 'Currency',
-      colBuy:      'Buy',
-      colSell:     'Sell',
-      updated:     'Updated:',
-      noRates:     'No rates available',
-      retry:       'Retry',
-      errorMsg:    'Not available. No server connection.',
-    }
-  : {
-      colCurrency: 'Moneda',
-      colBuy:      'Compra',
-      colSell:     'Venta',
-      updated:     'Actualizado:',
-      noRates:     'No hay tasas disponibles',
-      retry:       'Reintentar',
-      errorMsg:    'No disponible. Sin conexión con el servidor.',
-    }
-);
-const tUI = (key: keyof (typeof UILocal.value)) => UILocal.value[key];
+// ── Strings de interfaz pura (local — no van a los archivos .ts) ───────────────
+const tl = useLocalTranslations(props.lang, {
+  es: {
+    colCurrency: 'Moneda',
+    colBuy:      'Compra',
+    colSell:     'Venta',
+    updated:     'Actualizado:',
+    noRates:     'No hay tasas disponibles',
+    retry:       'Reintentar',
+    errorMsg:    'No disponible. Sin conexión con el servidor.',
+  },
+  en: {
+    colCurrency: 'Currency',
+    colBuy:      'Buy',
+    colSell:     'Sell',
+    updated:     'Updated:',
+    noRates:     'No rates available',
+    retry:       'Retry',
+    errorMsg:    'Not available. No server connection.',
+  },
+});
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface TasaCambio {
@@ -154,9 +147,9 @@ onMounted(cargarTasas);
 
   <!-- ── Error ──────────────────────────────────────────────────────────── -->
   <div v-else-if="errorDB" class="text-center py-2">
-    <p class="text-xs text-red-500 dark:text-red-400 mb-1">{{ tUI('errorMsg') }}</p>
+    <p class="text-xs text-red-500 dark:text-red-400 mb-1">{{ tl('errorMsg') }}</p>
     <button @click="cargarTasas" class="text-xs text-primary dark:text-primary hover:underline">
-      {{ tUI('retry') }}
+      {{ tl('retry') }}
     </button>
   </div>
 
@@ -165,10 +158,10 @@ onMounted(cargarTasas);
 
     <!-- Cabecera de columnas -->
     <div class="flex justify-between items-center text-xs font-semibold text-primary dark:text-primary uppercase tracking-wide mb-1 pb-1 border-b border-bpa-100/50 dark:border-bpa-amber-800/50">
-      <span>{{ tUI('colCurrency') }}</span>
+      <span>{{ tl('colCurrency') }}</span>
       <div class="flex gap-4">
-        <span class="w-14 text-right">{{ tUI('colBuy') }}</span>
-        <span class="w-14 text-right">{{ tUI('colSell') }}</span>
+        <span class="w-14 text-right">{{ tl('colBuy') }}</span>
+        <span class="w-14 text-right">{{ tl('colSell') }}</span>
       </div>
     </div>
 
@@ -201,12 +194,12 @@ onMounted(cargarTasas);
 
     <!-- Sin tasas -->
     <p v-if="!tasasFiltradas.length" class="text-xs text-muted dark:text-muted text-center py-2">
-      {{ tUI('noRates') }}
+      {{ tl('noRates') }}
     </p>
 
     <!-- Timestamp de actualización -->
     <p v-if="ultimaActualizacion" class="text-xs text-muted dark:text-muted mt-2 text-right">
-      {{ tUI('updated') }} {{ ultimaActualizacion }}
+      {{ tl('updated') }} {{ ultimaActualizacion }}
     </p>
 
   </div>

@@ -37,65 +37,51 @@
 
 import { ref, computed, onMounted } from 'vue';
 import { pb } from '~/lib/pocketbase';
-
-import es from '~/i18n/es';
-import en from '~/i18n/en';
-
-import type { Lang } from '~/i18n/utils';
+import { useTranslations, useFieldTranslation, useLocalTranslations, type Lang } from '~/i18n/utils';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 const props = defineProps<{ lang: Lang }>();
 
-// ── Traducción desde el diccionario (tipos de evento — contenido institucional) ─
-const dict = computed(() => (props.lang === 'en' ? en : es));
-const t    = (key: keyof typeof es) => dict.value[key] ?? key;
+// ── Traducción ────────────────────────────────────────────────────────────────
+const t  = useTranslations(props.lang);
+const tf = useFieldTranslation(props.lang);
 
-// ── Traducción de campos de PocketBase ───────────────────────────────────────
-// tf() aplica el campo _en si el idioma es inglés y no está vacío.
-// Fallback al español en cualquier otro caso.
-function tf(base: string, translated?: string | null): string {
-  if (props.lang === 'es' || !translated?.trim()) return base;
-  return translated.trim();
-}
+// ── Strings de interfaz pura del calendario (local — no van a los archivos .ts) ─
+const tl = useLocalTranslations(props.lang, {
+  es: {
+    today:         'Hoy',
+    loading:       'Cargando calendario de eventos…',
+    retry:         'Reintentar',
+    errorTitle:    'No se pudo conectar con el servidor',
+    errorMsg:      'El calendario de eventos no está disponible.',
+    emptyTitle:    'Sin eventos publicados',
+    emptyMsg:      'Añada registros en la colección',
+    emptyCol:      'eventos',
+    emptyPost:     'de PocketBase con publicado = true.',
+    eventsDay:     'Eventos del día',
+    close:         'Cerrar',
+  },
+  en: {
+    today:         'Today',
+    loading:       'Loading event calendar…',
+    retry:         'Retry',
+    errorTitle:    'Could not connect to server',
+    errorMsg:      'The event calendar is not available.',
+    emptyTitle:    'No events published',
+    emptyMsg:      'Add records in the',
+    emptyCol:      'eventos',
+    emptyPost:     'collection with publicado = true.',
+    eventsDay:     'Events for the day',
+    close:         'Close',
+  },
+});
 
-// ── Strings de interfaz pura del calendario (NO van a los archivos .ts) ───────
-// IMPORTANTE: computed() es necesario porque depende de props.lang (reactivo).
-// Sin computed(), cambiar el idioma NO actualizaría la UI.
-const UILocal = computed(() => props.lang === 'en'
-  ? {
-      months: ['January','February','March','April','May','June',
-               'July','August','September','October','November','December'],
-      days:          ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-      today:         'Today',
-      loading:       'Loading event calendar…',
-      retry:         'Retry',
-      errorTitle:    'Could not connect to server',
-      errorMsg:      'The event calendar is not available.',
-      emptyTitle:    'No events published',
-      emptyMsg:      'Add records in the',
-      emptyCol:      'eventos',
-      emptyPost:     'collection with publicado = true.',
-      eventsDay:     'Events for the day',
-      close:         'Close',
-    }
-  : {
-      months: ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
-      days:          ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],
-      today:         'Hoy',
-      loading:       'Cargando calendario de eventos…',
-      retry:         'Reintentar',
-      errorTitle:    'No se pudo conectar con el servidor',
-      errorMsg:      'El calendario de eventos no está disponible.',
-      emptyTitle:    'Sin eventos publicados',
-      emptyMsg:      'Añada registros en la colección',
-      emptyCol:      'eventos',
-      emptyPost:     'de PocketBase con publicado = true.',
-      eventsDay:     'Eventos del día',
-      close:         'Cerrar',
-    }
-);
-const tUI = (key: keyof (typeof UILocal.value)) => UILocal.value[key];
+const meses      = props.lang === 'en'
+  ? ['January','February','March','April','May','June','July','August','September','October','November','December']
+  : ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const diasSemana = props.lang === 'en'
+  ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+  : ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface Evento {
@@ -160,7 +146,7 @@ const CONFIG_TIPO = computed(() => ({
 }));
 
 // ── Computed ──────────────────────────────────────────────────────────────────
-const tituloMes = computed(() => `${UILocal.value.months[mesActual.value]} ${anioActual.value}`);
+const tituloMes = computed(() => `${meses[mesActual.value]} ${anioActual.value}`);
 
 const eventosMes = computed(() =>
   todosLosEventos.value.filter((ev) => {
@@ -295,7 +281,7 @@ onMounted(cargarEventos);
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 animate-spin text-primary">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a9 9 0 1 0 9 9" />
       </svg>
-      <p class="text-sm font-medium">{{ tUI('loading') }}</p>
+      <p class="text-sm font-medium">{{ tl('loading') }}</p>
     </div>
 
     <!-- ── ESTADO: Error ─────────────────────────────────────────────────── -->
@@ -304,12 +290,12 @@ onMounted(cargarEventos);
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mx-auto mb-3 text-red-500">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 8v4" /><path d="M12 16h.01" />
       </svg>
-      <p class="font-semibold text-red-700 dark:text-red-400 mb-1">{{ tUI('errorTitle') }}</p>
-      <p class="text-sm text-red-600 dark:text-red-500 mb-4">{{ tUI('errorMsg') }}</p>
+      <p class="font-semibold text-red-700 dark:text-red-400 mb-1">{{ tl('errorTitle') }}</p>
+      <p class="text-sm text-red-600 dark:text-red-500 mb-4">{{ tl('errorMsg') }}</p>
       <button @click="cargarEventos" class="inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 transition-colors">
         <!-- tabler:refresh -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
-        {{ tUI('retry') }}
+        {{ tl('retry') }}
       </button>
     </div>
 
@@ -319,11 +305,11 @@ onMounted(cargarEventos);
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mx-auto mb-3 text-muted opacity-40">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M3 3l18 18" />
       </svg>
-      <p class="font-semibold text-default dark:text-default mb-1">{{ tUI('emptyTitle') }}</p>
+      <p class="font-semibold text-default dark:text-default mb-1">{{ tl('emptyTitle') }}</p>
       <p class="text-sm text-muted">
-        {{ tUI('emptyMsg') }}
-        <code class="font-mono text-xs bg-bpa-100 dark:bg-bpa-800/40 px-1 rounded">{{ tUI('emptyCol') }}</code>
-        {{ tUI('emptyPost') }}
+        {{ tl('emptyMsg') }}
+        <code class="font-mono text-xs bg-bpa-100 dark:bg-bpa-800/40 px-1 rounded">{{ tl('emptyCol') }}</code>
+        {{ tl('emptyPost') }}
       </p>
     </div>
 
@@ -342,7 +328,7 @@ onMounted(cargarEventos);
             {{ tituloMes }}
           </h2>
           <button @click="irAHoy" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary hover:bg-bpa-200 dark:hover:bg-bpa-700/50 transition-colors">
-            {{ tUI('today') }}
+            {{ tl('today') }}
           </button>
         </div>
 
@@ -357,7 +343,7 @@ onMounted(cargarEventos);
 
         <!-- Encabezados de días de la semana -->
         <div class="grid grid-cols-7 bg-primary border-b border-bpa-200 dark:border-bpa-amber-800">
-            <div v-for="dia in UILocal.days" :key="dia" class="py-2.5 text-center text-xs font-semibold text-white uppercase tracking-wide">
+            <div v-for="dia in diasSemana" :key="dia" class="py-2.5 text-center text-xs font-semibold text-white uppercase tracking-wide">
             {{ dia }}
           </div>
         </div>
@@ -428,13 +414,13 @@ onMounted(cargarEventos);
               <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-bpa-200 dark:border-bpa-amber-800">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-widest text-primary dark:text-primary mb-0.5">
-                    {{ tUI('eventsDay') }}
+                    {{ tl('eventsDay') }}
                   </p>
                   <h3 class="font-bold text-default dark:text-default text-sm capitalize leading-tight">
                     {{ fechaDetalle }}
                   </h3>
                 </div>
-                <button @click="cerrarDetalle" :aria-label="UILocal.close"
+                <button @click="cerrarDetalle" :aria-label="tl('close')"
                   class="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full text-muted hover:text-default dark:hover:text-default hover:bg-bpa-50 dark:hover:bg-bpa-800/40 transition-colors">
                   <!-- tabler:x -->
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>

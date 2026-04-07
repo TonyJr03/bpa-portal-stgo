@@ -42,49 +42,34 @@
 
 import { ref, computed, onMounted } from 'vue';
 import { pb } from '~/lib/pocketbase';
-
-import es from '~/i18n/es';
-import en from '~/i18n/en';
-
-import type { Lang } from '~/i18n/utils';
+import { useTranslations, useFieldTranslation, useLocalTranslations, type Lang } from '~/i18n/utils';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 const props = defineProps<{ lang: Lang }>();
 
-// ── Traducción desde el diccionario (labels de tipos de evento) ───────────────
-const dict = computed(() => (props.lang === 'en' ? en : es));
-const t    = (key: keyof typeof es) => dict.value[key] ?? key;
+// ── Traducción ────────────────────────────────────────────────────────────────
+const t  = useTranslations(props.lang);
+const tf = useFieldTranslation(props.lang);
 
-// ── Traducción de campos de PocketBase ───────────────────────────────────────
-// tf() aplica el campo _en si el idioma es inglés y no está vacío.
-function tf(base: string, translated?: string | null): string {
-  if (props.lang === 'es' || !translated?.trim()) return base;
-  return translated.trim();
-}
+// ── Strings de interfaz pura (local — no van a los archivos .ts) ───────────────
+const tl = useLocalTranslations(props.lang, {
+  es: {
+    noPending: 'Sin eventos próximos',
+    tomorrow:  'mañana',
+    today:     'hoy',
+    retry:     'Reintentar',
+    errorMsg:  'No disponible. Sin conexión con el servidor.',
+  },
+  en: {
+    noPending: 'No upcoming events',
+    tomorrow:  'tomorrow',
+    today:     'today',
+    retry:     'Retry',
+    errorMsg:  'Not available. No server connection.',
+  },
+});
 
-// ── Strings de interfaz pura (NO van a los archivos .ts) ──────────────────────
-// IMPORTANTE: computed() es necesario porque depende de props.lang (reactivo).
-// Sin computed(), cambiar el idioma NO actualizaría la UI.
-// La cuenta regresiva y los estados de carga son específicos de este widget.
-const UILocal = computed(() => props.lang === 'en'
-  ? {
-      noPending: 'No upcoming events',
-      tomorrow:  'tomorrow',
-      inDays:    (n: number) => `in ${n} days`,
-      today:     'today',
-      retry:     'Retry',
-      errorMsg:  'Not available. No server connection.',
-    }
-  : {
-      noPending: 'Sin eventos próximos',
-      tomorrow:  'mañana',
-      inDays:    (n: number) => `en ${n} días`,
-      today:     'hoy',
-      retry:     'Reintentar',
-      errorMsg:  'No disponible. Sin conexión con el servidor.',
-    }
-);
-const tUI = (key: keyof (typeof UILocal.value)) => UILocal.value[key];
+const inDays = (n: number) => props.lang === 'en' ? `in ${n} days` : `en ${n} días`;
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface Evento {
@@ -219,9 +204,9 @@ onMounted(cargarEventos);
 
   <!-- ── Error ──────────────────────────────────────────────────────────── -->
   <div v-else-if="errorDB" class="text-center py-2">
-    <p class="text-xs text-red-500 dark:text-red-400 mb-1">{{ tUI('errorMsg') }}</p>
+    <p class="text-xs text-red-500 dark:text-red-400 mb-1">{{ tl('errorMsg') }}</p>
     <button @click="cargarEventos" class="text-xs text-primary dark:text-primary hover:underline">
-      {{ tUI('retry') }}
+      {{ tl('retry') }}
     </button>
   </div>
 
@@ -235,7 +220,7 @@ onMounted(cargarEventos);
       <path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6" />
       <path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 19l2 2l4 -4" />
     </svg>
-    <p class="text-xs text-muted">{{ tUI('noPending') }}</p>
+    <p class="text-xs text-muted">{{ tl('noPending') }}</p>
   </div>
 
   <!-- ── Próximo evento ─────────────────────────────────────────────────── -->
@@ -259,10 +244,10 @@ onMounted(cargarEventos);
 
     <!-- Cuenta regresiva (interfaz pura → objeto local) -->
     <p v-if="diasRestantes !== null && diasRestantes > 0" class="text-xs text-muted mb-2">
-      {{ diasRestantes === 1 ? tUI('tomorrow') : UILocal.inDays(diasRestantes) }}
+      {{ diasRestantes === 1 ? tl('tomorrow') : inDays(diasRestantes) }}
     </p>
     <p v-else-if="diasRestantes === 0" class="text-xs font-semibold text-muted mb-2">
-      {{ tUI('today') }}
+      {{ tl('today') }}
     </p>
 
     <!-- Título del evento → tf() (campo PB traducible) -->
