@@ -29,20 +29,18 @@
  */
 
 import type { GetStaticPaths } from 'astro';
-import Layout    from '~/layouts/PageLayout.astro';
-import HeroText  from '~/components/widgets/HeroText.astro';
-import Content   from '~/components/widgets/Content.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Content from '~/components/widgets/Content.astro';
 import Features2 from '~/components/widgets/Features2.astro';
-import PageNav   from '~/components/widgets/PageNav.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
 import SvgMision from '~/components/icons/SvgMision.astro';
 import SvgVision from '~/components/icons/SvgVision.astro';
 
 import { LANGS, useTranslations } from '~/i18n/utils';
-import { getPermalink }           from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
-export const getStaticPaths = (() =>
-  LANGS.map((lang) => ({ params: { lang } }))
-) satisfies GetStaticPaths;
+export const getStaticPaths = (() => LANGS.map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
@@ -55,14 +53,10 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Entrada al módulo. 
   ─────────────────────────────────────────────────────────────────────────── -->
-  <HeroText
-    title={t('about.hero.title')}
-    subtitle={t('about.hero.subtitle')}
-  />
+  <HeroText title={t('about.hero.title')} subtitle={t('about.hero.subtitle')} />
 
   <!-- BLOQUE 2 · Content — Misión ──────────────────────────────────────────────
       SVG a la derecha, texto a la izquierda (sin isReversed).
@@ -71,17 +65,19 @@ const metadata = {
     tagline={t('about.mission.tagline')}
     title={t('about.mission.title')}
     content={`<p>${t('about.mission.content.p1')}</p>`}
-    items={[{
-      title:       t('about.mission.readMore'),
-      description: t('about.mission.readMore.desc'),
-      icon:        'tabler:arrow-right',
-      callToAction: {
-        variant: 'link',
-        text:    t('about.mission.readMore.link'),
-        href:    p('sobre-nosotros/mision'),
-        icon:    'tabler:arrow-right',
+    items={[
+      {
+        title: t('about.mission.readMore'),
+        description: t('about.mission.readMore.desc'),
+        icon: 'tabler:arrow-right',
+        callToAction: {
+          variant: 'link',
+          text: t('about.mission.readMore.link'),
+          href: p('sobre-nosotros/mision'),
+          icon: 'tabler:arrow-right',
+        },
       },
-    }]}
+    ]}
   >
     <SvgMision slot="image" />
   </Content>
@@ -94,17 +90,19 @@ const metadata = {
     tagline={t('about.vision.tagline')}
     title={t('about.vision.title')}
     content={`<p>${t('about.vision.content.p1')}</p>`}
-    items={[{
-      title:       t('about.vision.readMore'),
-      description: t('about.vision.readMore.desc'),
-      icon:        'tabler:arrow-right',
-      callToAction: {
-        variant: 'link',
-        text:    t('about.vision.readMore.link'),
-        href:    p('sobre-nosotros/vision'),
-        icon:    'tabler:arrow-right',
+    items={[
+      {
+        title: t('about.vision.readMore'),
+        description: t('about.vision.readMore.desc'),
+        icon: 'tabler:arrow-right',
+        callToAction: {
+          variant: 'link',
+          text: t('about.vision.readMore.link'),
+          href: p('sobre-nosotros/vision'),
+          icon: 'tabler:arrow-right',
+        },
       },
-    }]}
+    ]}
   >
     <SvgVision slot="image" />
   </Content>
@@ -118,25 +116,25 @@ const metadata = {
     columns={2}
     items={[
       {
-        title:       t('about.history.title'),
+        title: t('about.history.title'),
         description: t('about.history.desc'),
-        icon:        'tabler:timeline',
+        icon: 'tabler:timeline',
         callToAction: {
           variant: 'link',
-          text:    t('about.history.link'),
-          href:    p('sobre-nosotros/historia'),
-          icon:    'tabler:arrow-right',
+          text: t('about.history.link'),
+          href: p('sobre-nosotros/historia'),
+          icon: 'tabler:arrow-right',
         },
       },
       {
-        title:       t('about.network.title'),
+        title: t('about.network.title'),
         description: t('about.network.desc'),
-        icon:        'tabler:map-pins',
+        icon: 'tabler:map-pins',
         callToAction: {
           variant: 'link',
-          text:    t('about.network.link'),
-          href:    p('sobre-nosotros/nuestra-red'),
-          icon:    'tabler:arrow-right',
+          text: t('about.network.link'),
+          href: p('sobre-nosotros/nuestra-red'),
+          icon: 'tabler:arrow-right',
         },
       },
     ]}
@@ -144,5 +142,4 @@ const metadata = {
 
   <!-- BLOQUE 5 · PageNav ─────────────────────────────────────────────────────── -->
   <PageNav prev={{ text: t('about.nav.back'), href: p('') }} />
-
 </Layout>

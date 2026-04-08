@@ -22,17 +22,15 @@
  */
 
 import type { GetStaticPaths } from 'astro';
-import Layout   from '~/layouts/PageLayout.astro';
+import Layout from '~/layouts/PageLayout.astro';
 import HeroText from '~/components/widgets/HeroText.astro';
-import Steps    from '~/components/widgets/Steps.astro';
-import PageNav  from '~/components/widgets/PageNav.astro';
+import Steps from '~/components/widgets/Steps.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
 
 import { LANGS, useTranslations } from '~/i18n/utils';
-import { getPermalink }           from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
-export const getStaticPaths = (() =>
-  LANGS.map((lang) => ({ params: { lang } }))
-) satisfies GetStaticPaths;
+export const getStaticPaths = (() => LANGS.map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
@@ -45,7 +43,7 @@ const metadata = {
 
 // Los hitos usan HTML en el title para la jerarquía año / nombre / decreto.
 // La estructura es idéntica en ambos idiomas — solo cambia el contenido de t().
-const hitos = [1, 2, 3, 4, 5, 6].map((n) => ({
+const hitos = ([1, 2, 3, 4, 5, 6] as const).map((n) => ({
   title: `${t(`about.history.m${n}.year`)} <br />
     <span class="text-xl font-semibold">${t(`about.history.m${n}.title`)}</span><br />
     <span class="text-sm font-normal text-muted">${t(`about.history.m${n}.decree`)}</span>`,
@@ -55,7 +53,6 @@ const hitos = [1, 2, 3, 4, 5, 6].map((n) => ({
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Tagline ubica al usuario dentro del módulo "Sobre Nosotros".
       Subtitle ofrece contexto inmediato antes del timeline.
@@ -81,8 +78,7 @@ const hitos = [1, 2, 3, 4, 5, 6].map((n) => ({
       Derecha:   avanza a Directorio (siguiente subsección de Sobre Nosotros).
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: t('about.history.nav.prev'), href: p('sobre-nosotros/vision')     }}
+    prev={{ text: t('about.history.nav.prev'), href: p('sobre-nosotros/vision') }}
     next={{ text: t('about.history.nav.next'), href: p('sobre-nosotros/nuestra-red') }}
   />
-
 </Layout>

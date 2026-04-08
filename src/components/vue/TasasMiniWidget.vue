@@ -46,65 +46,68 @@ const tf = useFieldTranslation(props.lang);
 const tl = useLocalTranslations(props.lang, {
   es: {
     colCurrency: 'Moneda',
-    colBuy:      'Compra',
-    colSell:     'Venta',
-    updated:     'Actualizado:',
-    noRates:     'No hay tasas disponibles',
-    retry:       'Reintentar',
-    errorMsg:    'No disponible. Sin conexión con el servidor.',
+    colBuy: 'Compra',
+    colSell: 'Venta',
+    updated: 'Actualizado:',
+    noRates: 'No hay tasas disponibles',
+    retry: 'Reintentar',
+    errorMsg: 'No disponible. Sin conexión con el servidor.',
   },
   en: {
     colCurrency: 'Currency',
-    colBuy:      'Buy',
-    colSell:     'Sell',
-    updated:     'Updated:',
-    noRates:     'No rates available',
-    retry:       'Retry',
-    errorMsg:    'Not available. No server connection.',
+    colBuy: 'Buy',
+    colSell: 'Sell',
+    updated: 'Updated:',
+    noRates: 'No rates available',
+    retry: 'Retry',
+    errorMsg: 'Not available. No server connection.',
   },
 });
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface TasaCambio {
-  id:               string;
-  moneda:           string;
-  nombre_moneda:    string;
+  id: string;
+  moneda: string;
+  nombre_moneda: string;
   nombre_moneda_en: string; // campo _en de PocketBase
-  compra:           number;
-  venta:            number;
-  activa:           boolean;
-  updated:          string;
+  compra: number;
+  venta: number;
+  activa: boolean;
+  updated: string;
 }
 
 // ── Estado ────────────────────────────────────────────────────────────────────
-const tasas    = ref<TasaCambio[]>([]);
+const tasas = ref<TasaCambio[]>([]);
 const cargando = ref(true);
-const errorDB  = ref(false);
+const errorDB = ref(false);
 
 // Las primeras 3 monedas activas según el orden de PocketBase
 const tasasFiltradas = computed(() => tasas.value.filter((t) => t.activa).slice(0, 3));
 
 const ultimaActualizacion = computed<string | null>(() => {
   if (!tasas.value.length) return null;
-  const mas = tasas.value.reduce((prev, curr) =>
-    new Date(curr.updated) > new Date(prev.updated) ? curr : prev,
-  );
+  const mas = tasas.value.reduce((prev, curr) => (new Date(curr.updated) > new Date(prev.updated) ? curr : prev));
   try {
     return new Intl.DateTimeFormat(props.lang === 'en' ? 'en-US' : 'es-CU', {
-      hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: 'short',
     }).format(new Date(mas.updated));
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 });
 
 // ── Carga de datos ────────────────────────────────────────────────────────────
 const cargarTasas = async () => {
   cargando.value = true;
-  errorDB.value  = false;
+  errorDB.value = false;
   try {
     // Se solicitan todos los campos incluidos nombre_moneda_en
     const resultado = await pb.collection('monedas').getFullList<TasaCambio>({
       filter: 'activa = true',
-      sort:   'orden',
+      sort: 'orden',
       fields: 'id,moneda,nombre_moneda,nombre_moneda_en,compra,venta,activa,updated',
     });
     tasas.value = resultado;
@@ -119,7 +122,6 @@ onMounted(cargarTasas);
 </script>
 
 <template>
-
   <!-- ── Cargando ────────────────────────────────────────────────────────── -->
   <div v-if="cargando" class="space-y-2 animate-pulse">
     <div class="flex justify-between items-center py-2 border-b border-bpa-100/50 dark:border-bpa-800/50">
@@ -155,9 +157,10 @@ onMounted(cargarTasas);
 
   <!-- ── Datos ──────────────────────────────────────────────────────────── -->
   <div v-else>
-
     <!-- Cabecera de columnas -->
-    <div class="flex justify-between items-center text-xs font-semibold text-primary dark:text-primary uppercase tracking-wide mb-1 pb-1 border-b border-bpa-100/50 dark:border-bpa-amber-800/50">
+    <div
+      class="flex justify-between items-center text-xs font-semibold text-primary dark:text-primary uppercase tracking-wide mb-1 pb-1 border-b border-bpa-100/50 dark:border-bpa-amber-800/50"
+    >
       <span>{{ tl('colCurrency') }}</span>
       <div class="flex gap-4">
         <span class="w-14 text-right">{{ tl('colBuy') }}</span>
@@ -201,6 +204,5 @@ onMounted(cargarTasas);
     <p v-if="ultimaActualizacion" class="text-xs text-muted dark:text-muted mt-2 text-right">
       {{ tl('updated') }} {{ ultimaActualizacion }}
     </p>
-
   </div>
 </template>

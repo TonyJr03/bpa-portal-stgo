@@ -24,50 +24,56 @@
  */
 
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
-import { marked }               from 'marked';
-import Layout                   from '~/layouts/PageLayout.astro';
-import HeroText                 from '~/components/widgets/HeroText.astro';
-import ProseContent             from '~/components/sections/ProseContent.astro';
-import DocumentosDescargables   from '~/components/widgets/DocumentosDescargables.astro';
-import CallToAction             from '~/components/widgets/CallToAction.astro';
-import PageNav                  from '~/components/widgets/PageNav.astro';
-import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
+import { marked } from 'marked';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import ProseContent from '~/components/sections/ProseContent.astro';
+import DocumentosDescargables from '~/components/widgets/DocumentosDescargables.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
+import EmptyCollection from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
 
 import { LANGS, useTranslations, useFieldTranslation, useLocalTranslations } from '~/i18n/utils';
-import { getPermalink }                           from '~/utils/permalinks';
-import { pb, fetchParaBuild }                     from '~/lib/pocketbase';
-import { CATEGORIAS_SLUGS }                       from '~/data/categorias';
+import { getPermalink } from '~/utils/permalinks';
+import { pb, fetchParaBuild } from '~/lib/pocketbase';
+import { CATEGORIAS_SLUGS } from '~/data/categorias';
 
 interface Producto {
-  id:             string;
-  nombre:         string;
-  nombre_en:      string;
-  slug:           string;
-  descripcion:    string;
+  id: string;
+  nombre: string;
+  nombre_en: string;
+  slug: string;
+  descripcion: string;
   descripcion_en: string;
-  contenido:      string;
-  contenido_en:   string;
-  icono:          string;
-  orden:          number;
-  publicado:      boolean;
-  categoria:      string;
+  contenido: string;
+  contenido_en: string;
+  icono: string;
+  orden: number;
+  publicado: boolean;
+  categoria: string;
 }
 
 interface Documento {
-  id: string; nombre: string; archivo: string;
-  referencia: string; tipo: string; orden: number;
-  collectionId: string; collectionName: string;
+  id: string;
+  nombre: string;
+  archivo: string;
+  referencia: string;
+  tipo: string;
+  orden: number;
+  collectionId: string;
+  collectionName: string;
 }
 
 export const getStaticPaths = (async () => {
   const paths = await Promise.all(
     CATEGORIAS_SLUGS.map(async (cat) => {
       const productos = await fetchParaBuild<Producto>(
-        () => pb.collection('productos').getFullList<Producto>({
-          filter: `categoria = "${cat.slug}" && publicado = true`,
-          sort:   'orden',
-        }),
+        () =>
+          pb.collection('productos').getFullList<Producto>({
+            filter: `categoria = "${cat.slug}" && publicado = true`,
+            sort: 'orden',
+          }),
         `productos/${cat.slug}`
       );
 
@@ -81,7 +87,7 @@ export const getStaticPaths = (async () => {
           try {
             documentos = await pb.collection('documentos').getFullList<Documento>({
               filter: `referencia = "${prod.slug}" && tipo = "producto"`,
-              sort:   'orden',
+              sort: 'orden',
             });
           } catch (err) {
             console.error(`[BPA] Error cargando documentos para "${prod.slug}":`, err);
@@ -91,7 +97,7 @@ export const getStaticPaths = (async () => {
           // Una ruta por idioma × por producto
           return LANGS.map((lang) => ({
             params: { lang, categoria: cat.slug, producto: prod.slug },
-            props:  { producto: prod, documentos, dbErrorDocs },
+            props: { producto: prod, documentos, dbErrorDocs },
           }));
         })
       );
@@ -104,7 +110,7 @@ export const getStaticPaths = (async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { producto, documentos, dbErrorDocs } = Astro.props as Props;
 const { lang, categoria } = Astro.params;
-const t  = useTranslations(lang);
+const t = useTranslations(lang);
 const tf = useFieldTranslation(lang);
 const p = (slug: string) => getPermalink(slug, lang);
 const tl = useLocalTranslations(lang, {
@@ -112,18 +118,16 @@ const tl = useLocalTranslations(lang, {
   en: { empty: 'Detailed information about this product is not available yet.' },
 });
 
-const nombreTraducido = tf(producto.nombre,    producto.nombre_en);
-const contenidoRaw    = tf(producto.contenido,  producto.contenido_en);
-const contenidoHtml   = contenidoRaw?.trim()
-  ? marked.parse(contenidoRaw) as string
-  : '';
+const nombreTraducido = tf(producto.nombre, producto.nombre_en);
+const contenidoRaw = tf(producto.contenido, producto.contenido_en);
+const contenidoHtml = contenidoRaw?.trim() ? (marked.parse(contenidoRaw) as string) : '';
 
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
-  id:      doc.id,
-  nombre:  doc.nombre,
+  id: doc.id,
+  nombre: doc.nombre,
   archivo: doc.archivo,
-  url:     pb.files.getURL(doc, doc.archivo),
-  orden:   doc.orden,
+  url: pb.files.getURL(doc, doc.archivo),
+  orden: doc.orden,
 }));
 
 const metadata = {
@@ -133,27 +137,22 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Tagline = nombre de la categoría para contextualizar la ubicación.
       Title = nombre del producto. Sin subtitle: el contenido habla por sí mismo.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <HeroText
-    tagline={t(`cat.${categoria}.nombre`)}
-    title={nombreTraducido}
-  />
+  <HeroText tagline={t(`cat.${categoria}.nombre`)} title={nombreTraducido} />
 
   <!-- BLOQUE 2 · ProseContent / EmptyCollection ───────────────────────────────
       Si el campo `contenido` tiene datos → convierte Markdown a HTML y renderiza
       con Tailwind Typography. Si está vacío → EmptyCollection avisa al usuario.
   ─────────────────────────────────────────────────────────────────────────── -->
-  {contenidoHtml
-    ? <ProseContent contenido={contenidoHtml} />
-    : <EmptyCollection
-        coleccion="productos"
-        mensaje={tl('empty')}
-        icono="tabler:info-circle"
-      />
+  {
+    contenidoHtml ? (
+      <ProseContent contenido={contenidoHtml} />
+    ) : (
+      <EmptyCollection coleccion="productos" mensaje={tl('empty')} icono="tabler:info-circle" />
+    )
   }
 
   <!-- BLOQUE 3 · DocumentosDescargables ───────────────────────────────────────
@@ -162,11 +161,7 @@ const metadata = {
       - Si array vacío → el componente no renderiza nada (silencioso).
       - Si hay docs    → grid de tarjetas con botón de descarga.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <DocumentosDescargables
-    documentos={documentosConUrl}
-    error={dbErrorDocs}
-    titulo={t('products.detail.docs')}
-  />
+  <DocumentosDescargables documentos={documentosConUrl} error={dbErrorDocs} titulo={t('products.detail.docs')} />
 
   <!-- BLOQUE 4 · CallToAction ──────────────────────────────────────────────────
       Cierre institucional consistente con el resto del módulo.
@@ -174,12 +169,14 @@ const metadata = {
   <CallToAction
     title={t('products.detail.cta.title')}
     subtitle={t('products.detail.cta.subtitle')}
-    actions={[{
-      variant: 'primary',
-      text:    t('products.detail.cta.button'),
-      href:    p('contacto'),
-      icon:    'tabler:headset',
-    }]}
+    actions={[
+      {
+        variant: 'primary',
+        text: t('products.detail.cta.button'),
+        href: p('contacto'),
+        icon: 'tabler:headset',
+      },
+    ]}
   />
 
   <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
@@ -191,5 +188,4 @@ const metadata = {
       href: p(`productos/${categoria}`),
     }}
   />
-
 </Layout>

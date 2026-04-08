@@ -13,7 +13,7 @@
  * @colecciones  Ninguna — contenido 100 % hardcodeado en diccionarios.
  */
 
-import { Icon }         from 'astro-icon/components';
+import { Icon } from 'astro-icon/components';
 import { getPermalink } from '~/utils/permalinks';
 import { useTranslations, getLangFromUrl } from '~/i18n/utils';
 
@@ -22,10 +22,10 @@ const t = useTranslations(lang);
 const p = (slug: string) => getPermalink(slug, lang);
 
 const atajos = [
-  { href: p('/productos'),       label: t('shortcuts.products'),    icon: 'tabler:building-bank' },
-  { href: p('/tramites'),        label: t('shortcuts.procedures'),  icon: 'tabler:file-text'     },
-  { href: p('/herramientas'),    label: t('shortcuts.tools'),       icon: 'tabler:tools'         },
-  { href: p('/sobre-nosotros'),  label: t('shortcuts.about'),       icon: 'tabler:info-circle'   },
+  { href: p('/productos'), label: t('shortcuts.products'), icon: 'tabler:building-bank' },
+  { href: p('/tramites'), label: t('shortcuts.procedures'), icon: 'tabler:file-text' },
+  { href: p('/herramientas'), label: t('shortcuts.tools'), icon: 'tabler:tools' },
+  { href: p('/sobre-nosotros'), label: t('shortcuts.about'), icon: 'tabler:info-circle' },
 ];
 ---
 
@@ -41,19 +41,21 @@ const atajos = [
 <!-- Cuadrícula de atajos — 4 tarjetas de altura fija y uniforme -->
 <nav aria-label="Navegación de recuperación">
   <ul class="grid grid-cols-4 gap-3 max-w-lg mx-auto list-none p-0 m-0">
-    {atajos.map(({ href, label, icon }) => (
-      <li class="flex">
-        <a
-          href={href}
-          class="group flex flex-col items-center justify-center gap-2 w-full h-20 rounded-xl border border-bpa-100 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 px-2 py-3 text-xs font-medium text-center text-default dark:text-default hover:border-primary dark:hover:border-primary hover:text-primary dark:hover:text-primary hover:shadow-sm transition-all duration-200"
-        >
-          <Icon
-            name={icon}
-            class="w-5 h-5 shrink-0 text-primary dark:text-primary group-hover:text-secondary dark:group-hover:text-secondary transition-colors"
-          />
-          <span class="leading-tight">{label}</span>
-        </a>
-      </li>
-    ))}
+    {
+      atajos.map(({ href, label, icon }) => (
+        <li class="flex">
+          <a
+            href={href}
+            class="group flex flex-col items-center justify-center gap-2 w-full h-20 rounded-xl border border-bpa-100 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 px-2 py-3 text-xs font-medium text-center text-default dark:text-default hover:border-primary dark:hover:border-primary hover:text-primary dark:hover:text-primary hover:shadow-sm transition-all duration-200"
+          >
+            <Icon
+              name={icon}
+              class="w-5 h-5 shrink-0 text-primary dark:text-primary group-hover:text-secondary dark:group-hover:text-secondary transition-colors"
+            />
+            <span class="leading-tight">{label}</span>
+          </a>
+        </li>
+      ))
+    }
   </ul>
 </nav>

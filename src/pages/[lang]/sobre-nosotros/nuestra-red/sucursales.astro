@@ -33,21 +33,19 @@
  */
 
 import type { GetStaticPaths } from 'astro';
-import Layout        from '~/layouts/PageLayout.astro';
-import HeroText      from '~/components/widgets/HeroText.astro';
-import Content       from '~/components/widgets/Content.astro';
-import Features3     from '~/components/widgets/Features3.astro';
-import CallToAction  from '~/components/widgets/CallToAction.astro';
-import PageNav       from '~/components/widgets/PageNav.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Content from '~/components/widgets/Content.astro';
+import Features3 from '~/components/widgets/Features3.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
 import SvgSucursales from '~/components/icons/SvgSucursales.astro';
-import SvgATM        from '~/components/icons/SvgATM.astro';
+import SvgATM from '~/components/icons/SvgATM.astro';
 
 import { LANGS, useTranslations } from '~/i18n/utils';
-import { getPermalink }           from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
-export const getStaticPaths = (() =>
-  LANGS.map((lang) => ({ params: { lang } }))
-) satisfies GetStaticPaths;
+export const getStaticPaths = (() => LANGS.map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
@@ -60,7 +58,6 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ────────────────────────────────────────────────────── -->
   <HeroText
     tagline={t('network.offices.hero.tagline')}
@@ -92,19 +89,19 @@ const metadata = {
     isAfterContent={true}
     items={[
       {
-        title:       t('network.offices.t1.title'),
+        title: t('network.offices.t1.title'),
         description: t('network.offices.t1.desc'),
-        icon:        'tabler:building-bank',
+        icon: 'tabler:building-bank',
       },
       {
-        title:       t('network.offices.t2.title'),
+        title: t('network.offices.t2.title'),
         description: t('network.offices.t2.desc'),
-        icon:        'tabler:building',
+        icon: 'tabler:building',
       },
       {
-        title:       t('network.offices.t3.title'),
+        title: t('network.offices.t3.title'),
         description: t('network.offices.t3.desc'),
-        icon:        'tabler:pig-money',
+        icon: 'tabler:pig-money',
       },
     ]}
   />
@@ -131,12 +128,14 @@ const metadata = {
   <CallToAction
     title={t('network.offices.cta.title')}
     subtitle={t('network.offices.cta.subtitle')}
-    actions={[{
-      variant: 'primary',
-      text:    t('network.offices.cta.button'),
-      href:    p('herramientas/mapa'),
-      icon:    'tabler:map-2',
-    }]}
+    actions={[
+      {
+        variant: 'primary',
+        text: t('network.offices.cta.button'),
+        href: p('herramientas/mapa'),
+        icon: 'tabler:map-2',
+      },
+    ]}
   />
 
   <!-- BLOQUE 6 · PageNav ───────────────────────────────────────────────────────
@@ -144,5 +143,4 @@ const metadata = {
       Derecha:   avanza a Canales de Atención (siguiente subsección).
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav prev={{ text: t('network.offices.nav.prev'), href: p('sobre-nosotros/nuestra-red') }} />
-
 </Layout>

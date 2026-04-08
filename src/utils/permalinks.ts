@@ -110,9 +110,9 @@ export const getPermalink = (slug = '', lang: Lang = 'es'): string => {
   // Si el slug ya es una URL absoluta o un ancla, devolverlo sin modificar
   if (
     slug.startsWith('https://') ||
-    slug.startsWith('http://')  ||
-    slug.startsWith('://')      ||
-    slug.startsWith('#')        ||
+    slug.startsWith('http://') ||
+    slug.startsWith('://') ||
+    slug.startsWith('#') ||
     slug.startsWith('javascript:')
   ) {
     return slug;
@@ -131,5 +131,4 @@ export const getPermalink = (slug = '', lang: Lang = 'es'): string => {
  *   getHomePermalink('es') → '/es'
  *   getHomePermalink('en') → '/en'
  */
-export const getHomePermalink = (lang: Lang = 'es'): string =>
-  getPermalink('', lang);
+export const getHomePermalink = (lang: Lang = 'es'): string => getPermalink('', lang);

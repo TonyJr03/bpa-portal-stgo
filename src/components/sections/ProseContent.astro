@@ -5,27 +5,16 @@ interface Props extends Widget {
   contenido: string;
 }
 
-const {
-  contenido,
-  id,
-  isDark = false,
-  classes = {},
-} = Astro.props;
+const { contenido, id, isDark = false, classes = {} } = Astro.props;
 ---
 
-<section
-  class:list={[
-    'relative scroll-mt-[72px]',
-    { 'dark': isDark },
-    classes?.container ?? '',
-  ]}
-  {...id ? { id } : {}}
->
-  <div class="relative mx-auto max-w-4xl px-4 md:px-6 py-12 md:py-12 text-default
-              motion-safe:intersect:animate-fade">
+<section class:list={['relative scroll-mt-[72px]', { dark: isDark }, classes?.container ?? '']} {...id ? { id } : {}}>
+  <div
+    class="relative mx-auto max-w-4xl px-4 md:px-6 py-12 md:py-12 text-default
+              motion-safe:intersect:animate-fade"
+  >
     <div
-      class="
-        prose prose-lg max-w-none
+      class="prose prose-lg max-w-none
         dark:prose-invert
         dark:prose-headings:text-default
         prose-headings:font-heading
@@ -36,9 +25,8 @@ const {
         dark:prose-a:text-primary
         prose-img:rounded-md
         prose-img:shadow-lg
-        prose-li:my-0
-      "
+        prose-li:my-0"
       set:html={contenido}
-    ></div>
+    />
   </div>
 </section>

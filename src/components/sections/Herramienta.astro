@@ -20,20 +20,20 @@
  *   <Herramienta herramienta="mapa" id="mapa" />
  */
 
-import WidgetWrapper         from '~/components/ui/WidgetWrapper.astro';
+import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
 import CalculadoraFinanciera from '~/components/vue/CalculadoraFinanciera.vue';
-import TasasDeCambio         from '~/components/vue/TasasDeCambio.vue';
-import CalendarioEventos     from '~/components/vue/CalendarioEventos.vue';
-import MapaSucursales        from '~/components/vue/MapaSucursales.vue';
+import TasasDeCambio from '~/components/vue/TasasDeCambio.vue';
+import CalendarioEventos from '~/components/vue/CalendarioEventos.vue';
+import MapaSucursales from '~/components/vue/MapaSucursales.vue';
 import type { Widget } from '~/types';
 import { getLangFromUrl } from '~/i18n/utils';
 
 // ── Configuración de ancho por herramienta ────────────────────────────────────
 const CONFIG = {
   calculadora: { maxWidth: 'max-w-2xl' },
-  tasas:       { maxWidth: 'max-w-4xl' },
-  calendario:  { maxWidth: 'max-w-3xl' },
-  mapa:        { maxWidth: 'max-w-6xl' },
+  tasas: { maxWidth: 'max-w-4xl' },
+  calendario: { maxWidth: 'max-w-3xl' },
+  mapa: { maxWidth: 'max-w-6xl' },
 } as const;
 
 type TipoHerramienta = keyof typeof CONFIG;
@@ -43,44 +43,26 @@ interface Props extends Widget {
   herramienta: TipoHerramienta;
 }
 
-const {
-  herramienta,
-  id,
-  isDark = false,
-  classes = {},
-} = Astro.props;
+const { herramienta, id, isDark = false, classes = {} } = Astro.props;
 
 const lang = getLangFromUrl(Astro.url);
 const { maxWidth } = CONFIG[herramienta];
 ---
 
-<WidgetWrapper
-  id={id}
-  isDark={isDark}
-  containerClass={`${maxWidth} mx-auto ${classes?.container ?? ''}`}
->
-
+<WidgetWrapper id={id} isDark={isDark} containerClass={`${maxWidth} mx-auto ${classes?.container ?? ''}`}>
   <!--
     Las islas se declaran de forma estática (requisito de Astro).
     Solo se monta la que corresponde al prop `herramienta` recibido.
     El prop `lang` permite a cada isla usar el diccionario correcto
     en el cliente, donde Astro.url no está disponible.
   -->
-  {herramienta === 'calculadora' && (
-    <CalculadoraFinanciera lang={lang} client:load />
-  )}
+  {herramienta === 'calculadora' && <CalculadoraFinanciera lang={lang} client:load />}
 
-  {herramienta === 'tasas' && (
-    <TasasDeCambio lang={lang} client:load />
-  )}
+  {herramienta === 'tasas' && <TasasDeCambio lang={lang} client:load />}
 
-  {herramienta === 'calendario' && (
-    <CalendarioEventos lang={lang} client:load />
-  )}
+  {herramienta === 'calendario' && <CalendarioEventos lang={lang} client:load />}
 
-  {herramienta === 'mapa' && (
-    <MapaSucursales lang={lang} client:load />
-  )}
+  {herramienta === 'mapa' && <MapaSucursales lang={lang} client:load />}
 
   <Fragment slot="bg"><slot name="bg" /></Fragment>
 </WidgetWrapper>

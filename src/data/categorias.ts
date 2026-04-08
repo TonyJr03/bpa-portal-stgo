@@ -28,15 +28,15 @@ export interface Categoria {
  *   cat.${slug}.desc
  */
 export const CATEGORIAS: Categoria[] = [
-  { slug: 'banca-personal',      icono: 'user-dollar'        },
-  { slug: 'banca-corporativa',   icono: 'building-factory-2' },
-  { slug: 'banca-electronica',   icono: 'device-mobile'      },
-  { slug: 'banca-internacional', icono: 'globe'              },
-  { slug: 'otros-servicios',     icono: 'layout-grid'        },
+  { slug: 'banca-personal', icono: 'user-dollar' },
+  { slug: 'banca-corporativa', icono: 'building-factory-2' },
+  { slug: 'banca-electronica', icono: 'device-mobile' },
+  { slug: 'banca-internacional', icono: 'globe' },
+  { slug: 'otros-servicios', icono: 'layout-grid' },
 ];
 
 /**
  * Variante sin iconos: usada en getStaticPaths de rutas anidadas
  * donde solo necesitamos los slugs para las queries a BD.
  */
-export const CATEGORIAS_SLUGS = CATEGORIAS.map(cat => ({ slug: cat.slug }));
+export const CATEGORIAS_SLUGS = CATEGORIAS.map((cat) => ({ slug: cat.slug }));

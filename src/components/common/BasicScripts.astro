@@ -77,8 +77,8 @@ import { UI } from 'astrowind:config';
   //   Así no dependemos de parsear la URL (más robusto ante edge cases).
 
   function buildAlternateUrl(currentLang) {
-    const altLang    = currentLang === 'es' ? 'en' : 'es';
-    const parts      = window.location.pathname.split('/').filter(Boolean);
+    const altLang = currentLang === 'es' ? 'en' : 'es';
+    const parts = window.location.pathname.split('/').filter(Boolean);
     const validLangs = ['es', 'en'];
 
     if (parts.length > 0 && validLangs.includes(parts[0])) {
@@ -131,15 +131,15 @@ import { UI } from 'astrowind:config';
     // ── Cambio de idioma ────────────────────────────────────────────────────────
     attachEvent('[data-aw-toggle-lang]', 'click', function (_, elem) {
       const currentLang = elem.getAttribute('data-current-lang') || 'es';
-      const newUrl      = buildAlternateUrl(currentLang);
+      const newUrl = buildAlternateUrl(currentLang);
       window.location.href = newUrl;
     });
 
     // Compartir en redes sociales
     attachEvent('[data-aw-social-share]', 'click', function (_, elem) {
       const network = elem.getAttribute('data-aw-social-share');
-      const url     = encodeURIComponent(elem.getAttribute('data-aw-url'));
-      const text    = encodeURIComponent(elem.getAttribute('data-aw-text'));
+      const url = encodeURIComponent(elem.getAttribute('data-aw-url'));
+      const text = encodeURIComponent(elem.getAttribute('data-aw-text'));
 
       let href;
       switch (network) {
@@ -162,9 +162,9 @@ import { UI } from 'astrowind:config';
           return;
       }
 
-      const newlink    = document.createElement('a');
-      newlink.target   = '_blank';
-      newlink.href     = href;
+      const newlink = document.createElement('a');
+      newlink.target = '_blank';
+      newlink.href = href;
       newlink.click();
     });
 
@@ -216,7 +216,7 @@ import { UI } from 'astrowind:config';
     document.querySelector('#header nav')?.classList.add('hidden');
   };
 
-  window.onload    = onLoad;
+  window.onload = onLoad;
   window.onpageshow = onPageShow;
 
   document.addEventListener('astro:after-swap', () => {
@@ -245,13 +245,13 @@ import { UI } from 'astrowind:config';
         '[class$=" intersect"]',
       ];
 
-      const elements  = Array.from(document.querySelectorAll(selectors.join(',')));
-      const isMobile  = window.innerWidth < 768;
+      const elements = Array.from(document.querySelectorAll(selectors.join(',')));
+      const isMobile = window.innerWidth < 768;
 
       const getThreshold = (element) => {
         if (isMobile) return 0.1;
-        if (element.classList.contains('intersect-full'))    return 0.99;
-        if (element.classList.contains('intersect-half'))    return 0.5;
+        if (element.classList.contains('intersect-full')) return 0.99;
+        if (element.classList.contains('intersect-half')) return 0.5;
         if (element.classList.contains('intersect-quarter')) return 0.25;
         return 0;
       };
@@ -264,9 +264,9 @@ import { UI } from 'astrowind:config';
       const callback = (entries) => {
         entries.forEach((entry) => {
           requestAnimationFrame(() => {
-            const target            = entry.target;
+            const target = entry.target;
             const intersectionRatio = entry.intersectionRatio;
-            const threshold         = target._intersectionThreshold;
+            const threshold = target._intersectionThreshold;
 
             if (target.classList.contains('intersect-no-queue')) {
               if (entry.isIntersecting) {
@@ -289,7 +289,7 @@ import { UI } from 'astrowind:config';
                 this.animationCounter++;
 
                 target.style.transitionDelay = `${delay}ms`;
-                target.style.animationDelay  = `${delay}ms`;
+                target.style.animationDelay = `${delay}ms`;
 
                 if (target.classList.contains('intersect-once')) {
                   this.observer.unobserve(target);
@@ -299,7 +299,7 @@ import { UI } from 'astrowind:config';
               target.setAttribute('no-intersect', '');
               target.removeAttribute('data-animated');
               target.style.transitionDelay = '';
-              target.style.animationDelay  = '';
+              target.style.animationDelay = '';
               this.animationCounter = 0;
             }
           });

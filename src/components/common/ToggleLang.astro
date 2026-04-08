@@ -33,9 +33,10 @@ export interface Props {
 
 const {
   lang,
-  label      = lang === 'es' ? 'Cambiar a inglés' : 'Switch to Spanish',
-  class: className = 'text-default dark:text-default hover:bg-bpa-100 dark:hover:bg-bpa-amber-800/40 focus:outline-none focus:ring-4 focus:ring-bpa-200 dark:focus:ring-bpa-amber-800 rounded-lg text-sm p-2.5 inline-flex items-center gap-1.5 font-semibold',
-  iconClass  = 'w-4 h-4 md:w-4 md:h-4',
+  label = lang === 'es' ? 'Cambiar a inglés' : 'Switch to Spanish',
+  class:
+    className = 'text-default dark:text-default hover:bg-bpa-100 dark:hover:bg-bpa-amber-800/40 focus:outline-none focus:ring-4 focus:ring-bpa-200 dark:focus:ring-bpa-amber-800 rounded-lg text-sm p-2.5 inline-flex items-center gap-1.5 font-semibold',
+  iconClass = 'w-4 h-4 md:w-4 md:h-4',
 } = Astro.props;
 
 // El idioma alternativo es el que se mostrará en el botón —
@@ -43,13 +44,7 @@ const {
 const altLang = lang === 'es' ? 'EN' : 'ES';
 ---
 
-<button
-  type="button"
-  class={className}
-  aria-label={label}
-  data-aw-toggle-lang
-  data-current-lang={lang}
->
+<button type="button" class={className} aria-label={label} data-aw-toggle-lang data-current-lang={lang}>
   <Icon name="tabler:world" class={iconClass} />
   <span class="text-xs leading-none">{altLang}</span>
 </button>

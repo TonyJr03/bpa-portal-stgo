@@ -13,28 +13,28 @@
  */
 
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
-import Layout          from '~/layouts/PageLayout.astro';
-import HeroText        from '~/components/widgets/HeroText.astro';
-import Features2       from '~/components/widgets/Features2.astro';
-import CallToAction    from '~/components/widgets/CallToAction.astro';
-import PageNav         from '~/components/widgets/PageNav.astro';
-import DatabaseError   from '~/components/ui/DatabaseError.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
+import DatabaseError from '~/components/ui/DatabaseError.astro';
 import EmptyCollection from '~/components/ui/EmptyCollection.astro';
 
 import { LANGS, useTranslations, useFieldTranslation, useLocalTranslations } from '~/i18n/utils';
-import { getPermalink }                           from '~/utils/permalinks';
-import { pb }                                     from '~/lib/pocketbase';
+import { getPermalink } from '~/utils/permalinks';
+import { pb } from '~/lib/pocketbase';
 
 interface Tramite {
-  id:            string;
-  nombre:        string;
-  nombre_en:     string;
-  slug:          string;
-  descripcion:   string;
-  descripcion_en:string;
-  icono:         string;
-  orden:         number;
-  publicado:     boolean;
+  id: string;
+  nombre: string;
+  nombre_en: string;
+  slug: string;
+  descripcion: string;
+  descripcion_en: string;
+  icono: string;
+  orden: number;
+  publicado: boolean;
 }
 
 export const getStaticPaths = (async () => {
@@ -44,7 +44,7 @@ export const getStaticPaths = (async () => {
   try {
     tramites = await pb.collection('tramites').getFullList<Tramite>({
       filter: 'publicado = true',
-      sort:   'orden',
+      sort: 'orden',
     });
   } catch {
     dbError = true;
@@ -54,36 +54,38 @@ export const getStaticPaths = (async () => {
   // Si PocketBase no responde, genera las rutas de idioma sin datos
   return LANGS.map((lang) => ({
     params: { lang },
-    props:  { tramites, dbError },
+    props: { tramites, dbError },
   }));
 }) satisfies GetStaticPaths;
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { tramites, dbError } = Astro.props as Props;
 const { lang } = Astro.params;
-const t  = useTranslations(lang);
+const t = useTranslations(lang);
 const tf = useFieldTranslation(lang);
 const p = (slug: string) => getPermalink(slug, lang);
 const tl = useLocalTranslations(lang, {
   es: {
-    dbError: 'No pudimos acceder a la información de los trámites. Por favor, intente más tarde o contacte con nosotros.',
-    empty:   'No hay trámites publicados en este momento. Consulte con nosotros si necesita información sobre un procedimiento específico.',
+    dbError:
+      'No pudimos acceder a la información de los trámites. Por favor, intente más tarde o contacte con nosotros.',
+    empty:
+      'No hay trámites publicados en este momento. Consulte con nosotros si necesita información sobre un procedimiento específico.',
   },
   en: {
     dbError: 'We could not access the procedure information. Please try again later or contact us.',
-    empty:   'No procedures are currently published. Contact us if you need information about a specific procedure.',
+    empty: 'No procedures are currently published. Contact us if you need information about a specific procedure.',
   },
 });
 
 const items = tramites.map((tr) => ({
-  title:       tf(tr.nombre, tr.nombre_en),
+  title: tf(tr.nombre, tr.nombre_en),
   description: tf(tr.descripcion, tr.descripcion_en),
-  icon:        `tabler:${tr.icono}`,
+  icon: `tabler:${tr.icono}`,
   callToAction: {
     variant: 'link' as const,
-    text:    t('procedures.view'),
-    href:    p(`tramites/${tr.slug}`),
-    icon:    'tabler:arrow-right',
+    text: t('procedures.view'),
+    href: p(`tramites/${tr.slug}`),
+    icon: 'tabler:arrow-right',
   },
 }));
 
@@ -94,38 +96,25 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Encabezado de sección. Sin tagline, sin imagen.
       Transmite al usuario de qué trata esta área del portal.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <HeroText
-    title={t('procedures.hero.title')}
-    subtitle={t('procedures.hero.subtitle')}
-  />
+  <HeroText title={t('procedures.hero.title')} subtitle={t('procedures.hero.subtitle')} />
 
   <!-- BLOQUE 2 · Features2 ─────────────────────────────────────────────────────
       Grid de tarjetas: una por cada trámite publicado en PocketBase.
       Se muestra DatabaseError si PB no respondió, EmptyCollection si no hay datos.
   ─────────────────────────────────────────────────────────────────────────── -->
-  {dbError ? (
-    <DatabaseError
-      coleccion="tramites"
-      mensaje={tl('dbError')}
-    />
-  ) : items.length === 0 ? (
-    <EmptyCollection
-      coleccion="tramites"
-      mensaje={tl('empty')}
-      icono="tabler:clipboard-off"
-    />
-  ) : (
-    <Features2
-      tagline={t('procedures.tagline')}
-      columns={3}
-      items={items}
-    />
-  )}
+  {
+    dbError ? (
+      <DatabaseError coleccion="tramites" mensaje={tl('dbError')} />
+    ) : items.length === 0 ? (
+      <EmptyCollection coleccion="tramites" mensaje={tl('empty')} icono="tabler:clipboard-off" />
+    ) : (
+      <Features2 tagline={t('procedures.tagline')} columns={3} items={items} />
+    )
+  }
 
   <!-- BLOQUE 3 · CallToAction ──────────────────────────────────────────────────
       Cierre institucional. Invita al usuario a contactar al banco si tiene dudas
@@ -134,17 +123,18 @@ const metadata = {
   <CallToAction
     title={t('procedures.cta.title')}
     subtitle={t('procedures.cta.subtitle')}
-    actions={[{
-      variant: 'primary',
-      text:    t('procedures.cta.button'),
-      href:    p('contacto'),
-      icon:    'tabler:headset',
-    }]}
+    actions={[
+      {
+        variant: 'primary',
+        text: t('procedures.cta.button'),
+        href: p('contacto'),
+        icon: 'tabler:headset',
+      },
+    ]}
   />
 
   <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
       Navegación contextual. Solo botón izquierdo: regresa al inicio.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav prev={{ text: t('procedures.nav.prev'), href: p('') }} />
-
 </Layout>

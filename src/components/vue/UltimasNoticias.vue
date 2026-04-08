@@ -32,31 +32,38 @@ import { pb } from '~/lib/pocketbase';
 import { useTranslations, useFieldTranslation, useLocalTranslations, type Lang } from '~/i18n/utils';
 
 interface Noticia {
-  id: string; titulo: string; titulo_en: string;
-  slug: string; resumen: string; resumen_en: string;
-  fecha: string; nivel: string; publicado: boolean;
-  imagen: string; collectionId: string;
+  id: string;
+  titulo: string;
+  titulo_en: string;
+  slug: string;
+  resumen: string;
+  resumen_en: string;
+  fecha: string;
+  nivel: string;
+  publicado: boolean;
+  imagen: string;
+  collectionId: string;
 }
 
 const props = defineProps<{ lang: Lang }>();
 
 // ── Traducción ────────────────────────────────────────────────────────────────
-const t  = useTranslations(props.lang);
+const t = useTranslations(props.lang);
 const tf = useFieldTranslation(props.lang);
 
 // IMPORTANTE: el componente se reinstancia al cambiar de idioma, por lo que
 // tl captura props.lang en el momento correcto sin necesidad de computed.
 const tl = useLocalTranslations(props.lang, {
   es: {
-    badge:       'Noticia',
-    readFull:    'Leer artículo completo',
-    retry:       'Reintentar',
+    badge: 'Noticia',
+    readFull: 'Leer artículo completo',
+    retry: 'Reintentar',
     unavailable: 'No se pudieron cargar las últimas noticias.',
   },
   en: {
-    badge:       'News',
-    readFull:    'Read full article',
-    retry:       'Retry',
+    badge: 'News',
+    readFull: 'Read full article',
+    retry: 'Retry',
     unavailable: 'Latest news could not be loaded.',
   },
 });
@@ -64,108 +71,254 @@ const tl = useLocalTranslations(props.lang, {
 function formatearFecha(iso: string): string {
   try {
     return new Intl.DateTimeFormat(props.lang === 'en' ? 'en-US' : 'es-CU', {
-      day: '2-digit', month: 'long', year: 'numeric',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
     }).format(new Date(iso));
-  } catch { return iso; }
+  } catch {
+    return iso;
+  }
 }
 
 const noticias = ref<Noticia[]>([]);
 const cargando = ref(true);
-const errorDB  = ref(false);
-const indice   = ref(0);
+const errorDB = ref(false);
+const indice = ref(0);
 
 let intervalo: ReturnType<typeof setInterval> | null = null;
 const INTERVALO_MS = 6000;
 
-const total         = computed(() => noticias.value.length);
-const hayNoticias   = computed(() => total.value > 0);
+const total = computed(() => noticias.value.length);
+const hayNoticias = computed(() => total.value > 0);
 const noticiaActual = computed(() => noticias.value[indice.value] ?? null);
-const mostrar       = computed(() => !cargando.value && hayNoticias.value);
-const mostrarError  = computed(() => !cargando.value && errorDB.value);
+const mostrar = computed(() => !cargando.value && hayNoticias.value);
+const mostrarError = computed(() => !cargando.value && errorDB.value);
 
-function siguiente() { indice.value = (indice.value + 1) % total.value; reiniciarAutoplay(); }
-function anterior()  { indice.value = (indice.value - 1 + total.value) % total.value; reiniciarAutoplay(); }
-function irA(idx: number) { if (idx !== indice.value) { indice.value = idx; reiniciarAutoplay(); } }
+function siguiente() {
+  indice.value = (indice.value + 1) % total.value;
+  reiniciarAutoplay();
+}
+function anterior() {
+  indice.value = (indice.value - 1 + total.value) % total.value;
+  reiniciarAutoplay();
+}
+function irA(idx: number) {
+  if (idx !== indice.value) {
+    indice.value = idx;
+    reiniciarAutoplay();
+  }
+}
 
 function iniciarAutoplay() {
   if (total.value <= 1) return;
-  intervalo = setInterval(() => { indice.value = (indice.value + 1) % total.value; }, INTERVALO_MS);
+  intervalo = setInterval(() => {
+    indice.value = (indice.value + 1) % total.value;
+  }, INTERVALO_MS);
 }
-function reiniciarAutoplay() { if (intervalo) clearInterval(intervalo); iniciarAutoplay(); }
+function reiniciarAutoplay() {
+  if (intervalo) clearInterval(intervalo);
+  iniciarAutoplay();
+}
 
 function urlImagen(n: Noticia): string | null {
   return n.imagen ? pb.files.getURL(n, n.imagen, { thumb: '800x400' }) : null;
 }
 
 async function cargar() {
-  cargando.value = true; errorDB.value = false; indice.value = 0;
+  cargando.value = true;
+  errorDB.value = false;
+  indice.value = 0;
   if (intervalo) clearInterval(intervalo);
   try {
     const res = await pb.collection('actualidad').getList<Noticia>(1, 3, {
-      filter: 'publicado = true && categoria = "noticia"', sort: '-updated',
+      filter: 'publicado = true && categoria = "noticia"',
+      sort: '-updated',
       fields: 'id,titulo,titulo_en,slug,resumen,resumen_en,fecha,imagen,collectionId',
     });
     noticias.value = res.items;
     if (res.items.length > 1) iniciarAutoplay();
-  } catch { errorDB.value = true; }
-  finally { cargando.value = false; }
+  } catch {
+    errorDB.value = true;
+  } finally {
+    cargando.value = false;
+  }
 }
 
 onMounted(cargar);
-onUnmounted(() => { if (intervalo) clearInterval(intervalo); });
+onUnmounted(() => {
+  if (intervalo) clearInterval(intervalo);
+});
 </script>
 
 <template>
   <div>
     <!-- Error -->
-    <div v-if="mostrarError" class="flex items-center gap-3 px-4 py-3 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-sm">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-red-500 flex-shrink-0">
-        <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 18l.01 0"/><path d="M9.172 15.172a4 4 0 0 1 5.656 0"/><path d="M3.515 9.515a12 12 0 0 1 3.544 -2.455m3.182 -.982a12 12 0 0 1 10.043 3.438"/><path d="M3 3l18 18"/>
+    <div
+      v-if="mostrarError"
+      class="flex items-center gap-3 px-4 py-3 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-sm"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="w-4 h-4 text-red-500 flex-shrink-0"
+      >
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M12 18l.01 0" />
+        <path d="M9.172 15.172a4 4 0 0 1 5.656 0" />
+        <path d="M3.515 9.515a12 12 0 0 1 3.544 -2.455m3.182 -.982a12 12 0 0 1 10.043 3.438" />
+        <path d="M3 3l18 18" />
       </svg>
       <span class="text-red-700 dark:text-red-400 flex-1">{{ tl('unavailable') }}</span>
-      <button @click="cargar" class="text-red-600 dark:text-red-400 hover:underline font-medium flex-shrink-0">{{ tl('retry') }}</button>
+      <button @click="cargar" class="text-red-600 dark:text-red-400 hover:underline font-medium flex-shrink-0">
+        {{ tl('retry') }}
+      </button>
     </div>
 
     <!-- Carrusel -->
-    <div v-if="mostrar" class="relative overflow-hidden rounded-2xl border-2 border-bpa-400 dark:border-bpa-amber-600 bg-white dark:bg-bpa-950/60 shadow-sm">
-      <Transition enter-active-class="transition-all duration-500 ease-in-out" enter-from-class="opacity-0 translate-x-4" enter-to-class="opacity-100 translate-x-0" leave-active-class="transition-all duration-300 ease-in" leave-from-class="opacity-100 translate-x-0" leave-to-class="opacity-0 -translate-x-4" mode="out-in">
+    <div
+      v-if="mostrar"
+      class="relative overflow-hidden rounded-2xl border-2 border-bpa-400 dark:border-bpa-amber-600 bg-white dark:bg-bpa-950/60 shadow-sm"
+    >
+      <Transition
+        enter-active-class="transition-all duration-500 ease-in-out"
+        enter-from-class="opacity-0 translate-x-4"
+        enter-to-class="opacity-100 translate-x-0"
+        leave-active-class="transition-all duration-300 ease-in"
+        leave-from-class="opacity-100 translate-x-0"
+        leave-to-class="opacity-0 -translate-x-4"
+        mode="out-in"
+      >
         <div v-if="noticiaActual" :key="noticiaActual.id" class="flex flex-col sm:flex-row">
           <div class="sm:w-2/5 h-52 sm:h-auto overflow-hidden flex-shrink-0">
-            <img v-if="urlImagen(noticiaActual)" :src="urlImagen(noticiaActual)!" :alt="tf(noticiaActual.titulo, noticiaActual.titulo_en)" class="w-full h-full object-cover" loading="lazy" />
-            <div v-else class="w-full h-full min-h-[13rem] flex items-center justify-center bg-gradient-to-br from-bpa-600 to-bpa-100 dark:from-bpa-amber-600 dark:to-bpa-amber-950">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-14 h-14 text-bpa-50 dark:text-bpa-amber-200 opacity-50">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 6h3a1 1 0 0 1 1 1v11a2 2 0 0 1 -4 0v-13a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v12a3 3 0 0 0 3 3h11"/><path d="M8 8h4"/><path d="M8 12h4"/><path d="M8 16h4"/>
+            <img
+              v-if="urlImagen(noticiaActual)"
+              :src="urlImagen(noticiaActual)!"
+              :alt="tf(noticiaActual.titulo, noticiaActual.titulo_en)"
+              class="w-full h-full object-cover"
+              loading="lazy"
+            />
+            <div
+              v-else
+              class="w-full h-full min-h-[13rem] flex items-center justify-center bg-gradient-to-br from-bpa-600 to-bpa-100 dark:from-bpa-amber-600 dark:to-bpa-amber-950"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-14 h-14 text-bpa-50 dark:text-bpa-amber-200 opacity-50"
+              >
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M16 6h3a1 1 0 0 1 1 1v11a2 2 0 0 1 -4 0v-13a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v12a3 3 0 0 0 3 3h11"
+                />
+                <path d="M8 8h4" />
+                <path d="M8 12h4" />
+                <path d="M8 16h4" />
               </svg>
             </div>
           </div>
           <div class="flex flex-col flex-1 p-6 gap-4 justify-between">
             <div class="space-y-3">
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-bpa-100 text-bpa-800 dark:bg-bpa-amber-800/40 dark:text-bpa-amber-200">{{ tl('badge') }}</span>
-                <time :datetime="noticiaActual.fecha" class="text-xs text-muted">{{ formatearFecha(noticiaActual.fecha) }}</time>
+                <span
+                  class="text-xs font-semibold px-2.5 py-1 rounded-full bg-bpa-100 text-bpa-800 dark:bg-bpa-amber-800/40 dark:text-bpa-amber-200"
+                  >{{ tl('badge') }}</span
+                >
+                <time :datetime="noticiaActual.fecha" class="text-xs text-muted">{{
+                  formatearFecha(noticiaActual.fecha)
+                }}</time>
               </div>
-              <h3 class="font-bold text-default dark:text-default text-lg leading-snug line-clamp-2">{{ tf(noticiaActual.titulo, noticiaActual.titulo_en) }}</h3>
-              <p class="text-sm text-muted leading-relaxed line-clamp-3">{{ tf(noticiaActual.resumen, noticiaActual.resumen_en) }}</p>
+              <h3 class="font-bold text-default dark:text-default text-lg leading-snug line-clamp-2">
+                {{ tf(noticiaActual.titulo, noticiaActual.titulo_en) }}
+              </h3>
+              <p class="text-sm text-muted leading-relaxed line-clamp-3">
+                {{ tf(noticiaActual.resumen, noticiaActual.resumen_en) }}
+              </p>
             </div>
             <div class="flex items-center justify-between gap-4 pt-2 border-t border-bpa-200 dark:border-bpa-amber-800">
-              <a v-if="noticiaActual.slug" :href="`/${props.lang ?? 'es'}/actualidad/${noticiaActual.slug}`"
-                class="inline-flex items-center gap-1.5 text-sm font-medium flex-shrink-0 text-primary dark:text-primary hover:text-secondary dark:hover:text-secondary transition-colors">
+              <a
+                v-if="noticiaActual.slug"
+                :href="`/${props.lang ?? 'es'}/actualidad/${noticiaActual.slug}`"
+                class="inline-flex items-center gap-1.5 text-sm font-medium flex-shrink-0 text-primary dark:text-primary hover:text-secondary dark:hover:text-secondary transition-colors"
+              >
                 {{ tl('readFull') }}
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0"/><path d="M13 18l6 -6"/><path d="M13 6l6 6"/></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="w-3.5 h-3.5"
+                >
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l14 0" />
+                  <path d="M13 18l6 -6" />
+                  <path d="M13 6l6 6" />
+                </svg>
               </a>
               <span v-else class="flex-1"></span>
               <div v-if="total > 1" class="flex items-center gap-2 flex-shrink-0">
-                <button @click="anterior" :aria-label="props.lang === 'en' ? 'Previous' : 'Anterior'"
-                  class="flex items-center justify-center w-8 h-8 rounded-full transition-colors border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 text-muted hover:border-primary hover:text-primary dark:hover:text-primary">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 6l-6 6l6 6"/></svg>
+                <button
+                  @click="anterior"
+                  :aria-label="props.lang === 'en' ? 'Previous' : 'Anterior'"
+                  class="flex items-center justify-center w-8 h-8 rounded-full transition-colors border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 text-muted hover:border-primary hover:text-primary dark:hover:text-primary"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="w-4 h-4"
+                  >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M15 6l-6 6l6 6" />
+                  </svg>
                 </button>
                 <div class="flex gap-1.5">
-                  <button v-for="(_, idx) in noticias" :key="idx" @click="irA(idx)"
-                    :class="['h-2 rounded-full transition-all duration-300', idx === indice ? 'w-4 bg-primary dark:bg-bpa-amber-400' : 'w-2 bg-bpa-200 dark:bg-bpa-amber-800 hover:bg-primary dark:hover:bg-bpa-amber-400']" />
+                  <button
+                    v-for="(_, idx) in noticias"
+                    :key="idx"
+                    @click="irA(idx)"
+                    :class="[
+                      'h-2 rounded-full transition-all duration-300',
+                      idx === indice
+                        ? 'w-4 bg-primary dark:bg-bpa-amber-400'
+                        : 'w-2 bg-bpa-200 dark:bg-bpa-amber-800 hover:bg-primary dark:hover:bg-bpa-amber-400',
+                    ]"
+                  />
                 </div>
-                <button @click="siguiente" :aria-label="props.lang === 'en' ? 'Next' : 'Siguiente'"
-                  class="flex items-center justify-center w-8 h-8 rounded-full transition-colors border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 text-muted hover:border-primary hover:text-primary dark:hover:text-primary">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 6l6 6l-6 6"/></svg>
+                <button
+                  @click="siguiente"
+                  :aria-label="props.lang === 'en' ? 'Next' : 'Siguiente'"
+                  class="flex items-center justify-center w-8 h-8 rounded-full transition-colors border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 text-muted hover:border-primary hover:text-primary dark:hover:text-primary"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="w-4 h-4"
+                  >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M9 6l6 6l-6 6" />
+                  </svg>
                 </button>
               </div>
             </div>

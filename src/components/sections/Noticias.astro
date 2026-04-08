@@ -21,21 +21,17 @@
  *   <Noticias id="noticias" />
  */
 
-import WidgetWrapper   from '~/components/ui/WidgetWrapper.astro';
-import Headline        from '~/components/ui/Headline.astro';
+import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
+import Headline from '~/components/ui/Headline.astro';
 import UltimasNoticias from '~/components/vue/UltimasNoticias.vue';
-import { Icon }        from 'astro-icon/components';
+import { Icon } from 'astro-icon/components';
 import type { Widget } from '~/types';
 import { useTranslations, getLangFromUrl } from '~/i18n/utils';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 type Props = Widget;
 
-const {
-  id,
-  isDark = false,
-  classes = {},
-} = Astro.props;
+const { id, isDark = false, classes = {} } = Astro.props;
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -52,8 +48,10 @@ const t = useTranslations(lang);
   <UltimasNoticias client:visible lang={lang} />
 
   <div class="text-center mt-8">
-    <a href={`/${lang}/actualidad?categoria=noticia`}
-      class="inline-flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline underline-offset-4 transition-colors">
+    <a
+      href={`/${lang}/actualidad?categoria=noticia`}
+      class="inline-flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline underline-offset-4 transition-colors"
+    >
       {t('home.articles.viewAll')}
       <Icon name="tabler:arrow-right" class="w-4 h-4" />
     </a>

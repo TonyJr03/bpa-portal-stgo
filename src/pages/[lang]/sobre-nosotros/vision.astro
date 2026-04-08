@@ -3,7 +3,7 @@
  * @pagina  src/pages/[lang]/sobre-nosotros/vision.astro
  * @ruta    es/sobre-nosotros/vision
  *          en/sobre-nosotros/vision
- * 
+ *
  * @descripcion
  * Página estática institucional con la Visión oficial del BPA Santiago de Cuba.
  * Estructura de presentación usando widgets nativos de AstroWind:
@@ -28,19 +28,17 @@
  */
 
 import type { GetStaticPaths } from 'astro';
-import Layout    from '~/layouts/PageLayout.astro';
-import HeroText  from '~/components/widgets/HeroText.astro';
-import Content   from '~/components/widgets/Content.astro';
-import Steps     from '~/components/widgets/Steps.astro';
-import PageNav   from '~/components/widgets/PageNav.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Content from '~/components/widgets/Content.astro';
+import Steps from '~/components/widgets/Steps.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
 import SvgVision from '~/components/icons/SvgVision.astro';
 
 import { LANGS, useTranslations } from '~/i18n/utils';
-import { getPermalink }           from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
-export const getStaticPaths = (() =>
-  LANGS.map((lang) => ({ params: { lang } }))
-) satisfies GetStaticPaths;
+export const getStaticPaths = (() => LANGS.map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
@@ -53,12 +51,8 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ────────────────────────────────────────────────────── -->
-  <HeroText
-    tagline={t('about.vision.hero.tagline')}
-    title={t('about.vision.hero.title')}
-  />
+  <HeroText tagline={t('about.vision.hero.tagline')} title={t('about.vision.hero.title')} />
 
   <!-- BLOQUE 2 · Content ─────────────────────────────────────────────────────── -->
   <Content
@@ -77,24 +71,24 @@ const metadata = {
     subtitle={t('about.vision.commitments.subtitle')}
     items={[
       {
-        title:       t('about.vision.c1.title'),
+        title: t('about.vision.c1.title'),
         description: t('about.vision.c1.desc'),
-        icon:        'tabler:award',
+        icon: 'tabler:award',
       },
       {
-        title:       t('about.vision.c2.title'),
+        title: t('about.vision.c2.title'),
         description: t('about.vision.c2.desc'),
-        icon:        'tabler:map-pin',
+        icon: 'tabler:map-pin',
       },
       {
-        title:       t('about.vision.c3.title'),
+        title: t('about.vision.c3.title'),
         description: t('about.vision.c3.desc'),
-        icon:        'tabler:school',
+        icon: 'tabler:school',
       },
       {
-        title:       t('about.vision.c4.title'),
+        title: t('about.vision.c4.title'),
         description: t('about.vision.c4.desc'),
-        icon:        'tabler:shield-check',
+        icon: 'tabler:shield-check',
       },
     ]}
   />
@@ -104,8 +98,7 @@ const metadata = {
       Derecha:   avanza a Historia (siguiente subsección de Sobre Nosotros).
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: t('about.vision.nav.prev'), href: p('sobre-nosotros/mision')  }}
+    prev={{ text: t('about.vision.nav.prev'), href: p('sobre-nosotros/mision') }}
     next={{ text: t('about.vision.nav.next'), href: p('sobre-nosotros/historia') }}
   />
-
 </Layout>

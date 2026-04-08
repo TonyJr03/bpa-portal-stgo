@@ -17,11 +17,11 @@
  *   lo hace por ellas. Solo necesitan pasar `metadata` como siempre.
  */
 
-import Layout  from '~/layouts/Layout.astro';
-import Header  from '~/components/widgets/Header.astro';
-import Footer  from '~/components/widgets/Footer.astro';
+import Layout from '~/layouts/Layout.astro';
+import Header from '~/components/widgets/Header.astro';
+import Footer from '~/components/widgets/Footer.astro';
 
-import { getLangFromUrl }               from '~/i18n/utils';
+import { getLangFromUrl } from '~/i18n/utils';
 import { getHeaderData, getFooterData } from '~/navigation';
 
 import type { MetaData } from '~/types';
@@ -35,21 +35,14 @@ const { metadata } = Astro.props;
 // Extraer el idioma activo de la URL actual.
 // Para rutas bajo /[lang]/... → 'es' o 'en'
 // Para rutas fuera de ese patrón (ej: /404) → 'es' (DEFAULT_LANG)
-const lang       = getLangFromUrl(Astro.url);
+const lang = getLangFromUrl(Astro.url);
 const headerData = getHeaderData(lang);
 const footerData = getFooterData(lang);
 ---
 
 <Layout metadata={metadata} lang={lang}>
-
   <slot name="header">
-    <Header
-      {...headerData}
-      lang={lang}
-      isSticky
-      showToggleTheme
-      showToggleLang
-    />
+    <Header {...headerData} lang={lang} isSticky showToggleTheme showToggleLang />
   </slot>
 
   <main>
@@ -59,5 +52,4 @@ const footerData = getFooterData(lang);
   <slot name="footer">
     <Footer {...footerData} />
   </slot>
-
 </Layout>

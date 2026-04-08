@@ -33,14 +33,12 @@ const tl = useLocalTranslations(lang, {
 const texto = mensaje ?? tl('default');
 ---
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center
+<div
+  class="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center
             intersect-once intersect-quarter intercept-no-queue
-            motion-safe:opacity-0 motion-safe:intersect:animate-fade">
-  <Icon
-    name={icono}
-    class="w-14 h-14 mx-auto mb-5 text-primary opacity-60"
-    aria-hidden="true"
-  />
+            motion-safe:opacity-0 motion-safe:intersect:animate-fade"
+>
+  <Icon name={icono} class="w-14 h-14 mx-auto mb-5 text-primary opacity-60" aria-hidden="true" />
 
   <p class="text-xl font-semibold text-default dark:text-white">
     {texto}
@@ -51,5 +49,4 @@ const texto = mensaje ?? tl('default');
     <!-- Colección vacía: "{coleccion}". Añada registros desde el panel
         de administración de PocketBase con el campo publicado = true. -->
   </div>
-
 </div>

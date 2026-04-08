@@ -39,17 +39,14 @@ pb.autoCancellation(false);
  *     'tramites'
  *   );
  */
-export async function fetchParaBuild<T>(
-  fetcher: () => Promise<T[]>,
-  coleccion: string
-): Promise<T[]> {
+export async function fetchParaBuild<T>(fetcher: () => Promise<T[]>, coleccion: string): Promise<T[]> {
   try {
     return await fetcher();
   } catch (error) {
     const mensaje = error instanceof Error ? error.message : String(error);
     console.warn(
       `[BPA] PocketBase no disponible al compilar la colección "${coleccion}". ` +
-      `Se omitirán las rutas dinámicas. (${mensaje})`
+        `Se omitirán las rutas dinámicas. (${mensaje})`
     );
     return [];
   }

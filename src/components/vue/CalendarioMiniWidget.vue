@@ -48,45 +48,45 @@ import { useTranslations, useFieldTranslation, useLocalTranslations, type Lang }
 const props = defineProps<{ lang: Lang }>();
 
 // ── Traducción ────────────────────────────────────────────────────────────────
-const t  = useTranslations(props.lang);
+const t = useTranslations(props.lang);
 const tf = useFieldTranslation(props.lang);
 
 // ── Strings de interfaz pura (local — no van a los archivos .ts) ───────────────
 const tl = useLocalTranslations(props.lang, {
   es: {
     noPending: 'Sin eventos próximos',
-    tomorrow:  'mañana',
-    today:     'hoy',
-    retry:     'Reintentar',
-    errorMsg:  'No disponible. Sin conexión con el servidor.',
+    tomorrow: 'mañana',
+    today: 'hoy',
+    retry: 'Reintentar',
+    errorMsg: 'No disponible. Sin conexión con el servidor.',
   },
   en: {
     noPending: 'No upcoming events',
-    tomorrow:  'tomorrow',
-    today:     'today',
-    retry:     'Retry',
-    errorMsg:  'Not available. No server connection.',
+    tomorrow: 'tomorrow',
+    today: 'today',
+    retry: 'Retry',
+    errorMsg: 'Not available. No server connection.',
   },
 });
 
-const inDays = (n: number) => props.lang === 'en' ? `in ${n} days` : `en ${n} días`;
+const inDays = (n: number) => (props.lang === 'en' ? `in ${n} days` : `en ${n} días`);
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface Evento {
-  id:            string;
-  titulo:        string;
-  titulo_en:     string; // campo _en de PocketBase
-  fecha:         string;
-  tipo:          'pago_jubilados' | 'feriado' | 'aviso';
-  descripcion:   string;
-  descripcion_en:string; // campo _en de PocketBase
-  publicado:     boolean;
+  id: string;
+  titulo: string;
+  titulo_en: string; // campo _en de PocketBase
+  fecha: string;
+  tipo: 'pago_jubilados' | 'feriado' | 'aviso';
+  descripcion: string;
+  descripcion_en: string; // campo _en de PocketBase
+  publicado: boolean;
 }
 
 // ── Estado ────────────────────────────────────────────────────────────────────
-const eventos  = ref<Evento[]>([]);
+const eventos = ref<Evento[]>([]);
 const cargando = ref(true);
-const errorDB  = ref(false);
+const errorDB = ref(false);
 
 // ── Configuración visual por tipo ─────────────────────────────────────────────
 // Los labels de tipo → t() desde el diccionario (compartido con CalendarioEventos).
@@ -132,9 +132,12 @@ function parsearFechaLocal(isoStr: string): Date {
 function formatearFecha(isoStr: string): string {
   try {
     return new Intl.DateTimeFormat(props.lang === 'en' ? 'en-US' : 'es-CU', {
-      day: 'numeric', month: 'long',
+      day: 'numeric',
+      month: 'long',
     }).format(parsearFechaLocal(isoStr));
-  } catch { return isoStr.substring(0, 10); }
+  } catch {
+    return isoStr.substring(0, 10);
+  }
 }
 
 function hoyLocal(): Date {
@@ -160,7 +163,7 @@ const proximoEvento = computed<Evento | null>(() => {
 
 const diasRestantes = computed<number | null>(() => {
   if (!proximoEvento.value) return null;
-  const hoy      = hoyLocal();
+  const hoy = hoyLocal();
   const eventoMs = parsearFechaLocal(proximoEvento.value.fecha).getTime();
   return Math.round((eventoMs - hoy.getTime()) / (1000 * 60 * 60 * 24));
 });
@@ -173,12 +176,12 @@ function configEvento(tipo: Evento['tipo']) {
 // ── Carga de datos ────────────────────────────────────────────────────────────
 const cargarEventos = async () => {
   cargando.value = true;
-  errorDB.value  = false;
+  errorDB.value = false;
   try {
     // Se solicitan todos los campos incluidos titulo_en y descripcion_en
     const resultado = await pb.collection('eventos').getFullList<Evento>({
       filter: 'publicado = true',
-      sort:   'fecha',
+      sort: 'fecha',
       fields: 'id,titulo,titulo_en,fecha,tipo,descripcion,descripcion_en,publicado',
     });
     eventos.value = resultado;
@@ -193,7 +196,6 @@ onMounted(cargarEventos);
 </script>
 
 <template>
-
   <!-- ── Cargando ────────────────────────────────────────────────────────── -->
   <div v-if="cargando" class="flex flex-col items-center gap-3 py-4 animate-pulse">
     <div class="w-8 h-8 rounded-full bg-bpa-100 dark:bg-bpa-800/40" />
@@ -213,26 +215,37 @@ onMounted(cargarEventos);
   <!-- ── Sin próximos eventos ───────────────────────────────────────────── -->
   <div v-else-if="!proximoEvento" class="text-center py-2">
     <!-- tabler:calendar-check -->
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-      class="w-8 h-8 mx-auto mb-2 text-muted">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="w-8 h-8 mx-auto mb-2 text-muted"
+    >
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6" />
-      <path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 19l2 2l4 -4" />
+      <path d="M16 3v4" />
+      <path d="M8 3v4" />
+      <path d="M4 11h16" />
+      <path d="M15 19l2 2l4 -4" />
     </svg>
     <p class="text-xs text-muted">{{ tl('noPending') }}</p>
   </div>
 
   <!-- ── Próximo evento ─────────────────────────────────────────────────── -->
   <div v-else class="text-center">
-
     <!-- Ícono + Badge de tipo (label → diccionario) -->
     <div class="flex items-center justify-center gap-2 mb-3">
       <span
         :class="['flex items-center justify-center w-8 h-8 shrink-0', configEvento(proximoEvento.tipo).color]"
         v-html="configEvento(proximoEvento.tipo).icono"
       />
-      <span :class="['inline-block text-xs font-semibold px-2.5 py-1 rounded-full', configEvento(proximoEvento.tipo).badge]">
+      <span
+        :class="['inline-block text-xs font-semibold px-2.5 py-1 rounded-full', configEvento(proximoEvento.tipo).badge]"
+      >
         {{ configEvento(proximoEvento.tipo).label }}
       </span>
     </div>
@@ -256,12 +269,8 @@ onMounted(cargarEventos);
     </p>
 
     <!-- Descripción del evento → tf() (campo PB traducible) -->
-    <p
-      v-if="proximoEvento.descripcion || proximoEvento.descripcion_en"
-      class="text-xs text-muted mt-1 line-clamp-2"
-    >
+    <p v-if="proximoEvento.descripcion || proximoEvento.descripcion_en" class="text-xs text-muted mt-1 line-clamp-2">
       {{ tf(proximoEvento.descripcion, proximoEvento.descripcion_en) }}
     </p>
-
   </div>
 </template>

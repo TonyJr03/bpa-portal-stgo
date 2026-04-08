@@ -10,16 +10,16 @@
  *   El resto del comportamiento no cambia respecto a la versión anterior.
  */
 
-import { Icon }        from 'astro-icon/components';
-import Logo            from '~/components/Logo.astro';
-import ToggleTheme     from '~/components/common/ToggleTheme.astro';
-import ToggleMenu      from '~/components/common/ToggleMenu.astro';
-import ToggleLang      from '~/components/common/ToggleLang.astro';
-import Button          from '~/components/ui/Button.astro';
+import { Icon } from 'astro-icon/components';
+import Logo from '~/components/Logo.astro';
+import ToggleTheme from '~/components/common/ToggleTheme.astro';
+import ToggleMenu from '~/components/common/ToggleMenu.astro';
+import ToggleLang from '~/components/common/ToggleLang.astro';
+import Button from '~/components/ui/Button.astro';
 
 import { getHomePermalink, getPermalink, trimSlash } from '~/utils/permalinks';
-import type { CallToAction }       from '~/types';
-import type { Lang }               from '~/i18n/utils';
+import type { CallToAction } from '~/types';
+import type { Lang } from '~/i18n/utils';
 
 interface Link {
   text?: string;
@@ -48,20 +48,20 @@ export interface Props {
 }
 
 const {
-  id            = 'header',
-  links         = [],
-  actions       = [],
-  isSticky      = false,
-  isDark        = false,
-  isFullWidth   = false,
+  id = 'header',
+  links = [],
+  actions = [],
+  isSticky = false,
+  isDark = false,
+  isFullWidth = false,
   showToggleTheme = false,
-  showToggleLang  = false,
-  position      = 'center',
-  lang          = 'es',
+  showToggleLang = false,
+  position = 'center',
+  lang = 'es',
 } = Astro.props;
 
-const currentPath  = `/${trimSlash(new URL(Astro.url).pathname)}`;
-const contactHref  = getPermalink('contacto', lang);
+const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
+const contactHref = getPermalink('contacto', lang);
 ---
 
 <header
@@ -79,7 +79,6 @@ const contactHref  = getPermalink('contacto', lang);
       { 'max-w-7xl': !isFullWidth },
     ]}
   >
-
     <!-- COLUMNA 1: Logo + botón hamburguesa -->
     <div class:list={[{ 'mr-auto rtl:mr-0 rtl:ml-auto': position === 'right' }, 'flex justify-between']}>
       <a class="flex items-center" href={getHomePermalink(lang)}>
@@ -128,7 +127,10 @@ const contactHref  = getPermalink('contacto', lang);
                       class="hover:text-primary dark:hover:text-primary px-4 py-3 flex items-center whitespace-nowrap"
                     >
                       {text}{' '}
-                      <Icon name="tabler:chevron-down" class="w-3.5 h-3.5 ml-0.5 rtl:ml-0 rtl:mr-0.5 hidden lg:inline" />
+                      <Icon
+                        name="tabler:chevron-down"
+                        class="w-3.5 h-3.5 ml-0.5 rtl:ml-0 rtl:mr-0.5 hidden lg:inline"
+                      />
                     </button>
                   )}
                   <ul class="dropdown-menu lg:backdrop-blur-md dark:lg:bg-dark rounded lg:absolute pl-4 lg:pl-0 lg:hidden font-medium lg:bg-white/90 lg:min-w-[200px] drop-shadow-xl">
@@ -173,7 +175,6 @@ const contactHref  = getPermalink('contacto', lang);
     >
       <div class="items-center flex justify-between w-full lg:w-auto gap-1">
         <div class="flex items-center gap-1">
-
           <!-- Botón Contáctenos -->
           <a
             href={contactHref}
@@ -192,7 +193,6 @@ const contactHref  = getPermalink('contacto', lang);
 
           <!-- Selector de tema claro/oscuro -->
           {showToggleTheme && <ToggleTheme iconClass="w-6 h-6 lg:w-5 lg:h-5 lg:inline-block" />}
-
         </div>
         {
           actions?.length ? (

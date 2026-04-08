@@ -23,19 +23,17 @@
  */
 
 import type { GetStaticPaths } from 'astro';
-import Layout      from '~/layouts/PageLayout.astro';
-import HeroText    from '~/components/widgets/HeroText.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
 import ContactoBPA from '~/components/sections/ContactoBPA.astro';
-import Steps       from '~/components/widgets/Steps.astro';
+import Steps from '~/components/widgets/Steps.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
-import PageNav     from '~/components/widgets/PageNav.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
 
 import { LANGS, useTranslations } from '~/i18n/utils';
-import { getPermalink }           from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
-export const getStaticPaths = (() =>
-  LANGS.map((lang) => ({ params: { lang } }))
-) satisfies GetStaticPaths;
+export const getStaticPaths = (() => LANGS.map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
@@ -48,14 +46,10 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ─────────────────────────────────────────────────────
       Página terminal — sin tagline, sin imagen.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <HeroText
-    title={t('contact.hero.title')}
-    subtitle={t('contact.hero.subtitle')}
-  />
+  <HeroText title={t('contact.hero.title')} subtitle={t('contact.hero.subtitle')} />
 
   <!-- BLOQUE 2 · ContactoBPA ───────────────────────────────────────────────────
       Widget propio que sigue el patrón AstroWind:
@@ -117,8 +111,5 @@ const metadata = {
   <!-- BLOQUE 5 · PageNav ───────────────────────────────────────────────────────
       Página terminal del portal: sin botón next.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: t('contact.nav.prev'), href: p('/') }}
-  />
-
+  <PageNav prev={{ text: t('contact.nav.prev'), href: p('/') }} />
 </Layout>

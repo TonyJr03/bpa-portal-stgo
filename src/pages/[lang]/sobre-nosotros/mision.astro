@@ -29,20 +29,18 @@
  */
 
 import type { GetStaticPaths } from 'astro';
-import Layout    from '~/layouts/PageLayout.astro';
-import HeroText  from '~/components/widgets/HeroText.astro';
-import Content   from '~/components/widgets/Content.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Content from '~/components/widgets/Content.astro';
 import Features2 from '~/components/widgets/Features2.astro';
 import Features3 from '~/components/widgets/Features3.astro';
-import PageNav   from '~/components/widgets/PageNav.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
 import SvgMision from '~/components/icons/SvgMision.astro';
 
 import { LANGS, useTranslations } from '~/i18n/utils';
-import { getPermalink }           from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
-export const getStaticPaths = (() =>
-  LANGS.map((lang) => ({ params: { lang } }))
-) satisfies GetStaticPaths;
+export const getStaticPaths = (() => LANGS.map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
@@ -55,12 +53,8 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ────────────────────────────────────────────────────── -->
-  <HeroText
-    tagline={t('about.mission.hero.tagline')}
-    title={t('about.mission.hero.title')}
-  />
+  <HeroText tagline={t('about.mission.hero.tagline')} title={t('about.mission.hero.title')} />
 
   <!-- BLOQUE 2 · Content ───────────────────────────────────────────────────────
       Columna izquierda: texto oficial íntegro de la Misión (§2 del documento).
@@ -81,24 +75,24 @@ const metadata = {
     isAfterContent={true}
     items={[
       {
-        title:       t('about.mission.p1.title'),
+        title: t('about.mission.p1.title'),
         description: t('about.mission.p1.desc'),
-        icon:        'tabler:building-bank',
+        icon: 'tabler:building-bank',
       },
       {
-        title:       t('about.mission.p2.title'),
+        title: t('about.mission.p2.title'),
         description: t('about.mission.p2.desc'),
-        icon:        'tabler:users',
+        icon: 'tabler:users',
       },
       {
-        title:       t('about.mission.p3.title'),
+        title: t('about.mission.p3.title'),
         description: t('about.mission.p3.desc'),
-        icon:        'tabler:device-laptop',
+        icon: 'tabler:device-laptop',
       },
       {
-        title:       t('about.mission.p4.title'),
+        title: t('about.mission.p4.title'),
         description: t('about.mission.p4.desc'),
-        icon:        'tabler:heart-handshake',
+        icon: 'tabler:heart-handshake',
       },
     ]}
   />
@@ -111,34 +105,34 @@ const metadata = {
     columns={3}
     items={[
       {
-        title:       t('about.mission.f1.title'),
+        title: t('about.mission.f1.title'),
         description: t('about.mission.f1.desc'),
-        icon:        'tabler:building-bank',
+        icon: 'tabler:building-bank',
       },
       {
-        title:       t('about.mission.f2.title'),
+        title: t('about.mission.f2.title'),
         description: t('about.mission.f2.desc'),
-        icon:        'tabler:cash-banknote',
+        icon: 'tabler:cash-banknote',
       },
       {
-        title:       t('about.mission.f3.title'),
+        title: t('about.mission.f3.title'),
         description: t('about.mission.f3.desc'),
-        icon:        'tabler:arrows-exchange',
+        icon: 'tabler:arrows-exchange',
       },
       {
-        title:       t('about.mission.f4.title'),
+        title: t('about.mission.f4.title'),
         description: t('about.mission.f4.desc'),
-        icon:        'tabler:credit-card',
+        icon: 'tabler:credit-card',
       },
       {
-        title:       t('about.mission.f5.title'),
+        title: t('about.mission.f5.title'),
         description: t('about.mission.f5.desc'),
-        icon:        'tabler:certificate',
+        icon: 'tabler:certificate',
       },
       {
-        title:       t('about.mission.f6.title'),
+        title: t('about.mission.f6.title'),
         description: t('about.mission.f6.desc'),
-        icon:        'tabler:chart-bar',
+        icon: 'tabler:chart-bar',
       },
     ]}
   />
@@ -148,8 +142,7 @@ const metadata = {
       Derecha:   avanza a la Visión (flujo natural de lectura institucional).
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav
-    prev={{ text: t('about.mission.nav.prev'), href: p('')             }}
+    prev={{ text: t('about.mission.nav.prev'), href: p('') }}
     next={{ text: t('about.mission.nav.next'), href: p('sobre-nosotros/vision') }}
   />
-
 </Layout>

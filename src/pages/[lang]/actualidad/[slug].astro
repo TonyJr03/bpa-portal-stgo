@@ -10,56 +10,61 @@
  */
 
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
-import { marked }               from 'marked';
-import Layout                   from '~/layouts/PageLayout.astro';
-import HeroText                 from '~/components/widgets/HeroText.astro';
-import ProseContent             from '~/components/sections/ProseContent.astro';
-import DocumentosDescargables   from '~/components/widgets/DocumentosDescargables.astro';
-import CallToAction             from '~/components/widgets/CallToAction.astro';
-import PageNav                  from '~/components/widgets/PageNav.astro';
-import EmptyCollection          from '~/components/ui/EmptyCollection.astro';
+import { marked } from 'marked';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import ProseContent from '~/components/sections/ProseContent.astro';
+import DocumentosDescargables from '~/components/widgets/DocumentosDescargables.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
+import EmptyCollection from '~/components/ui/EmptyCollection.astro';
 import type { DocumentoConUrl } from '~/components/widgets/DocumentosDescargables.astro';
 
 import { LANGS, useTranslations, useFieldTranslation, useLocalTranslations } from '~/i18n/utils';
-import { getPermalink }                           from '~/utils/permalinks';
-import { pb, fetchParaBuild }                     from '~/lib/pocketbase';
+import { getPermalink } from '~/utils/permalinks';
+import { pb, fetchParaBuild } from '~/lib/pocketbase';
 
 interface Registro {
-  id:           string;
-  titulo:       string;
-  titulo_en:    string;
-  slug:         string;
-  resumen:      string;
-  resumen_en:   string;
-  contenido:    string;
+  id: string;
+  titulo: string;
+  titulo_en: string;
+  slug: string;
+  resumen: string;
+  resumen_en: string;
+  contenido: string;
   contenido_en: string;
-  fecha:        string;
-  nivel:        'informativo' | 'alerta' | 'urgente';
-  categoria:    'comunicado' | 'noticia';
-  publicado:    boolean;
-  imagen:       string;
+  fecha: string;
+  nivel: 'informativo' | 'alerta' | 'urgente';
+  categoria: 'comunicado' | 'noticia';
+  publicado: boolean;
+  imagen: string;
   collectionId: string;
 }
 
 interface Documento {
-  id: string; nombre: string; archivo: string;
-  referencia: string; tipo: string; orden: number;
-  collectionId: string; collectionName: string;
+  id: string;
+  nombre: string;
+  archivo: string;
+  referencia: string;
+  tipo: string;
+  orden: number;
+  collectionId: string;
+  collectionName: string;
 }
 
 // ── Diccionarios de traducción para badges ──────────────────────────────────
 const BADGE_NIVEL = {
-  es: { alerta: 'Alerta',   urgente: 'Urgente'  },
-  en: { alerta: 'Alert',    urgente: 'Urgent'   },
+  es: { alerta: 'Alerta', urgente: 'Urgente' },
+  en: { alerta: 'Alert', urgente: 'Urgent' },
 } as const;
 
 const BADGE_CATEGORIA = {
   es: { comunicado: 'Comunicado', noticia: 'Noticia' },
-  en: { comunicado: 'Announcement', noticia: 'News'  },
+  en: { comunicado: 'Announcement', noticia: 'News' },
 } as const;
 
 const BADGE_NIVEL_CLASS = {
-  alerta:  'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+  alerta: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
   urgente: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
 } as const;
 
@@ -74,36 +79,33 @@ interface BadgeInfo {
   tagline: string;
 }
 
-function getBadgeInfo(
-  nivel: string,
-  categoria: string,
-  lang: string
-): BadgeInfo {
+function getBadgeInfo(nivel: string, categoria: string, lang: string): BadgeInfo {
   const isCritical = nivel === 'alerta' || nivel === 'urgente';
 
   if (isCritical) {
     // Mostrar nivel (alerta/urgente) con clase de alerta
     return {
-      label: BADGE_NIVEL[lang as keyof typeof BADGE_NIVEL][nivel as keyof typeof BADGE_NIVEL['es']],
+      label: BADGE_NIVEL[lang as keyof typeof BADGE_NIVEL][nivel as keyof (typeof BADGE_NIVEL)['es']],
       class: BADGE_NIVEL_CLASS[nivel as keyof typeof BADGE_NIVEL_CLASS],
-      tagline: BADGE_CATEGORIA[lang as keyof typeof BADGE_CATEGORIA][categoria as keyof typeof BADGE_CATEGORIA['es']],
+      tagline: BADGE_CATEGORIA[lang as keyof typeof BADGE_CATEGORIA][categoria as keyof (typeof BADGE_CATEGORIA)['es']],
     };
   } else {
     // Mostrar categoría (comunicado/noticia) con clase suave
     return {
-      label: BADGE_CATEGORIA[lang as keyof typeof BADGE_CATEGORIA][categoria as keyof typeof BADGE_CATEGORIA['es']],
+      label: BADGE_CATEGORIA[lang as keyof typeof BADGE_CATEGORIA][categoria as keyof (typeof BADGE_CATEGORIA)['es']],
       class: BADGE_CAT_CLASS,
-      tagline: BADGE_CATEGORIA[lang as keyof typeof BADGE_CATEGORIA][categoria as keyof typeof BADGE_CATEGORIA['es']],
+      tagline: BADGE_CATEGORIA[lang as keyof typeof BADGE_CATEGORIA][categoria as keyof (typeof BADGE_CATEGORIA)['es']],
     };
   }
 }
 
 export const getStaticPaths = (async () => {
   const registros = await fetchParaBuild<Registro>(
-    () => pb.collection('actualidad').getFullList<Registro>({
-      filter: 'publicado = true && slug != ""',
-      sort:   '-updated',
-    }),
+    () =>
+      pb.collection('actualidad').getFullList<Registro>({
+        filter: 'publicado = true && slug != ""',
+        sort: '-updated',
+      }),
     'actualidad'
   );
 
@@ -114,7 +116,7 @@ export const getStaticPaths = (async () => {
       try {
         documentos = await pb.collection('documentos').getFullList<Documento>({
           filter: `referencia = "${r.slug}" && tipo = "noticia"`,
-          sort:   'orden',
+          sort: 'orden',
         });
       } catch (err) {
         console.error(`[BPA] Error cargando documentos para "${r.slug}":`, err);
@@ -123,7 +125,7 @@ export const getStaticPaths = (async () => {
 
       return LANGS.map((lang) => ({
         params: { lang, slug: r.slug },
-        props:  { registro: r, documentos, dbErrorDocs },
+        props: { registro: r, documentos, dbErrorDocs },
       }));
     })
   );
@@ -134,7 +136,7 @@ export const getStaticPaths = (async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { registro, documentos, dbErrorDocs } = Astro.props as Props;
 const { lang } = Astro.params;
-const t  = useTranslations(lang);
+const t = useTranslations(lang);
 const tf = useFieldTranslation(lang);
 const p = (slug: string) => getPermalink(slug, lang);
 const tl = useLocalTranslations(lang, {
@@ -143,22 +145,25 @@ const tl = useLocalTranslations(lang, {
 });
 
 // Campos traducidos
-const tituloTraducido = tf(registro.titulo,   registro.titulo_en);
-const contenidoRaw    = tf(registro.contenido, registro.contenido_en);
-const contenidoHtml    = contenidoRaw?.trim()
-  ? marked.parse(contenidoRaw) as string
-  : '';
+const tituloTraducido = tf(registro.titulo, registro.titulo_en);
+const contenidoRaw = tf(registro.contenido, registro.contenido_en);
+const contenidoHtml = contenidoRaw?.trim() ? (marked.parse(contenidoRaw) as string) : '';
 
 // Badge y tagline según nivel y categoría
 const badge = getBadgeInfo(registro.nivel, registro.categoria, lang);
 
 const fechaFormateada = new Intl.DateTimeFormat(tl('locale'), {
-  day: '2-digit', month: 'long', year: 'numeric',
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
 }).format(new Date(registro.fecha));
 
 const documentosConUrl: DocumentoConUrl[] = documentos.map((doc) => ({
-  id: doc.id, nombre: doc.nombre, archivo: doc.archivo,
-  url: pb.files.getURL(doc, doc.archivo), orden: doc.orden,
+  id: doc.id,
+  nombre: doc.nombre,
+  archivo: doc.archivo,
+  url: pb.files.getURL(doc, doc.archivo),
+  orden: doc.orden,
 }));
 
 const metadata = {
@@ -168,7 +173,6 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <HeroText tagline={badge.tagline} title={tituloTraducido} />
 
   <!-- Badges + fecha -->
@@ -184,30 +188,24 @@ const metadata = {
     </div>
   </section>
 
-  {contenidoHtml
-    ? <ProseContent contenido={contenidoHtml} />
-    : <EmptyCollection
-        coleccion="actualidad"
-        mensaje={tl('empty')}
-        icono="tabler:article-off"
-      />
+  {
+    contenidoHtml ? (
+      <ProseContent contenido={contenidoHtml} />
+    ) : (
+      <EmptyCollection coleccion="actualidad" mensaje={tl('empty')} icono="tabler:article-off" />
+    )
   }
 
-  <DocumentosDescargables
-    documentos={documentosConUrl}
-    error={dbErrorDocs}
-    titulo={t('news.detail.docs')}
-  />
+  <DocumentosDescargables documentos={documentosConUrl} error={dbErrorDocs} titulo={t('news.detail.docs')} />
 
   <CallToAction
     title={t('news.detail.cta.title')}
     subtitle={t('news.detail.cta.subtitle')}
     actions={[
-      { variant: 'primary',   text: t('news.detail.cta.btn1'), href: p('contacto'),   icon: 'tabler:headset' },
-      { variant: 'secondary', text: t('news.detail.cta.btn2'), href: p('actualidad'), icon: 'tabler:news'    },
+      { variant: 'primary', text: t('news.detail.cta.btn1'), href: p('contacto'), icon: 'tabler:headset' },
+      { variant: 'secondary', text: t('news.detail.cta.btn2'), href: p('actualidad'), icon: 'tabler:news' },
     ]}
   />
 
   <PageNav prev={{ text: t('news.detail.nav.prev'), href: p('actualidad') }} />
-
 </Layout>

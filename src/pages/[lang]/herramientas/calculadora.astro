@@ -20,31 +20,28 @@
 
 import type { GetStaticPaths } from 'astro';
 
-import Layout       from '~/layouts/PageLayout.astro';
-import HeroText     from '~/components/widgets/HeroText.astro';
-import Herramienta  from '~/components/sections/Herramienta.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Herramienta from '~/components/sections/Herramienta.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
-import PageNav      from '~/components/widgets/PageNav.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
 
 import { LANGS, useTranslations } from '~/i18n/utils';
-import { getPermalink }           from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
-export const getStaticPaths = (() =>
-  LANGS.map((lang) => ({ params: { lang } }))
-) satisfies GetStaticPaths;
+export const getStaticPaths = (() => LANGS.map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const { lang } = Astro.params;
-const t        = useTranslations(lang);
-const p        = (slug: string) => getPermalink(slug, lang);
+const t = useTranslations(lang);
+const p = (slug: string) => getPermalink(slug, lang);
 
 const metadata = {
-  title:       `${t('tools.calc.hero.title')} — BPA Santiago de Cuba`,
+  title: `${t('tools.calc.hero.title')} — BPA Santiago de Cuba`,
   description: t('tools.calc.hero.subtitle'),
 };
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Tagline "Herramientas" sitúa al usuario dentro del módulo.
       El HeroText cumple el rol de Headline; por eso Herramienta.astro
@@ -71,15 +68,15 @@ const metadata = {
     actions={[
       {
         variant: 'primary',
-        text:    t('tools.calc.cta.map'),
-        href:    p('herramientas/mapa'),
-        icon:    'tabler:map-pin',
+        text: t('tools.calc.cta.map'),
+        href: p('herramientas/mapa'),
+        icon: 'tabler:map-pin',
       },
       {
         variant: 'secondary',
-        text:    t('tools.calc.cta.products'),
-        href:    p('productos'),
-        icon:    'tabler:layout-grid',
+        text: t('tools.calc.cta.products'),
+        href: p('productos'),
+        icon: 'tabler:layout-grid',
       },
     ]}
   />
@@ -87,8 +84,5 @@ const metadata = {
   <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
       Solo botón izquierdo: regresa al índice del módulo Herramientas.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <PageNav
-    prev={{ text: t('tools.nav.back.tools'), href: p('herramientas') }}
-  />
-
+  <PageNav prev={{ text: t('tools.nav.back.tools'), href: p('herramientas') }} />
 </Layout>

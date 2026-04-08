@@ -23,18 +23,16 @@
  */
 
 import type { GetStaticPaths } from 'astro';
-import Layout            from '~/layouts/PageLayout.astro';
-import HeroText          from '~/components/widgets/HeroText.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
 import ListadoActualidad from '~/components/sections/ListadoActualidad.astro';
-import CallToAction      from '~/components/widgets/CallToAction.astro';
-import PageNav           from '~/components/widgets/PageNav.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import PageNav from '~/components/widgets/PageNav.astro';
 
 import { LANGS, useTranslations } from '~/i18n/utils';
-import { getPermalink }           from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
-export const getStaticPaths = (() =>
-  LANGS.map((lang) => ({ params: { lang } }))
-) satisfies GetStaticPaths;
+export const getStaticPaths = (() => LANGS.map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
@@ -47,14 +45,10 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <!-- BLOQUE 1 · HeroText ──────────────────────────────────────────────────────
       Sin tagline: módulo de primer nivel, sin sección padre.
   ─────────────────────────────────────────────────────────────────────────── -->
-  <HeroText
-    title={t('news.hero.title')}
-    subtitle={t('news.hero.subtitle')}
-  />
+  <HeroText title={t('news.hero.title')} subtitle={t('news.hero.subtitle')} />
 
   <!-- BLOQUE 2 · ListadoActualidad ─────────────────────────────────────────────
       Sin fondo alternado — la sección hereda el fondo base de la página.
@@ -67,17 +61,18 @@ const metadata = {
   <CallToAction
     title={t('news.cta.title')}
     subtitle={t('news.cta.subtitle')}
-    actions={[{
-      variant: 'primary',
-      text:    t('news.cta.button'),
-      href:    p('contacto'),
-      icon:    'tabler:headset',
-    }]}
+    actions={[
+      {
+        variant: 'primary',
+        text: t('news.cta.button'),
+        href: p('contacto'),
+        icon: 'tabler:headset',
+      },
+    ]}
   />
 
   <!-- BLOQUE 4 · PageNav ───────────────────────────────────────────────────────
       Solo botón izquierdo — regresa al inicio del portal.
   ─────────────────────────────────────────────────────────────────────────── -->
   <PageNav prev={{ text: t('news.nav.prev'), href: p('') }} />
-
 </Layout>

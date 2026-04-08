@@ -25,24 +25,15 @@ const {
   bg = await Astro.slots.render('bg'),
 } = Astro.props;
 
-const justify =
-  prev && next ? 'justify-between' : next ? 'justify-end' : 'justify-start';
+const justify = prev && next ? 'justify-between' : next ? 'justify-end' : 'justify-start';
 ---
 
 {
   (prev || next) && (
-    <WidgetWrapper
-      id={id}
-      isDark={isDark}
-      containerClass={`max-w-7xl mx-auto ${classes?.container ?? ''}`}
-      bg={bg}
-    >
-      {showDivider && (
-        <div class="border-t border-primary dark:border-primary mb-6" aria-hidden="true" />
-      )}
+    <WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-7xl mx-auto ${classes?.container ?? ''}`} bg={bg}>
+      {showDivider && <div class="border-t border-primary dark:border-primary mb-6" aria-hidden="true" />}
 
       <nav aria-label="Navegación entre páginas" class={`flex items-center ${justify}`}>
-
         {prev && (
           <a
             href={prev.href}
@@ -70,7 +61,6 @@ const justify =
             />
           </a>
         )}
-
       </nav>
     </WidgetWrapper>
   )

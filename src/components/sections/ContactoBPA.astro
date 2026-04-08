@@ -26,21 +26,17 @@
  *   <ContactoBPA id="contacto" />
  */
 
-import WidgetWrapper      from '~/components/ui/WidgetWrapper.astro';
+import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
 import FormularioContacto from '~/components/vue/FormularioContacto.vue';
-import { Icon }           from 'astro-icon/components';
-import type { Widget }    from '~/types';
+import { Icon } from 'astro-icon/components';
+import type { Widget } from '~/types';
 import { useTranslations, getLangFromUrl } from '~/i18n/utils';
-import { getPermalink }   from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 type Props = Widget;
 
-const {
-  id,
-  isDark = false,
-  classes = {},
-} = Astro.props;
+const { id, isDark = false, classes = {} } = Astro.props;
 
 const bg = await Astro.slots.render('bg');
 const lang = getLangFromUrl(Astro.url);
@@ -49,9 +45,7 @@ const p = (slug: string) => getPermalink(slug, lang);
 ---
 
 <WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-6xl mx-auto ${classes?.container ?? ''}`} bg={bg}>
-
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-14 items-start">
-
     <!-- Formulario -->
     <div class="lg:col-span-2">
       <div class="mb-6">
@@ -65,7 +59,6 @@ const p = (slug: string) => getPermalink(slug, lang);
 
     <!-- Aside estático -->
     <aside class="space-y-5 lg:pt-[4.5rem]">
-
       <div class="rounded-xl border border-bpa-100 dark:border-bpa-amber-800 bg-bpa-50 dark:bg-bpa-950/60 p-6">
         <h3 class="text-base font-semibold font-heading text-default dark:text-default mb-4 flex items-center gap-2">
           <Icon name="tabler:building-bank" class="w-5 h-5 text-primary shrink-0" />
@@ -79,8 +72,12 @@ const p = (slug: string) => getPermalink(slug, lang);
           <li class="flex gap-3">
             <Icon name="tabler:phone" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
             <span>
-              {lang === 'es' ? 'Recepción' : 'Reception'}: <strong class="text-default dark:text-default">[COMPLETAR]</strong><br/>
-              {lang === 'es' ? 'Atención al Cliente' : 'Customer Service'}: <strong class="text-default dark:text-default">[COMPLETAR]</strong>
+              {lang === 'es' ? 'Recepción' : 'Reception'}: <strong class="text-default dark:text-default"
+                >[COMPLETAR]</strong
+              ><br />
+              {lang === 'es' ? 'Atención al Cliente' : 'Customer Service'}: <strong
+                class="text-default dark:text-default">[COMPLETAR]</strong
+              >
             </span>
           </li>
           <li class="flex gap-3">
@@ -90,14 +87,16 @@ const p = (slug: string) => getPermalink(slug, lang);
           <li class="flex gap-3">
             <Icon name="tabler:clock" class="w-4 h-4 mt-0.5 shrink-0 text-primary" />
             <span>
-              {lang === 'es' ? 'Lunes a Viernes' : 'Monday to Friday'}<br/>
+              {lang === 'es' ? 'Lunes a Viernes' : 'Monday to Friday'}<br />
               <strong class="text-default dark:text-default">[COMPLETAR: 8:00 am – 4:00 pm]</strong>
             </span>
           </li>
         </ul>
       </div>
 
-      <div class="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-5 text-sm text-amber-800 dark:text-amber-300">
+      <div
+        class="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-5 text-sm text-amber-800 dark:text-amber-300"
+      >
         <p class="font-semibold mb-1.5 flex items-center gap-2">
           <Icon name="tabler:info-circle" class="w-4 h-4 shrink-0" />
           {t('contact.aside.deadline.title')}
@@ -105,12 +104,13 @@ const p = (slug: string) => getPermalink(slug, lang);
         <p set:html={t('contact.aside.deadline.text')} />
       </div>
 
-      <a href={p('sobre-nosotros/nuestra-red/canales-de-atencion')}
-        class="flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline">
+      <a
+        href={p('sobre-nosotros/nuestra-red/canales-de-atencion')}
+        class="flex items-center gap-2 text-sm font-medium text-primary dark:text-primary hover:underline"
+      >
         <Icon name="tabler:arrow-right" class="w-4 h-4 shrink-0" />
         {t('contact.aside.channels.link')}
       </a>
-
     </aside>
   </div>
 </WidgetWrapper>

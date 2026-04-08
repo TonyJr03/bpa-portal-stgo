@@ -31,10 +31,10 @@
  * @colecciones  Ninguna — página 100 % estática (SSG puro).
  */
 
-import Layout    from '~/layouts/PageLayout.astro';
-import Svg404        from '~/components/icons/Svg404.astro';
-import Button        from '~/components/ui/Button.astro';
-import AtajosPortal  from '~/components/sections/AtajosPortal.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import Svg404 from '~/components/icons/Svg404.astro';
+import Button from '~/components/ui/Button.astro';
+import AtajosPortal from '~/components/sections/AtajosPortal.astro';
 import { getPermalink } from '~/utils/permalinks';
 import { useTranslations, getLangFromUrl } from '~/i18n/utils';
 
@@ -49,21 +49,25 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <section class="relative flex items-center justify-center min-h-[calc(100vh-160px)] px-4 py-12 overflow-hidden">
-
     <!-- Fondos decorativos — sin imágenes externas -->
-    <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-bpa-100/60 dark:bg-bpa-amber-950/20 blur-3xl pointer-events-none" aria-hidden="true"></div>
-    <div class="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-primary/5 blur-3xl pointer-events-none" aria-hidden="true"></div>
+    <div
+      class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-bpa-100/60 dark:bg-bpa-amber-950/20 blur-3xl pointer-events-none"
+      aria-hidden="true"
+    >
+    </div>
+    <div
+      class="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-primary/5 blur-3xl pointer-events-none"
+      aria-hidden="true"
+    >
+    </div>
 
     <div class="relative z-10 w-full max-w-xl mx-auto text-center">
-
       <!-- BLOQUE 1 · SVG + código + título en fila ─────────────────────────
           SVG a la izquierda. A la derecha: "404" grande y el h1.
           En móvil se apilan verticalmente (flex-col → flex-row en sm).
       -->
       <div class="flex flex-col sm:flex-row items-center justify-center gap-6 mb-5">
-
         <!-- Ilustración institucional -->
         <div class="shrink-0">
           <Svg404 />
@@ -71,17 +75,13 @@ const metadata = {
 
         <!-- Texto: código + título -->
         <div class="text-center sm:text-left">
-          <p
-            class="text-8xl font-extrabold tracking-tight text-primary leading-none mb-2"
-            aria-label={t('404.code')}
-          >
+          <p class="text-8xl font-extrabold tracking-tight text-primary leading-none mb-2" aria-label={t('404.code')}>
             {t('404.code')}
           </p>
           <h1 class="text-2xl md:text-3xl font-bold text-default dark:text-white leading-snug">
             {t('404.heading')}
           </h1>
         </div>
-
       </div>
 
       <!-- BLOQUE 2 · Descripción a lo ancho ───────────────────────────────── -->
@@ -91,24 +91,12 @@ const metadata = {
 
       <!-- BLOQUE 3 · Acciones principales ─────────────────────────────────── -->
       <div class="flex flex-col sm:flex-row gap-3 justify-center mb-10">
-        <Button
-          variant="primary"
-          text={t('404.btn.home')}
-          href={p('/')}
-          icon="tabler:home"
-        />
-        <Button
-          variant="secondary"
-          text={t('404.btn.contact')}
-          href={p('/contacto')}
-          icon="tabler:headset"
-        />
+        <Button variant="primary" text={t('404.btn.home')} href={p('/')} icon="tabler:home" />
+        <Button variant="secondary" text={t('404.btn.contact')} href={p('/contacto')} icon="tabler:headset" />
       </div>
 
       <!-- BLOQUE 4 · Atajos del portal ────────────────────────────────────── -->
       <AtajosPortal />
-
     </div>
   </section>
-
 </Layout>

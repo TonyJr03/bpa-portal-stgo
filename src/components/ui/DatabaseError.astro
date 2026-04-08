@@ -26,12 +26,12 @@ const lang = getLangFromUrl(Astro.url);
 
 const tl = useLocalTranslations(lang, {
   es: {
-    title:   'Sección temporalmente no disponible',
+    title: 'Sección temporalmente no disponible',
     default: 'La información de esta sección no está disponible temporalmente. Por favor, inténtelo más tarde.',
     contact: 'Contáctenos si el problema persiste',
   },
   en: {
-    title:   'Section temporarily unavailable',
+    title: 'Section temporarily unavailable',
     default: 'The information for this section is temporarily unavailable. Please try again later.',
     contact: 'Contact us if the problem persists',
   },
@@ -39,14 +39,12 @@ const tl = useLocalTranslations(lang, {
 const texto = mensaje ?? tl('default');
 ---
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center
+<div
+  class="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center
             intersect-once intersect-quarter intercept-no-queue
-            motion-safe:opacity-0 motion-safe:intersect:animate-fade">
-  <Icon
-    name="tabler:info-circle"
-    class="w-14 h-14 mx-auto mb-5 text-primary opacity-60"
-    aria-hidden="true"
-  />
+            motion-safe:opacity-0 motion-safe:intersect:animate-fade"
+>
+  <Icon name="tabler:info-circle" class="w-14 h-14 mx-auto mb-5 text-primary opacity-60" aria-hidden="true" />
 
   <p class="text-xl font-semibold text-default dark:text-white">
     {tl('title')}
@@ -70,5 +68,4 @@ const texto = mensaje ?? tl('default');
         Verifique que el servidor esté corriendo en http://127.0.0.1:8090
         y vuelva a ejecutar el build. -->
   </div>
-
 </div>

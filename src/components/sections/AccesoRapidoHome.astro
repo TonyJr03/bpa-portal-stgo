@@ -22,22 +22,19 @@
  *   <AccesoRapidoHome id="herramientas" />
  */
 
-import WidgetWrapper        from '~/components/ui/WidgetWrapper.astro';
-import Headline             from '~/components/ui/Headline.astro';
-import TasasMiniWidget      from '~/components/vue/TasasMiniWidget.vue';
+import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
+import Headline from '~/components/ui/Headline.astro';
+import TasasMiniWidget from '~/components/vue/TasasMiniWidget.vue';
 import CalendarioMiniWidget from '~/components/vue/CalendarioMiniWidget.vue';
-import { Icon }             from 'astro-icon/components';
-import type { Widget }      from '~/types';
+import { Icon } from 'astro-icon/components';
+import type { Widget } from '~/types';
 import { useTranslations, getLangFromUrl } from '~/i18n/utils';
-import { getPermalink }     from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 type Props = Widget;
 
-const {
-  id,
-  isDark = false,
-} = Astro.props;
+const { id, isDark = false } = Astro.props;
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -45,7 +42,6 @@ const p = (slug: string) => getPermalink(slug, lang);
 ---
 
 <WidgetWrapper id={id} isDark={isDark} containerClass="max-w-6xl">
-
   <Headline
     tagline={t('home.tools.tagline')}
     title={t('home.tools.title')}
@@ -54,16 +50,21 @@ const p = (slug: string) => getPermalink(slug, lang);
   />
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
     <!-- Tasas de Cambio -->
-    <div class="flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+    <div
+      class="flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden"
+    >
       <div class="px-5 pt-5 pb-3 border-b border-bpa-200/50 dark:border-bpa-amber-800/50">
         <div class="flex items-center gap-3 mb-1">
-          <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary shrink-0">
+          <span
+            class="flex items-center justify-center w-10 h-10 rounded-xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary shrink-0"
+          >
             <Icon name="tabler:currency-dollar" class="w-5 h-5" />
           </span>
           <div>
-            <h3 class="font-bold text-default dark:text-default text-sm leading-tight">{t('home.tools.rates.title')}</h3>
+            <h3 class="font-bold text-default dark:text-default text-sm leading-tight">
+              {t('home.tools.rates.title')}
+            </h3>
             <p class="text-xs text-muted dark:text-muted">{t('home.tools.rates.subtitle')}</p>
           </div>
         </div>
@@ -71,54 +72,74 @@ const p = (slug: string) => getPermalink(slug, lang);
       <div class="flex-1 px-5 py-4">
         <TasasMiniWidget client:visible lang={lang} />
       </div>
-      <a href={p('herramientas/tasas-de-cambio')}
-        class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary hover:bg-bpa-100/50 dark:hover:bg-bpa-800/30 transition-colors group">
+      <a
+        href={p('herramientas/tasas-de-cambio')}
+        class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary hover:bg-bpa-100/50 dark:hover:bg-bpa-800/30 transition-colors group"
+      >
         <span>{t('home.tools.rates.link')}</span>
         <Icon name="tabler:arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </a>
     </div>
 
     <!-- Calculadora Financiera -->
-    <a href={p('herramientas/calculadora')}
-      class="group flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+    <a
+      href={p('herramientas/calculadora')}
+      class="group flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+    >
       <div class="flex-1 flex flex-col items-center justify-center px-5 py-8 text-center">
-        <span class="flex items-center justify-center w-14 h-14 rounded-2xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary mb-4 group-hover:scale-110 transition-transform duration-300">
+        <span
+          class="flex items-center justify-center w-14 h-14 rounded-2xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary mb-4 group-hover:scale-110 transition-transform duration-300"
+        >
           <Icon name="tabler:calculator" class="w-7 h-7" />
         </span>
         <h3 class="font-bold text-default dark:text-default text-base mb-2">{t('home.tools.calc.title')}</h3>
         <p class="text-sm text-muted dark:text-muted leading-relaxed">{t('home.tools.calc.description')}</p>
       </div>
-      <div class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary group-hover:bg-bpa-100/50 dark:group-hover:bg-bpa-800/30 transition-colors">
+      <div
+        class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary group-hover:bg-bpa-100/50 dark:group-hover:bg-bpa-800/30 transition-colors"
+      >
         <span>{t('home.tools.calc.link')}</span>
         <Icon name="tabler:arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </div>
     </a>
 
     <!-- Mapa de Sucursales -->
-    <a href={p('herramientas/mapa')}
-      class="group flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+    <a
+      href={p('herramientas/mapa')}
+      class="group flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+    >
       <div class="flex-1 flex flex-col items-center justify-center px-5 py-8 text-center">
-        <span class="flex items-center justify-center w-14 h-14 rounded-2xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary mb-4 group-hover:scale-110 transition-transform duration-300">
+        <span
+          class="flex items-center justify-center w-14 h-14 rounded-2xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary mb-4 group-hover:scale-110 transition-transform duration-300"
+        >
           <Icon name="tabler:map-pin" class="w-7 h-7" />
         </span>
         <h3 class="font-bold text-default dark:text-default text-base mb-2">{t('home.tools.map.title')}</h3>
         <p class="text-sm text-muted dark:text-muted leading-relaxed">{t('home.tools.map.description')}</p>
       </div>
-      <div class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary group-hover:bg-bpa-100/50 dark:group-hover:bg-bpa-800/30 transition-colors">
+      <div
+        class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary group-hover:bg-bpa-100/50 dark:group-hover:bg-bpa-800/30 transition-colors"
+      >
         <span>{t('home.tools.map.link')}</span>
         <Icon name="tabler:arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </div>
     </a>
 
     <!-- Calendario de Eventos -->
-    <div class="flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+    <div
+      class="flex flex-col rounded-2xl border border-bpa-200 dark:border-bpa-amber-800 bg-white dark:bg-bpa-950/60 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden"
+    >
       <div class="px-5 pt-5 pb-3 border-b border-bpa-200/50 dark:border-bpa-amber-800/50">
         <div class="flex items-center gap-3">
-          <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary shrink-0">
+          <span
+            class="flex items-center justify-center w-10 h-10 rounded-xl bg-bpa-100 dark:bg-bpa-800/40 text-primary dark:text-primary shrink-0"
+          >
             <Icon name="tabler:calendar-event" class="w-5 h-5" />
           </span>
           <div>
-            <h3 class="font-bold text-default dark:text-default text-sm leading-tight">{t('home.tools.calendar.title')}</h3>
+            <h3 class="font-bold text-default dark:text-default text-sm leading-tight">
+              {t('home.tools.calendar.title')}
+            </h3>
             <p class="text-xs text-muted dark:text-muted">{t('home.tools.calendar.subtitle')}</p>
           </div>
         </div>
@@ -126,12 +147,13 @@ const p = (slug: string) => getPermalink(slug, lang);
       <div class="flex-1 px-5 py-4">
         <CalendarioMiniWidget client:visible lang={lang} />
       </div>
-      <a href={p('herramientas/calendario')}
-        class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary hover:bg-bpa-100/50 dark:hover:bg-bpa-800/30 transition-colors group">
+      <a
+        href={p('herramientas/calendario')}
+        class="flex items-center justify-between px-5 py-3 bg-bpa-50 dark:bg-bpa-950/80 border-t border-bpa-200/50 dark:border-bpa-amber-800/50 text-sm font-medium text-primary dark:text-primary hover:bg-bpa-100/50 dark:hover:bg-bpa-800/30 transition-colors group"
+      >
         <span>{t('home.tools.calendar.link')}</span>
         <Icon name="tabler:arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </a>
     </div>
-
   </div>
 </WidgetWrapper>

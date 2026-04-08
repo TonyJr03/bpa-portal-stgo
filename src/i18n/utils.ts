@@ -135,11 +135,7 @@ export function getAlternateLangUrl(url: URL, targetLang: Lang): string {
  * @param base      Valor en español (siempre presente)
  * @param translated Valor en inglés (puede estar vacío o undefined)
  */
-export function translateField(
-  lang: Lang,
-  base: string,
-  translated?: string | null
-): string {
+export function translateField(lang: Lang, base: string, translated?: string | null): string {
   if (lang === 'es') return base;
   return translated?.trim() ? translated.trim() : base;
 }

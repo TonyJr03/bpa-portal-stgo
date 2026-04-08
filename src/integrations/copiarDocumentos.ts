@@ -38,8 +38,8 @@
 
 import type { AstroIntegration } from 'astro';
 import { copyFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
-import { join }                                        from 'node:path';
-import PocketBase                                      from 'pocketbase';
+import { join } from 'node:path';
+import PocketBase from 'pocketbase';
 
 // ── Configuración ─────────────────────────────────────────────────────────────
 
@@ -111,14 +111,8 @@ export function copiarDocumentos(): AstroIntegration {
         let fallidos = 0;
 
         for (const doc of documentos) {
-          const ext    = doc.archivo.split('.').pop() ?? 'bin';
-          const origen = join(
-            process.cwd(),
-            PB_STORAGE_PATH,
-            DOCUMENTOS_COLLECTION_ID,
-            doc.id,
-            doc.archivo
-          );
+          const ext = doc.archivo.split('.').pop() ?? 'bin';
+          const origen = join(process.cwd(), PB_STORAGE_PATH, DOCUMENTOS_COLLECTION_ID, doc.id, doc.archivo);
           const destFinal = join(destino, `${doc.id}.${ext}`);
 
           if (!existsSync(origen)) {
@@ -136,9 +130,7 @@ export function copiarDocumentos(): AstroIntegration {
           }
         }
 
-        logger.info(
-          `Documentos: ${copiados} copiados, ${fallidos} fallidos.`
-        );
+        logger.info(`Documentos: ${copiados} copiados, ${fallidos} fallidos.`);
       },
     },
   };

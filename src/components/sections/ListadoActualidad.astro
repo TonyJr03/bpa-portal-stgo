@@ -22,29 +22,20 @@
  *   <ListadoActualidad id="actualidad" />
  */
 
-import WidgetWrapper     from '~/components/ui/WidgetWrapper.astro';
+import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
 import ActualidadListado from '~/components/vue/ActualidadListado.vue';
-import type { Widget }   from '~/types';
+import type { Widget } from '~/types';
 import { getLangFromUrl } from '~/i18n/utils';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 type Props = Widget;
 
-const {
-  id,
-  isDark = false,
-  classes = {},
-} = Astro.props;
+const { id, isDark = false, classes = {} } = Astro.props;
 
 const lang = getLangFromUrl(Astro.url);
 ---
 
-<WidgetWrapper
-  id={id}
-  isDark={isDark}
-  containerClass={`max-w-7xl mx-auto ${classes?.container ?? ''}`}
->
-  
+<WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-7xl mx-auto ${classes?.container ?? ''}`}>
   <ActualidadListado client:load lang={lang} />
 
   <Fragment slot="bg"><slot name="bg" /></Fragment>

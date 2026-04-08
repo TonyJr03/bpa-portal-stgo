@@ -31,22 +31,20 @@
 
 // ── Imports de layout y widgets ────────────────────────────────────────────
 import type { GetStaticPaths } from 'astro';
-import Layout           from '~/layouts/PageLayout.astro';
-import Hero             from '~/components/widgets/Hero.astro';
-import Features2        from '~/components/widgets/Features2.astro';
-import Features3        from '~/components/widgets/Features3.astro';
-import CallToAction     from '~/components/widgets/CallToAction.astro';
-import Comunicados      from '~/components/sections/Comunicados.astro';
-import Noticias         from '~/components/sections/Noticias.astro';
+import Layout from '~/layouts/PageLayout.astro';
+import Hero from '~/components/widgets/Hero.astro';
+import Features2 from '~/components/widgets/Features2.astro';
+import Features3 from '~/components/widgets/Features3.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import Comunicados from '~/components/sections/Comunicados.astro';
+import Noticias from '~/components/sections/Noticias.astro';
 import AccesoRapidoHome from '~/components/sections/AccesoRapidoHome.astro';
 
 import { LANGS, useTranslations } from '~/i18n/utils';
-import { getPermalink }           from '~/utils/permalinks';
+import { getPermalink } from '~/utils/permalinks';
 import { CATEGORIAS } from '~/data/categorias';
 
-export const getStaticPaths = (() =>
-  LANGS.map((lang) => ({ params: { lang } }))
-) satisfies GetStaticPaths;
+export const getStaticPaths = (() => LANGS.map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
@@ -54,14 +52,14 @@ const p = (slug: string) => getPermalink(slug, lang);
 
 // ── Items para el componente Features2 (Bloque 4) ─────────────────────────
 const items = CATEGORIAS.map((cat) => ({
-  title:       t(`cat.${cat.slug}.nombre`),
+  title: t(`cat.${cat.slug}.nombre`),
   description: t(`cat.${cat.slug}.desc`),
-  icon:        `tabler:${cat.icono}`,
+  icon: `tabler:${cat.icono}`,
   callToAction: {
     variant: 'link' as const,
-    text:    t('products.view'),
-    href:    p(`productos/${cat.slug}`),
-    icon:    'tabler:arrow-right',
+    text: t('products.view'),
+    href: p(`productos/${cat.slug}`),
+    icon: 'tabler:arrow-right',
   },
 }));
 
@@ -74,7 +72,6 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-
   <!-- ══════════════════════════════════════════════════════════════════════
       BLOQUE 1 · HERO — CTA Principal
       ─────────────────────────────────────────────────────────────────────
@@ -149,7 +146,7 @@ const metadata = {
       BLOQUE 5 · Últimas Noticias — Isla Vue (runtime)
       ─────────────────────────────────────────────────────────────────────
   ══════════════════════════════════════════════════════════════════════════ -->
-  <Noticias    id="noticias" />
+  <Noticias id="noticias" />
 
   <!-- ══════════════════════════════════════════════════════════════════════
       BLOQUE 6 · APLICACIONES BANCARIAS — Estático
@@ -172,8 +169,8 @@ const metadata = {
         callToAction: {
           variant: 'link',
           text: t('home.digital.enzona.link'),
-          href:    'https://www.enzona.net',
-          icon:    'tabler:arrow-right',
+          href: 'https://www.enzona.net',
+          icon: 'tabler:arrow-right',
         },
       },
       {
@@ -183,8 +180,8 @@ const metadata = {
         callToAction: {
           variant: 'link',
           text: t('home.digital.transfermovil.link'),
-          href:    'https://www.etecsa.cu/es/aplicaciones/transfermovil',
-          icon:    'tabler:arrow-right',
+          href: 'https://www.etecsa.cu/es/aplicaciones/transfermovil',
+          icon: 'tabler:arrow-right',
         },
       },
     ]}
@@ -209,5 +206,4 @@ const metadata = {
       },
     ]}
   />
-
 </Layout>
